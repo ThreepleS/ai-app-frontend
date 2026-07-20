@@ -2107,7 +2107,7 @@
           </div>
           <div class="tpl-actions">
             ${resetBtn}
-            <button class="btn ghost sm tpl-edit" data-id="${esc(t.id)}" title="Изменить">✎</button>
+            ${t.recommended ? "" : `<button class="btn ghost sm tpl-edit" data-id="${esc(t.id)}" title="Изменить">✎</button>`}
             <button class="btn ghost sm tpl-del" data-id="${esc(t.id)}" title="Удалить">✕</button>
           </div>
         `;
