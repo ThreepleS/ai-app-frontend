@@ -237,7 +237,7 @@
     .panel-head .grip { position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:4px; border-radius:99px; background: var(--stroke-strong); }
     .panel-head b { font-size:16px; flex:1; }
     .panel-head .close { border:0; background: var(--glass); color:var(--text); width:36px; height:36px; border-radius:11px; cursor:pointer; font-size:17px; }
-    .panel-body { flex:1 1 auto; overflow-y:auto; padding: 16px 18px calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:14px; }
+    .panel-body { flex:1 1 auto; overflow-y:auto; padding: 16px 18px calc(20px + env(safe-area-inset-bottom) + 64px); display:flex; flex-direction:column; gap:14px; }
 
     /* Settings */
     .row { display:flex; flex-direction:column; gap:6px; }
@@ -380,11 +380,13 @@
     .tpl-dropdown-item .tname { font-weight:600; margin-bottom:2px; }
     .tpl-dropdown-item .tdesc { font-size:11px; color: var(--muted); }
 
-    /* ---------- Settings tabs ---------- */
-    .settings-tabs { flex:0 0 auto; display:flex; gap:4px; padding:10px 14px; border-bottom:1px solid var(--stroke); overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .stab { flex:0 0 auto; padding:8px 14px; border-radius:10px; border:1px solid transparent; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition: all .2s ease; display:flex; align-items:center; gap:6px; }
+    /* ---------- Settings tabs (bottom bar) ---------- */
+    .settings-tabs { flex:0 0 auto; display:flex; gap:2px; padding:6px 10px; border-top:1px solid var(--stroke); background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(12px); }
+    .settings-tabs::-webkit-scrollbar { display:none; }
+    .stab { flex:1 1 auto; padding:8px 4px; border-radius:10px; border:1px solid transparent; background:transparent; color:var(--muted); font:inherit; font-size:10px; font-weight:600; cursor:pointer; white-space:nowrap; transition: all .2s ease; display:flex; flex-direction:column; align-items:center; gap:2px; }
     .stab:hover { color:var(--text); background: color-mix(in srgb, var(--glass) 80%, transparent); }
-    .stab.active { color:var(--text); background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent); }
+    .stab.active { color:var(--text); background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+    .stab .stab-icon { font-size:20px; line-height:1; }
     .tab-content { display:none; animation: fadeUp .22s ease; }
     .tab-content.active { display:flex; flex-direction:column; gap:12px; }
     .settings-card { background: var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; transition: border-color .2s, box-shadow .2s; }
@@ -442,13 +444,6 @@
           <span class="grip"></span>
           <b>⚙ Настройки</b>
           <button class="close" data-close="settings" title="Закрыть">✕</button>
-        </div>
-        <div class="settings-tabs">
-          <button class="stab active" data-tab="theme">🎨 Тема</button>
-          <button class="stab" data-tab="prompts">💬 Промпты</button>
-          <button class="stab" data-tab="keys">🔑 Ключи</button>
-          <button class="stab" data-tab="notify">🔔 Оповещения</button>
-          <button class="stab" data-tab="more">📤 Ещё</button>
         </div>
         <div class="panel-body">
           <div class="tab-content active" data-content="theme">
@@ -607,6 +602,19 @@
               </div>
               <button id="s_clear" class="btn danger sm" type="button">🗑 Очистить всю историю</button>
             </div>
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Инструменты</div>
+                  <div class="settings-card-desc">Дополнительные действия.</div>
+                </div>
+              </div>
+              <div class="export-btns" style="margin-bottom:8px">
+                <button id="s_pwa" class="btn ghost sm" type="button">📲 PWA</button>
+                <button id="s_web" class="btn ghost sm" type="button">🌐 В браузере</button>
+              </div>
+              <a id="s_admin" class="btn sm" href="admin.html" style="display:none;align-self:flex-start">🛠 Админ-панель</a>
+            </div>
           </div>
 
           <div class="actions-bar">
@@ -615,10 +623,13 @@
               Сохранить
             </button>
             <span id="s_status"></span>
-            <div style="flex:1"></div>
-            <button id="s_pwa" class="btn ghost sm" type="button">PWA</button>
-            <button id="s_web" class="btn ghost sm" type="button">В браузере</button>
-            <a id="s_admin" class="btn sm" href="admin.html" style="display:none">🛠 Админ</a>
+          </div>
+          <div class="settings-tabs">
+            <button class="stab active" data-tab="theme"><span class="stab-icon">🎨</span>Тема</button>
+            <button class="stab" data-tab="prompts"><span class="stab-icon">💬</span>Промпты</button>
+            <button class="stab" data-tab="keys"><span class="stab-icon">🔑</span>Ключи</button>
+            <button class="stab" data-tab="notify"><span class="stab-icon">🔔</span>Опов.</button>
+            <button class="stab" data-tab="more"><span class="stab-icon">📤</span>Ещё</button>
           </div>
         </div>
       </div>
@@ -2162,10 +2173,10 @@
     function tplAddRecommended() {
       const available = DEFAULT_TEMPLATES.filter((d) => !tplList.some((x) => x.name === d.name));
       if (!available.length) { toast("Все рекомендуемые шаблоны уже добавлены", "ok"); return; }
-      const pick = available[0];
-      tplList.push(JSON.parse(JSON.stringify(pick)));
+      available.forEach((t) => tplList.push(JSON.parse(JSON.stringify(t))));
       tplSave(tplList);
       tplRender();
+      toast(`Добавлено шаблонов: ${available.length}`, "ok");
     }
     $("#tplList").addEventListener("click", (e) => {
       const editBtn = e.target.closest(".tpl-edit");
