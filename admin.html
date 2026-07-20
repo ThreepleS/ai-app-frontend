@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="theme-color" content="#0b0f1a" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>AI App — Админ</title>
+  <style>
+    :root {
+      --bg: #0b0f1a; --bg-2: #0e1424; --panel: rgba(22, 30, 48, 0.72); --panel-solid: #161e30;
+      --glass: rgba(28, 37, 60, 0.55); --stroke: rgba(120, 150, 210, 0.16); --stroke-strong: rgba(120, 150, 210, 0.32);
+      --accent: #4f8cff; --accent-2: #9b5cff; --accent-3: #21d4c4;
+      --text: #eaf0fb; --muted: #93a3bd; --green: #3ddc84; --amber: #ffb454; --red: #ff6b6b;
+      --shadow: 0 10px 40px rgba(0,0,0,.45); --ring: 0 0 0 1px var(--stroke), 0 8px 30px rgba(0,0,0,.35);
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+    [data-theme="light"] {
+      --bg: #eef2f9; --bg-2: #f6f9ff; --panel: rgba(255,255,255,.78); --panel-solid:#ffffff;
+      --glass: rgba(255,255,255,.6); --stroke: rgba(20,40,80,.12); --stroke-strong: rgba(20,40,80,.22);
+      --text: #14223c; --muted: #5d6e88; --shadow: 0 10px 40px rgba(40,60,110,.18);
+    }
+    [data-theme="midnight"] {
+      --bg: #05070a; --bg-2: #0a0f14; --panel: rgba(10,18,26,0.85); --panel-solid:#0a1218;
+      --glass: rgba(12,22,32,0.7); --stroke: rgba(0,200,180,0.12); --stroke-strong: rgba(0,200,180,0.25);
+      --accent: #00d4c8; --accent-2: #00a8ff; --accent-3: #7b61ff;
+      --text: #d0f0f0; --muted: #6a9a9a; --shadow: 0 10px 40px rgba(0,0,0,.6);
+    }
+    [data-theme="aurora"] {
+      --bg: #0a0a14; --bg-2: #0f0f1e; --panel: rgba(18,14,36,0.8); --panel-solid:#14102a;
+      --glass: rgba(24,18,44,0.65); --stroke: rgba(100,80,220,0.18); --stroke-strong: rgba(100,80,220,0.35);
+      --accent: #7c5cff; --accent-2: #3ddc84; --accent-3: #ff6b9d;
+      --text: #e8e0ff; --muted: #9a8fc0; --shadow: 0 10px 40px rgba(20,10,40,.5);
+    }
+    [data-theme="sunset"] {
+      --bg: #140a0a; --bg-2: #1e0f0f; --panel: rgba(36,18,18,0.8); --panel-solid:#2a1414;
+      --glass: rgba(44,22,22,0.65); --stroke: rgba(255,120,80,0.18); --stroke-strong: rgba(255,120,80,0.35);
+      --accent: #ff7b42; --accent-2: #ff5e9c; --accent-3: #ffb454;
+      --text: #ffe8e0; --muted: #c09080; --shadow: 0 10px 40px rgba(40,10,10,.5);
+    }
+    [data-theme="custom"] {
+      --bg: var(--custom-bg, #0b0f1a); --bg-2: var(--custom-bg2, #0e1424);
+      --panel: var(--custom-panel, rgba(22,30,48,0.72)); --panel-solid: var(--custom-panel-solid, #161e30);
+      --glass: var(--custom-glass, rgba(28,37,60,0.55)); --stroke: var(--custom-stroke, rgba(120,150,210,0.16)); --stroke-strong: var(--custom-stroke-strong, rgba(120,150,210,0.32));
+      --accent: var(--custom-accent, #4f8cff); --accent-2: var(--custom-accent2, #9b5cff); --accent-3: var(--custom-accent3, #21d4c4);
+      --text: var(--custom-text, #eaf0fb); --muted: var(--custom-muted, #93a3bd);
+      --shadow: 0 10px 40px rgba(0,0,0,.45);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: var(--font); color: var(--text); overflow-x: hidden;
+      background:
+        radial-gradient(1200px 700px at 12% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 60%),
+        radial-gradient(1000px 600px at 110% 0%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 55%),
+        linear-gradient(180deg, var(--bg-2), var(--bg));
+      background-attachment: fixed;
+      min-height: 100vh;
+      transition: background-color .4s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(var(--accent), var(--accent-2)); border-radius: 99px; border: 2px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    @keyframes fadeUp { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform:none; } }
+    @keyframes pop { 0%{transform:scale(.96)} 60%{transform:scale(1.02)} 100%{transform:scale(1)} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 20px 16px 40px; }
+    .admin-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .admin-header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    .admin-header .sub { color: var(--muted); font-size: 12px; margin: 0; }
+    .admin-header a { color: var(--accent); text-decoration: none; font-size: 12px; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .card {
+      background: var(--panel); border: 1px solid var(--stroke); border-radius: 16px; padding: 16px;
+      backdrop-filter: blur(12px); transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .card:hover { transform: translateY(-2px); border-color: var(--stroke-strong); box-shadow: var(--ring); }
+    .card .n { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .card .l { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+    h2 { font-size: 13px; margin: 28px 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 700; }
+
+    .data-table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--stroke); border-radius: 16px; overflow: hidden; font-size: 13px; backdrop-filter: blur(12px); }
+    .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--stroke); vertical-align: top; }
+    .data-table th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; background: color-mix(in srgb, var(--glass) 80%, transparent); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+    .data-table .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+
+    .btn { border: 0; border-radius: 10px; padding: 8px 14px; cursor: pointer; font: inherit; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; transition: transform .15s, filter .2s, background .2s, box-shadow .2s; }
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+    .btn:active { transform: scale(.96); }
+    .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent); }
+    .btn.ghost { background: var(--glass); color: var(--text); border: 1px solid var(--stroke); }
+    .btn.ghost:hover { border-color: var(--stroke-strong); }
+    .btn.danger { background: rgba(255,107,107,.15); color: var(--red); border: 1px solid rgba(255,107,107,.4); }
+    .btn.danger:hover { background: rgba(255,107,107,.25); }
+    .btn.sm { padding: 5px 10px; font-size: 11px; border-radius: 8px; }
+
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    input, select, textarea { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--stroke); background: var(--glass); color: var(--text); font: inherit; font-size: 13px; outline: none; transition: border-color .2s, box-shadow .2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+    input[type=text], input[type=number] { width: 140px; }
+
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; margin-right: 4px; }
+    .pill.adm { background: rgba(255,180,84,.18); color: var(--amber); border: 1px solid rgba(255,180,84,.3); }
+    .pill.perm { background: rgba(61,220,132,.15); color: var(--green); border: 1px solid rgba(61,220,132,.3); }
+    .pill.temp { background: rgba(255,180,84,.15); color: var(--amber); border: 1px solid rgba(255,180,84,.3); }
+    .pill.prov { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+
+    .muted { color: var(--muted); font-size: 12px; }
+    .err { color: var(--red); }
+    .ok { color: var(--green); }
+    .key { font-family: ui-monospace, monospace; font-size: 11px; word-break: break-all; }
+
+    #login { max-width: 420px; margin: 80px auto; background: var(--panel); padding: 28px; border-radius: 18px; text-align: center; border: 1px solid var(--stroke); backdrop-filter: blur(12px); animation: fadeUp .4s ease; }
+    #login h1 { font-size: 22px; margin: 0 0 8px; }
+
+    .section { background: var(--panel); border: 1px solid var(--stroke); border-radius: 18px; padding: 18px; margin-bottom: 18px; backdrop-filter: blur(12px); }
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-title { font-size: 14px; font-weight: 700; margin: 0; }
+
+    .theme-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+    .theme-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--stroke); cursor: pointer; transition: transform .15s, border-color .2s; }
+    .theme-dot:hover { transform: scale(1.1); border-color: var(--stroke-strong); }
+    .theme-dot.active { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
+
+    .flash { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; animation: fadeUp .25s; }
+    .flash.ok { background: rgba(61,220,132,.12); color: var(--green); border: 1px solid rgba(61,220,132,.3); }
+    .flash.err { background: rgba(255,107,107,.12); color: var(--red); border: 1px solid rgba(255,107,107,.3); }
+
+    @media (max-width: 640px) {
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 8px; }
+      .btn { padding: 6px 10px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="login">
+      <h1>🛠 Админ-панель</h1>
+      <p class="muted">Вход выполняется автоматически с вашего устройства…</p>
+      <p id="login_err" class="err"></p>
+    </div>
+
+    <div id="app" style="display:none">
+      <div class="admin-header">
+        <div>
+          <h1>🛠 Админ-панель</h1>
+          <p class="sub">Управление пользователями, ключами и доступом. <a href="index.html">← к чату</a></p>
+        </div>
+        <div style="flex:1"></div>
+        <div class="theme-toggle" id="adminThemeToggle">
+          <div class="theme-dot" data-t="dark" style="background:#0b0f1a" title="Тёмная"></div>
+          <div class="theme-dot" data-t="light" style="background:#eef2f9" title="Светлая"></div>
+          <div class="theme-dot" data-t="midnight" style="background:#05070a" title="Полночь"></div>
+          <div class="theme-dot" data-t="aurora" style="background:#0a0a14" title="Аврора"></div>
+          <div class="theme-dot" data-t="sunset" style="background:#140a0a" title="Закат"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Сводка</div></div>
+        <div class="cards" id="summary"></div>
+        <div id="statsExtra" class="muted" style="margin-top:8px"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Пользователи и ключи</div>
+          <button class="btn ghost sm" onclick="loadAll()">🔄 Обновить</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="users">
+            <thead><tr>
+              <th>ID</th><th>Провайдер</th><th>Модель</th><th>Контекст</th><th>Сообщ.</th><th>Токены</th><th>Ключи</th><th>Действия</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">Белый список</div></div>
+        <div class="row">
+          <input id="wl_id" type="text" placeholder="Telegram ID" />
+          <select id="wl_type">
+            <option value="permanent">♾️ вечный</option>
+            <option value="temporary">⏳ временный</option>
+          </select>
+          <input id="wl_days" type="number" placeholder="дней" style="display:none" />
+          <input id="wl_note" type="text" placeholder="пометка" />
+          <button class="btn primary sm" onclick="wlAdd()">➕ Добавить</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="whitelist">
+            <thead><tr><th>ID</th><th>Тип</th><th>Пометка</th><th>Действия</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" style="border-color: rgba(255,107,107,.3)">
+        <div class="section-head"><div class="section-title" style="color: var(--red)">Опасная зона</div></div>
+        <div class="row">
+          <button class="btn danger" onclick="resetAll()">🧹 Сбросить ВСЕХ пользователей</button>
+        </div>
+        <p id="msg" class="muted"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const DEFAULT_FN_BASE = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1";
+    function resolveApiBase() {
+      try {
+        const fromUrl = new URLSearchParams(location.search).get("api");
+        if (fromUrl) { localStorage.setItem("api_base", fromUrl); return fromUrl.replace(/\/+$/, ""); }
+        const stored = localStorage.getItem("api_base");
+        if (stored) return stored.replace(/\/+$/, "");
+      } catch (e) {}
+      return DEFAULT_FN_BASE;
+    }
+    const API_BASE = resolveApiBase();
+    window.addEventListener("error", (e) => { try { alert("JS ошибка: " + (e.message || e.error || e)); } catch (_) {} });
+    let initData = "";
+    const inTelegram = !!(window.Telegram && window.Telegram.WebApp);
+    if (inTelegram) { window.Telegram.WebApp.ready(); initData = window.Telegram.WebApp.initData || ""; }
+
+    let currentAdminId = "";
+    function authBody() {
+      return inTelegram && initData ? { init_data: initData } : { user_id: currentAdminId };
+    }
+    async function pjson(action, extra) {
+      const body = Object.assign(authBody(), { action }, extra || {});
+      const res = await fetch(API_BASE + "/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return res.json();
+    }
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    // --- Theme (admin) ---
+    function applyAdminTheme(t) {
+      document.documentElement.setAttribute("data-theme", t || "dark");
+      document.querySelectorAll("#adminThemeToggle .theme-dot").forEach((d) => d.classList.toggle("active", d.dataset.t === t));
+      try { localStorage.setItem("admin_theme", t || "dark"); } catch (e) {}
+    }
+    let adminTheme = "dark";
+    try {
+      const saved = localStorage.getItem("admin_theme");
+      if (saved && ["dark","light","midnight","aurora","sunset"].includes(saved)) {
+        adminTheme = saved;
+      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+        adminTheme = "light";
+      }
+    } catch (e) {}
+    applyAdminTheme(adminTheme);
+    document.getElementById("adminThemeToggle").addEventListener("click", (e) => {
+      const dot = e.target.closest(".theme-dot");
+      if (!dot) return;
+      adminTheme = dot.dataset.t || "dark";
+      applyAdminTheme(adminTheme);
+    });
+
+    async function doLogin() {
+      $("#login_err").textContent = "запрос к серверу…";
+      let data;
+      try { data = await pjson("summary"); }
+      catch (e) { $("#login_err").textContent = "⚠️ сетевая ошибка: " + String(e); return; }
+      if (!data.ok) { $("#login_err").textContent = "⛔ " + (data.error || JSON.stringify(data)); return; }
+      if (data.admin_id) currentAdminId = String(data.admin_id);
+      $("#login").style.display = "none";
+      $("#app").style.display = "block";
+      loadAll();
+    }
+    async function boot() {
+      if (!inTelegram && !initData) { $("#login_err").textContent = "⛔ Откройте админ-панель внутри Telegram (через бота)."; return; }
+      await doLogin();
+    }
+    boot();
+
+    async function loadAll() {
+      const [s, u, w] = await Promise.all([
+        pjson("summary"),
+        pjson("users"),
+        pjson("whitelist", { sub_action: "list" }).catch(() => ({ ok: false })),
+      ]);
+      if (s.ok) renderSummary(s);
+      if (u.ok) renderUsers(u.users);
+      if (w.ok) renderWhitelist(w.whitelist);
+    }
+
+    function renderSummary(s) {
+      const cards = [
+        ["Пользователей", s.users_total],
+        ["В белом списке", s.whitelisted],
+        ["Всего сообщений", s.messages_total],
+        ["Всего токенов", s.tokens_total],
+      ];
+      $("#summary").innerHTML = cards.map(([l, n]) => `<div class="card"><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join("");
+      const line = (title, arr) => `<span class="muted">${title}: ${(arr && arr.length) ? arr.length + " актив." : "нет"}</span>`;
+      $("#statsExtra").innerHTML = line("24ч", s.stats_24h) + " &nbsp; " + line("7д", s.stats_7d);
+    }
+
+    function keysHtml(keys) {
+      if (!keys) return '<span class="muted">—</span>';
+      const order = ["openrouter", "gemini", "venice"];
+      const entries = order.filter((p) => keys[p]).map((p) => [p, keys[p]]).concat(Object.entries(keys).filter(([p]) => !order.includes(p)));
+      if (!entries.length) return '<span class="muted">—</span>';
+      return entries.map(([prov, v]) => `<span class="pill prov">${esc(prov)} ${v && v.has ? "✅" : "—"}</span>`).join(" ");
+    }
+
+    function renderUsers(users) {
+      const tb = $("#users tbody");
+      tb.innerHTML = users.map((u) => `
+        <tr>
+          <td>${u.is_admin ? '<span class="pill adm">админ</span>' : ""}<span class="mono">${esc(u.user_id)}</span></td>
+          <td>${esc(u.provider)}</td>
+          <td>${esc(u.model) || "—"}</td>
+          <td>${esc(u.context_limit) || "—"}</td>
+          <td>${esc(u.message_count) || "0"}</td>
+          <td>${esc(u.tokens_total) || "0"}</td>
+          <td>${keysHtml(u.keys)}</td>
+          <td><div class="btns">
+            <button class="btn ghost sm" onclick="usrAction('clear',${u.user_id})">🗑 история</button>
+            <button class="btn danger sm" onclick="usrAction('reset',${u.user_id})">♻ сброс</button>
+          </div></td>
+        </tr>`).join("");
+    }
+
+    async function usrAction(action, uid) {
+      if (action === "reset" && !confirm(`Сбросить пользователя ${uid}?`)) return;
+      const d = await pjson("user", { sub_action: action, user_id: uid });
+      flash(d.ok ? d.message : (d.error || "ошибка"));
+      if (d.ok) loadAll();
+    }
+
+    function renderWhitelist(list) {
+      const tb = $("#whitelist tbody");
+      if (!list || !list.length) { tb.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;padding:16px">список пуст</td></tr>`; return; }
+      tb.innerHTML = list.map((e) => {
+        const isAdmin = e.user_id == ADMIN();
+        const type = e.access_type === "temporary" ? `<span class="pill temp">⏳ временный</span>` : `<span class="pill perm">♾️ вечный</span>`;
+        let expInfo = "";
+        if (e.access_type === "temporary") {
+          const ms = expToMs(e.access_expires_at);
+          if (ms) {
+            const daysLeft = Math.max(0, Math.ceil((ms - Date.now()) / 86400000));
+            const d = new Date(ms);
+            expInfo = `<div class="muted" style="margin-top:3px">осталось ${daysLeft} дн. (до ${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()})</div>`;
+          }
+        }
+        return `<tr>
+          <td>${isAdmin ? '<span class="pill adm">админ</span>' : ""}<span class="mono">${esc(e.user_id)}</span></td>
+          <td>${type}${expInfo}</td>
+          <td>${esc(e.note) || "—"}</td>
+          <td><div class="btns">
+            <button class="btn ghost sm" onclick="wlNote(${e.user_id})">✏️ пометка</button>
+            ${e.access_type === "temporary" && !isAdmin ? `<button class="btn ghost sm" onclick="wlAddDays(${e.user_id})">➕ дни</button>` : ""}
+            ${isAdmin ? "" : `<button class="btn danger sm" onclick="wlRemove(${e.user_id})">✕ удалить</button>`}
+          </div></td>
+        </tr>`;
+      }).join("");
+    }
+    function ADMIN() { return Number(currentAdminId); }
+    function expToMs(v) { if (v == null) return null; if (typeof v === "number") return v * 1000; const t = Date.parse(v); return isNaN(t) ? null : t; }
+
+    async function wlAdd() {
+      const user_id = $("#wl_id").value.trim();
+      const access_type = $("#wl_type").value;
+      const days = access_type === "temporary" ? $("#wl_days").value : null;
+      const note = $("#wl_note").value.trim();
+      if (!user_id) { flash("введи ID", true); return; }
+      const d = await pjson("whitelist", { sub_action: "add", user_id, access_type, days, note });
+      flash(d.ok ? "добавлено" : (d.error || "ошибка"));
+      if (d.ok) { $("#wl_id").value = ""; $("#wl_note").value = ""; loadAll(); }
+    }
+    async function wlAddDays(uid) {
+      const days = prompt("Сколько дней добавить?");
+      if (days === null) return;
+      const d = Number(days);
+      if (isNaN(d) || d <= 0) { flash("введи положительное число дней", true); return; }
+      const r = await pjson("whitelist", { sub_action: "add_days", user_id: uid, days: d });
+      flash(r.ok ? `добавлено ${d} дн.` : (r.error || "ошибка"));
+      if (r.ok) loadAll();
+    }
+    async function wlRemove(uid) {
+      if (!confirm(`Удалить ${uid} из белого списка?`)) return;
+      const d = await pjson("whitelist", { sub_action: "remove", user_id: uid });
+      flash(d.ok ? d.message : (d.error || "ошибка"));
+      if (d.ok) loadAll();
+    }
+    async function wlNote(uid) {
+      const note = prompt("Новая пометка:");
+      if (note === null) return;
+      const d = await pjson("whitelist", { sub_action: "note", user_id: uid, note });
+      flash(d.ok ? "сохранено" : (d.error || "ошибка"));
+      if (d.ok) loadAll();
+    }
+    async function resetAll() {
+      if (!confirm("Сбросить ВСЕХ пользователей? Белый список сохранится.")) return;
+      const d = await pjson("reset_all", {});
+      flash(d.ok ? d.message : (d.error || "ошибка"));
+      if (d.ok) loadAll();
+    }
+
+    $("#wl_type").addEventListener("change", (e) => { $("#wl_days").style.display = e.target.value === "temporary" ? "inline" : "none"; });
+
+    function flash(t, isErr) {
+      const m = $("#msg"); m.textContent = t; m.className = isErr ? "err flash" : "ok flash";
+      setTimeout(() => { m.textContent = ""; m.className = "muted"; }, 2500);
+    }
+  </script>
+</body>
+</html>
