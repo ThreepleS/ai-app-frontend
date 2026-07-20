@@ -358,6 +358,28 @@
     .toggle input { width:18px; height:18px; accent-color: var(--accent); cursor:pointer; }
     .export-btns { display:flex; gap:8px; flex-wrap:wrap; }
 
+    .tpl-section { display:flex; flex-direction:column; gap:10px; }
+    .tpl-head { display:flex; align-items:center; justify-content:space-between; }
+    .tpl-list { display:flex; flex-direction:column; gap:8px; }
+    .tpl-card { display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:12px; border:1px solid var(--stroke); background: var(--glass); transition: transform .15s, border-color .2s; }
+    .tpl-card:hover { transform: translateY(-1px); border-color: var(--stroke-strong); }
+    .tpl-card .tpl-info { flex:1; min-width:0; cursor:pointer; }
+    .tpl-card .tpl-name { font-size:13px; font-weight:600; color: var(--text); margin-bottom:2px; display:flex; align-items:center; gap:6px; }
+    .tpl-card .tpl-text { font-size:12px; color: var(--muted); line-height:1.4; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    .tpl-card .tpl-actions { display:flex; gap:4px; flex-shrink:0; }
+    .tpl-badge { font-size:10px; padding:2px 8px; border-radius:99px; background: rgba(61,220,132,.15); color: var(--green); border:1px solid rgba(61,220,132,.3); font-weight:600; white-space:nowrap; }
+    .tpl-edit { display:flex; flex-direction:column; gap:8px; padding:12px; border-radius:12px; border:1px solid var(--stroke-strong); background: var(--panel); }
+    .tpl-edit input, .tpl-edit textarea { padding:10px 12px; border-radius:10px; border:1px solid var(--stroke); background: var(--glass); color: var(--text); font:inherit; font-size:13px; outline:none; }
+    .tpl-edit textarea { min-height:60px; resize:vertical; }
+    .tpl-edit-actions { display:flex; gap:8px; justify-content:flex-end; }
+    .tpl-dropdown { position:relative; display:inline-block; }
+    .tpl-dropdown-menu { display:none; position:absolute; right:0; bottom:100%; margin-bottom:6px; min-width:220px; background: var(--panel-solid); border:1px solid var(--stroke-strong); border-radius:12px; box-shadow: var(--shadow); z-index:100; padding:6px; max-height:240px; overflow-y:auto; }
+    .tpl-dropdown-menu.open { display:block; }
+    .tpl-dropdown-item { padding:10px 12px; border-radius:8px; cursor:pointer; font-size:12px; color: var(--text); transition: background .15s; }
+    .tpl-dropdown-item:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+    .tpl-dropdown-item .tname { font-weight:600; margin-bottom:2px; }
+    .tpl-dropdown-item .tdesc { font-size:11px; color: var(--muted); }
+
     /* Chat search */
     .cs-item { padding:12px; border-radius:12px; border:1px solid var(--stroke); background: var(--glass); cursor:pointer; transition: transform .15s, border-color .2s; }
     .cs-item:hover { transform: translateY(-1px); border-color: var(--stroke-strong); }
@@ -452,11 +474,28 @@
             </div>
           </div>
           <div class="row">
-            <label>Шаблоны промптов</label>
-            <div class="tpl-grid" id="tplGrid"></div>
+            <label>Системный промпт</label>
+            <textarea id="s_prompt"></textarea>
           </div>
-          <div class="row">
-            <label>Оповещения</label>
+
+          <div class="tpl-section">
+            <div class="tpl-head">
+              <div class="section-title">Шаблоны промптов</div>
+              <div class="tpl-actions">
+                <button class="btn ghost sm" id="tpl_add" type="button">＋ Добавить</button>
+                <button class="btn ghost sm" id="tpl_add_rec" type="button">📋 Рекомендуемый</button>
+              </div>
+            </div>
+            <div id="tplList" class="tpl-list"></div>
+            <div id="tplEdit" class="tpl-edit" style="display:none">
+              <input id="tplEditName" placeholder="Название" />
+              <textarea id="tplEditText" placeholder="Текст промпта..."></textarea>
+              <div class="tpl-edit-actions">
+                <button class="btn primary sm" id="tplEditSave" type="button">Сохранить</button>
+                <button class="btn ghost sm" id="tplEditCancel" type="button">Отмена</button>
+              </div>
+            </div>
+          </div>
             <div class="toggles">
               <label class="toggle"><input type="checkbox" id="s_sound"><span>🔔 Звук</span></label>
               <label class="toggle"><input type="checkbox" id="s_vibrate"><span>📳 Вибрация</span></label>
@@ -1965,27 +2004,121 @@
     });
 
     // --- Prompt templates -------------------------------------------------
-    const TEMPLATES = [
-      { name: "Ассистент", desc: "Помощник", text: "Ты — полезный ассистент. Отвечай кратко и по делу." },
-      { name: "Переводчик", desc: "RU ↔ EN", text: "Переводи всё на русский, если не указано иное. Сохраняй стиль оригинала." },
-      { name: "Редактор", desc: "Исправлять", text: "Исправляй грамматику и пунктуацию, сохраняя смысл и тон." },
-      { name: "Код-ревью", desc: "Code review", text: "Делай code review: найди баги, предложи улучшения, оцени сложность." },
-      { name: "Учитель", desc: "Объясняй", text: "Объясняй сложные темы простыми словами, с примерами и аналогиями." },
-      { name: "Копирайтер", desc: "Текст", text: "Пиши engaging тексты для соцсетей: цепляющий заголовок, 3 пункта, призыв к действию." },
+    const DEFAULT_TEMPLATES = [
+      { id: "rec-1", name: "Ассистент", text: "Ты — полезный ассистент. Отвечай кратко и по делу.", recommended: true, originalText: "Ты — полезный ассистент. Отвечай кратко и по делу." },
+      { id: "rec-2", name: "Переводчик", text: "Переводи всё на русский, если не указано иное. Сохраняй стиль оригинала.", recommended: true, originalText: "Переводи всё на русский, если не указано иное. Сохраняй стиль оригинала." },
+      { id: "rec-3", name: "Редактор", text: "Исправляй грамматику и пунктуацию, сохраняя смысл и тон.", recommended: true, originalText: "Исправляй грамматику и пунктуацию, сохраняя смысл и тон." },
+      { id: "rec-4", name: "Код-ревью", text: "Делай code review: найди баги, предложи улучшения, оцени сложность.", recommended: true, originalText: "Делай code review: найди баги, предложи улучшения, оцени сложность." },
+      { id: "rec-5", name: "Учитель", text: "Объясняй сложные темы простыми словами, с примерами и аналогиями.", recommended: true, originalText: "Объясняй сложные темы простыми словами, с примерами и аналогиями." },
+      { id: "rec-6", name: "Копирайтер", text: "Пиши engaging тексты для соцсетей: цепляющий заголовок, 3 пункта, призыв к действию.", recommended: true, originalText: "Пиши engaging тексты для соцсетей: цепляющий заголовок, 3 пункта, призыв к действию." },
     ];
-    function buildTemplates() {
-      const grid = $("#tplGrid");
-      if (!grid) return;
-      grid.innerHTML = "";
-      TEMPLATES.forEach((t) => {
+    function tplLoad() {
+      try {
+        const raw = localStorage.getItem("templates");
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
+    }
+    function tplSave(list) {
+      try { localStorage.setItem("templates", JSON.stringify(list)); } catch (e) {}
+    }
+    let tplList = tplLoad();
+    let tplEditingId = null;
+
+    function tplRender() {
+      const wrap = $("#tplList");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      tplList.forEach((t) => {
         const card = document.createElement("div");
         card.className = "tpl-card";
-        card.innerHTML = `<div class="tname">${esc(t.name)}</div><div class="tdesc">${esc(t.desc)}</div>`;
-        card.addEventListener("click", () => { $("#s_prompt").value = t.text; });
-        grid.appendChild(card);
+        const badge = t.recommended ? `<span class="tpl-badge">Рекомендуемый</span>` : "";
+        const resetBtn = (t.recommended && t.originalText && t.text !== t.originalText) ? `<button class="btn ghost sm tpl-reset" data-id="${esc(t.id)}" title="Сбросить">↩</button>` : "";
+        card.innerHTML = `
+          <div class="tpl-info" data-id="${esc(t.id)}">
+            <div class="tpl-name">${esc(t.name)} ${badge}</div>
+            <div class="tpl-text">${esc(t.text)}</div>
+          </div>
+          <div class="tpl-actions">
+            ${resetBtn}
+            <button class="btn ghost sm tpl-edit" data-id="${esc(t.id)}" title="Изменить">✎</button>
+            <button class="btn ghost sm tpl-del" data-id="${esc(t.id)}" title="Удалить">✕</button>
+          </div>
+        `;
+        wrap.appendChild(card);
       });
     }
-    buildTemplates();
+    function tplOpenEdit(id) {
+      const t = tplList.find((x) => x.id === id);
+      if (!t) return;
+      tplEditingId = id;
+      const edit = $("#tplEdit");
+      $("#tplEditName").value = t.name;
+      $("#tplEditText").value = t.text;
+      edit.style.display = "flex";
+    }
+    function tplCloseEdit() {
+      tplEditingId = null;
+      $("#tplEdit").style.display = "none";
+    }
+    function tplSaveEdit() {
+      const name = ($("#tplEditName").value || "").trim();
+      const text = ($("#tplEditText").value || "").trim();
+      if (!name || !text) return;
+      const idx = tplList.findIndex((x) => x.id === tplEditingId);
+      if (idx >= 0) {
+        tplList[idx].name = name;
+        tplList[idx].text = text;
+        if (tplList[idx].recommended && tplList[idx].originalText !== text) {
+          tplList[idx].recommended = false;
+          delete tplList[idx].originalText;
+        }
+      } else {
+        tplList.push({ id: "tpl-" + Date.now(), name, text, recommended: false });
+      }
+      tplSave(tplList);
+      tplCloseEdit();
+      tplRender();
+    }
+    function tplDelete(id) {
+      tplList = tplList.filter((x) => x.id !== id);
+      tplSave(tplList);
+      tplRender();
+    }
+    function tplReset(id) {
+      const t = tplList.find((x) => x.id === id);
+      if (!t || !t.originalText) return;
+      t.text = t.originalText;
+      t.recommended = true;
+      tplSave(tplList);
+      tplRender();
+    }
+    function tplAddRecommended() {
+      const available = DEFAULT_TEMPLATES.filter((d) => !tplList.some((x) => x.name === d.name));
+      if (!available.length) { toast("Все рекомендуемые шаблоны уже добавлены", "ok"); return; }
+      const pick = available[0];
+      tplList.push(JSON.parse(JSON.stringify(pick)));
+      tplSave(tplList);
+      tplRender();
+    }
+    $("#tplList").addEventListener("click", (e) => {
+      const editBtn = e.target.closest(".tpl-edit");
+      const delBtn = e.target.closest(".tpl-del");
+      const resetBtn = e.target.closest(".tpl-reset");
+      const info = e.target.closest(".tpl-info");
+      if (editBtn) { e.stopPropagation(); tplOpenEdit(editBtn.dataset.id); return; }
+      if (delBtn) { e.stopPropagation(); tplDelete(delBtn.dataset.id); return; }
+      if (resetBtn) { e.stopPropagation(); tplReset(resetBtn.dataset.id); return; }
+      if (info) {
+        const t = tplList.find((x) => x.id === info.dataset.id);
+        if (t) $("#s_prompt").value = t.text;
+      }
+    });
+    $("#tpl_add").addEventListener("click", () => { tplEditingId = null; $("#tplEditName").value = ""; $("#tplEditText").value = ""; $("#tplEdit").style.display = "flex"; });
+    $("#tpl_add_rec").addEventListener("click", tplAddRecommended);
+    $("#tplEditSave").addEventListener("click", tplSaveEdit);
+    $("#tplEditCancel").addEventListener("click", tplCloseEdit);
+    tplRender();
 
     // --- Sound / Vibration -------------------------------------------------
     function playNotifySound() {
