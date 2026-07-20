@@ -380,6 +380,19 @@
     .tpl-dropdown-item .tname { font-weight:600; margin-bottom:2px; }
     .tpl-dropdown-item .tdesc { font-size:11px; color: var(--muted); }
 
+    /* ---------- Settings tabs ---------- */
+    .settings-tabs { flex:0 0 auto; display:flex; gap:4px; padding:10px 14px; border-bottom:1px solid var(--stroke); overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .stab { flex:0 0 auto; padding:8px 14px; border-radius:10px; border:1px solid transparent; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition: all .2s ease; display:flex; align-items:center; gap:6px; }
+    .stab:hover { color:var(--text); background: color-mix(in srgb, var(--glass) 80%, transparent); }
+    .stab.active { color:var(--text); background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent); }
+    .tab-content { display:none; animation: fadeUp .22s ease; }
+    .tab-content.active { display:flex; flex-direction:column; gap:12px; }
+    .settings-card { background: var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; transition: border-color .2s, box-shadow .2s; }
+    .settings-card:hover { border-color: var(--stroke-strong); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent); }
+    .settings-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .settings-card-desc { font-size:12px; color:var(--muted); margin-top:2px; }
+    .actions-bar { flex:0 0 auto; display:flex; align-items:center; gap:10px; padding-top:8px; border-top:1px solid var(--stroke); flex-wrap:wrap; }
+
     /* Chat search */
     .cs-item { padding:12px; border-radius:12px; border:1px solid var(--stroke); background: var(--glass); cursor:pointer; transition: transform .15s, border-color .2s; }
     .cs-item:hover { transform: translateY(-1px); border-color: var(--stroke-strong); }
@@ -430,9 +443,15 @@
           <b>⚙ Настройки</b>
           <button class="close" data-close="settings" title="Закрыть">✕</button>
         </div>
+        <div class="settings-tabs">
+          <button class="stab active" data-tab="theme">🎨 Тема</button>
+          <button class="stab" data-tab="prompts">💬 Промпты</button>
+          <button class="stab" data-tab="keys">🔑 Ключи</button>
+          <button class="stab" data-tab="notify">🔔 Оповещения</button>
+          <button class="stab" data-tab="more">📤 Ещё</button>
+        </div>
         <div class="panel-body">
-          <div class="row">
-            <label>Тема оформления</label>
+          <div class="tab-content active" data-content="theme">
             <div class="theme-grid" id="themeGrid">
               <div class="theme-card active" data-theme-val="dark">
                 <div class="theme-preview" style="background:linear-gradient(135deg,#0b0f1a,#1a2040)"></div>
@@ -465,99 +484,146 @@
                 <div class="tdesc">Custom</div>
               </div>
             </div>
-            <div id="customThemeEditor" style="display:none;flex-direction:column;gap:8px;margin-top:8px">
+            <div id="customThemeEditor" class="custom-editor" style="display:none">
               <div class="section-title">Цвета пользовательской темы</div>
               <div class="custom-theme-row">
-                <label>Фон</label><input type="color" id="ct_bg" value="#0b0f1a"><label>Панель</label><input type="color" id="ct_panel" value="#161e30"><label>Акцент</label><input type="color" id="ct_accent" value="#4f8cff"><label>Текст</label><input type="color" id="ct_text" value="#eaf0fb">
+                <label>Фон</label><input type="color" id="ct_bg" value="#0b0f1a">
+                <label>Панель</label><input type="color" id="ct_panel" value="#161e30">
+                <label>Акцент</label><input type="color" id="ct_accent" value="#4f8cff">
+                <label>Текст</label><input type="color" id="ct_text" value="#eaf0fb">
               </div>
-              <button id="ct_save" class="btn primary" type="button" style="align-self:flex-start">Сохранить тему</button>
-            </div>
-          </div>
-          <div class="row">
-            <label>Системный промпт</label>
-            <textarea id="s_prompt"></textarea>
-          </div>
-
-          <div class="tpl-section">
-            <div class="tpl-head">
-              <div class="section-title">Шаблоны промптов</div>
-              <div class="tpl-actions">
-                <button class="btn ghost sm" id="tpl_add" type="button">＋ Добавить</button>
-                <button class="btn ghost sm" id="tpl_add_rec" type="button">📋 Рекомендуемый</button>
-              </div>
-            </div>
-            <div id="tplList" class="tpl-list"></div>
-            <div id="tplEdit" class="tpl-edit" style="display:none">
-              <input id="tplEditName" placeholder="Название" />
-              <textarea id="tplEditText" placeholder="Текст промпта..."></textarea>
-              <div class="tpl-edit-actions">
-                <button class="btn primary sm" id="tplEditSave" type="button">Сохранить</button>
-                <button class="btn ghost sm" id="tplEditCancel" type="button">Отмена</button>
-              </div>
-            </div>
-          </div>
-            <div class="toggles">
-              <label class="toggle"><input type="checkbox" id="s_sound"><span>🔔 Звук</span></label>
-              <label class="toggle"><input type="checkbox" id="s_vibrate"><span>📳 Вибрация</span></label>
-            </div>
-          </div>
-          <div class="row">
-            <label>Ключи провайдеров (каждый — отдельно)</label>
-            <div id="s_keys" class="provkeys"></div>
-          </div>
-          <div class="row">
-            <label>Системный промпт</label>
-            <textarea id="s_prompt"></textarea>
-          </div>
-          <div class="row">
-            <label>Лимит контекста (сообщений)</label>
-            <select id="s_limit">
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-          <div class="row">
-            <label>Статистика токенов</label>
-            <select id="s_stats">
-              <option value="disabled">выкл</option>
-              <option value="compact">компакт</option>
-              <option value="full">полная</option>
-            </select>
-          </div>
-          <div class="row">
-            <label>Экспорт чата</label>
-            <div class="export-btns">
-              <button class="btn ghost sm" id="s_export_md" type="button">📄 Markdown</button>
-              <button class="btn ghost sm" id="s_export_txt" type="button">📝 TXT</button>
+              <button id="ct_save" class="btn primary sm" type="button">Сохранить тему</button>
             </div>
           </div>
 
-          <div class="actions">
+          <div class="tab-content" data-content="prompts">
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Системный промпт</div>
+                  <div class="settings-card-desc">Этот промпт отправляется модели в каждом запросе.</div>
+                </div>
+              </div>
+              <textarea id="s_prompt" rows="5"></textarea>
+            </div>
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Шаблоны промптов</div>
+                  <div class="settings-card-desc">Быстрые заготовки. Нажмите, чтобы подставить.</div>
+                </div>
+                <div class="tpl-actions">
+                  <button class="btn ghost sm" id="tpl_add" type="button">＋ Добавить</button>
+                  <button class="btn ghost sm" id="tpl_add_rec" type="button">📋 Рекомендуемый</button>
+                </div>
+              </div>
+              <div id="tplList" class="tpl-list"></div>
+              <div id="tplEdit" class="tpl-edit" style="display:none">
+                <input id="tplEditName" placeholder="Название" />
+                <textarea id="tplEditText" rows="3" placeholder="Текст промпта..."></textarea>
+                <div class="tpl-edit-actions">
+                  <button class="btn primary sm" id="tplEditSave" type="button">Сохранить</button>
+                  <button class="btn ghost sm" id="tplEditCancel" type="button">Отмена</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-content="keys">
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">API-ключи провайдеров</div>
+                  <div class="settings-card-desc">Ключи хранятся только в вашем аккаунте. Каждый провайдер отдельно.</div>
+                </div>
+                <button class="btn ghost sm" onclick="loadKeyInfo()">🔄 Проверить</button>
+              </div>
+              <div id="s_keys" class="provkeys"></div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-content="notify">
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Оповещения</div>
+                  <div class="settings-card-desc">Звук и вибрация при получении ответа.</div>
+                </div>
+              </div>
+              <div class="toggles">
+                <label class="toggle"><input type="checkbox" id="s_sound"><span>🔔 Звук</span></label>
+                <label class="toggle"><input type="checkbox" id="s_vibrate"><span>📳 Вибрация</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-content="more">
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Лимит контекста</div>
+                  <div class="settings-card-desc">Сколько последних сообщений помнить.</div>
+                </div>
+              </div>
+              <select id="s_limit">
+                <option value="5">5 сообщений</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Статистика токенов</div>
+                  <div class="settings-card-desc">Показывать ли расход токенов под ответом.</div>
+                </div>
+              </div>
+              <select id="s_stats">
+                <option value="disabled">Скрыть</option>
+                <option value="compact">Компактно</option>
+                <option value="full">Полная</option>
+              </select>
+            </div>
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Экспорт чата</div>
+                  <div class="settings-card-desc">Скачать переписку в файл.</div>
+                </div>
+              </div>
+              <div class="export-btns">
+                <button class="btn ghost sm" id="s_export_md" type="button">📄 Markdown</button>
+                <button class="btn ghost sm" id="s_export_txt" type="button">📝 TXT</button>
+              </div>
+            </div>
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Опасная зона</div>
+                  <div class="settings-card-desc">Необратимые действия.</div>
+                </div>
+              </div>
+              <button id="s_clear" class="btn danger sm" type="button">🗑 Очистить всю историю</button>
+            </div>
+          </div>
+
+          <div class="actions-bar">
             <button id="s_save" class="btn primary" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8M7 3v5h8"></path></svg>
               Сохранить
             </button>
-            <button id="s_clear" class="btn danger" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
-              Очистить историю
-            </button>
-            <button id="s_pwa" class="btn ghost" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"></path></svg>
-              PWA
-            </button>
-            <button id="s_web" class="btn ghost" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg>
-              В браузере
-            </button>
-            <a id="s_admin" class="btn" href="admin.html" style="display:none">🛠 Админ-панель</a>
             <span id="s_status"></span>
+            <div style="flex:1"></div>
+            <button id="s_pwa" class="btn ghost sm" type="button">PWA</button>
+            <button id="s_web" class="btn ghost sm" type="button">В браузере</button>
+            <a id="s_admin" class="btn sm" href="admin.html" style="display:none">🛠 Админ</a>
           </div>
         </div>
       </div>
     </div>
+
 
     <div id="chatSearch" class="overlay">
       <div class="panel">
@@ -2272,6 +2338,18 @@
     $("#gear").addEventListener("click", () => {
       if ($("#settings").style.display === "flex") closeSettings();
       else openSettings();
+    });
+
+    // --- Settings tabs ----------------------------------------------------
+    document.querySelectorAll(".settings-tabs .stab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".settings-tabs .stab").forEach((t) => t.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+        tab.classList.add("active");
+        const target = tab.dataset.tab;
+        const content = document.querySelector(`.tab-content[data-content="${target}"]`);
+        if (content) content.classList.add("active");
+      });
     });
     async function tryAutoAdmin() {
       // Dev-режим на локальной машине: пробуем зайти под dev_user.
