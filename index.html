@@ -58,6 +58,51 @@
       --accent: #ff7b42; --accent-2: #ff5e9c; --accent-3: #ffb454;
       --text: #ffe8e0; --muted: #c09080; --shadow: 0 10px 40px rgba(40,10,10,.5);
     }
+    [data-theme="cyber"] {
+      --bg: #0a001a; --bg-2: #120028; --panel: rgba(20,0,50,0.8); --panel-solid:#140030;
+      --glass: rgba(30,5,60,0.65); --stroke: rgba(120,60,255,0.2); --stroke-strong: rgba(120,60,255,0.4);
+      --accent: #b066ff; --accent-2: #ff2bd6; --accent-3: #00f0ff;
+      --text: #f0e0ff; --muted: #a080d0; --shadow: 0 10px 40px rgba(20,0,50,.6);
+      background:
+        radial-gradient(600px 400px at 20% 10%, rgba(120,60,255,.25), transparent 60%),
+        radial-gradient(500px 350px at 80% 90%, rgba(255,43,214,.2), transparent 55%),
+        radial-gradient(400px 300px at 50% 50%, rgba(0,240,255,.1), transparent 50%),
+        linear-gradient(180deg, var(--bg-2), var(--bg));
+      background-attachment: fixed;
+    }
+    [data-theme="neon"] {
+      --bg: #000a05; --bg-2: #001a0d; --panel: rgba(0,20,10,0.85); --panel-solid:#001a0d;
+      --glass: rgba(0,30,15,0.7); --stroke: rgba(0,255,100,0.15); --stroke-strong: rgba(0,255,100,0.35);
+      --accent: #00ff66; --accent-2: #00ffcc; --accent-3: #ccff00;
+      --text: #e0ffe8; --muted: #60cc80; --shadow: 0 10px 40px rgba(0,20,10,.7);
+      background:
+        radial-gradient(500px 500px at 10% 20%, rgba(0,255,100,.18), transparent 55%),
+        radial-gradient(400px 400px at 90% 80%, rgba(0,255,200,.12), transparent 50%),
+        linear-gradient(180deg, var(--bg-2), var(--bg));
+      background-attachment: fixed;
+    }
+    [data-theme="lava"] {
+      --bg: #1a0000; --bg-2: #2a0505; --panel: rgba(40,5,5,0.85); --panel-solid:#2a0505;
+      --glass: rgba(50,10,10,0.7); --stroke: rgba(255,80,40,0.2); --stroke-strong: rgba(255,80,40,0.4);
+      --accent: #ff4422; --accent-2: #ff8800; --accent-3: #ffcc00;
+      --text: #ffe8e0; --muted: #cc9070; --shadow: 0 10px 40px rgba(30,0,0,.7);
+      background:
+        radial-gradient(600px 500px at 50% 0%, rgba(255,80,40,.3), transparent 60%),
+        radial-gradient(500px 400px at 20% 100%, rgba(255,136,0,.2), transparent 55%),
+        linear-gradient(180deg, var(--bg-2), var(--bg));
+      background-attachment: fixed;
+    }
+    [data-theme="ocean"] {
+      --bg: #000a1a; --bg-2: #001230; --panel: rgba(0,15,40,0.85); --panel-solid:#001230;
+      --glass: rgba(0,20,50,0.7); --stroke: rgba(40,120,255,0.18); --stroke-strong: rgba(40,120,255,0.4);
+      --accent: #2277ff; --accent-2: #00ccff; --accent-3: #6644ff;
+      --text: #e0f0ff; --muted: #6090cc; --shadow: 0 10px 40px rgba(0,10,30,.7);
+      background:
+        radial-gradient(600px 500px at 80% 10%, rgba(40,120,255,.2), transparent 60%),
+        radial-gradient(500px 400px at 10% 90%, rgba(0,204,255,.15), transparent 55%),
+        linear-gradient(180deg, var(--bg-2), var(--bg));
+      background-attachment: fixed;
+    }
     [data-theme="custom"] {
       --bg: var(--custom-bg, #0b0f1a);
       --bg-2: var(--custom-bg2, #0e1424);
@@ -101,7 +146,11 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-    @keyframes sendPulse { 0%{box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 50%, transparent)} 50%{box-shadow: 0 6px 35px color-mix(in srgb, var(--accent) 80%, transparent)} 100%{box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 50%, transparent)} }
+    @keyframes sendPulse {
+      0% { box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent); transform: scale(1); }
+      50% { box-shadow: 0 8px 40px color-mix(in srgb, var(--accent) 95%, transparent); transform: scale(1.18); background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); }
+      100% { box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent); transform: scale(1); }
+    }
     @keyframes ripple { to { transform: scale(2); opacity: 0; } }
 
     /* ---------- Header ---------- */
@@ -226,10 +275,10 @@
     #models.has-update::after { opacity: 1; }
 
     /* ---------- Overlay panels (settings / models) ---------- */
-    .overlay { position: fixed; inset:0; z-index: 50; display:none; flex-direction:column; background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 60%, transparent), color-mix(in srgb, var(--bg) 85%, transparent)); backdrop-filter: blur(6px); animation: fadeUp .25s; }
+    .overlay { position: fixed; inset:0; z-index: 50; display:none; flex-direction:column; background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 60%, transparent), color-mix(in srgb, var(--bg) 85%, transparent)); backdrop-filter: blur(6px); animation: fadeUp .25s; padding: env(safe-area-inset-top) 0 0; }
     .overlay.open { display:flex; }
     .panel {
-      display:flex; flex-direction:column; overflow:hidden; flex:1 1 auto; margin: 10px auto 0; width: 100%; max-width: 760px;
+      display:flex; flex-direction:column; overflow:hidden; flex:1 1 auto; margin: 10px 10px 10px; width: calc(100% - 20px); max-width: 760px;
       background: var(--panel); border:1px solid var(--stroke); border-radius: 22px 22px 0 0; box-shadow: var(--shadow);
       backdrop-filter: blur(22px) saturate(140%); animation: pop .3s ease;
     }
@@ -237,7 +286,7 @@
     .panel-head .grip { position:absolute; top:7px; left:50%; transform:translateX(-50%); width:38px; height:4px; border-radius:99px; background: var(--stroke-strong); }
     .panel-head b { font-size:16px; flex:1; }
     .panel-head .close { border:0; background: var(--glass); color:var(--text); width:36px; height:36px; border-radius:11px; cursor:pointer; font-size:17px; }
-    .panel-body { flex:1 1 auto; overflow-y:auto; padding: 16px 18px calc(20px + env(safe-area-inset-bottom) + 64px); display:flex; flex-direction:column; gap:14px; }
+    .panel-body { flex:1 1 auto; overflow-y:auto; padding: 16px 18px calc(16px + env(safe-area-inset-bottom) + 64px); display:flex; flex-direction:column; gap:14px; }
 
     /* Settings */
     .row { display:flex; flex-direction:column; gap:6px; }
@@ -357,6 +406,25 @@
     .toggles { display:flex; gap:12px; flex-wrap:wrap; }
     .toggle { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color: var(--text); }
     .toggle input { width:18px; height:18px; accent-color: var(--accent); cursor:pointer; }
+    .custom-toggles { display:flex; flex-direction:column; gap:10px; }
+    .custom-toggle { display:flex; align-items:center; gap:12px; cursor:pointer; font-size:14px; color: var(--text); position:relative; }
+    .custom-toggle input { position:absolute; opacity:0; width:0; height:0; }
+    .toggle-slider { width:44px; height:24px; flex:0 0 auto; background: var(--glass); border:1px solid var(--stroke); border-radius:99px; position:relative; transition: background .2s, border-color .2s; }
+    .toggle-slider::after { content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background: var(--muted); transition: transform .2s, background .2s; }
+    .custom-toggle input:checked + .toggle-slider { background: color-mix(in srgb, var(--accent) 35%, transparent); border-color: var(--accent); }
+    .custom-toggle input:checked + .toggle-slider::after { transform: translateX(20px); background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .toggle-label { font-weight:600; }
+    .seg-picker { display:flex; gap:4px; background: var(--glass); border:1px solid var(--stroke); border-radius:12px; padding:4px; flex-wrap:wrap; }
+    .seg-btn { flex:1 1 auto; border:0; background:transparent; color:var(--muted); padding:8px 10px; border-radius:9px; cursor:pointer; font:inherit; font-size:12px; font-weight:600; text-align:center; transition: all .15s; white-space:nowrap; }
+    .seg-btn:hover { color:var(--text); background: color-mix(in srgb, var(--glass) 80%, transparent); }
+    .seg-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:#fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent); }
+    .sound-picker { display:flex; gap:6px; flex-wrap:wrap; }
+    .sound-chip { padding:8px 12px; border-radius:10px; border:1px solid var(--stroke); background: var(--glass); color:var(--text); cursor:pointer; font:inherit; font-size:12px; font-weight:600; transition: all .15s; }
+    .sound-chip:hover { border-color: var(--stroke-strong); }
+    .sound-chip.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+    .vib-slider-row { display:flex; align-items:center; gap:12px; }
+    .vib-slider-row input[type="range"] { flex:1; accent-color: var(--accent); height:6px; }
+    .vib-val { font-size:13px; font-weight:700; color: var(--accent); min-width:28px; text-align:right; }
     .export-btns { display:flex; gap:8px; flex-wrap:wrap; }
 
     .tpl-section { display:flex; flex-direction:column; gap:10px; }
@@ -406,7 +474,39 @@
     .cs-item .cs-text { font-size:13px; color: var(--text); line-height:1.45; }
     .cs-empty { color: var(--muted); font-size:13px; text-align:center; padding:20px; }
 
+    .search-highlight-frame {
+      position: relative;
+      z-index: 10;
+      outline: 3px solid #fff;
+      outline-offset: 4px;
+      border-radius: 18px;
+      box-shadow: 0 0 0 6px rgba(0,0,0,.85), 0 0 30px rgba(0,0,0,.5);
+      animation: searchFramePulse .9s ease-out forwards;
+    }
+    @keyframes searchFramePulse {
+      0% { outline-width: 18px; outline-offset: 18px; box-shadow: 0 0 0 20px rgba(0,0,0,.9), 0 0 60px rgba(0,0,0,.7); }
+      100% { outline-width: 3px; outline-offset: 4px; box-shadow: 0 0 0 6px rgba(0,0,0,.85), 0 0 30px rgba(0,0,0,.5); }
+    }
+    .search-highlight-term {
+      background: rgba(255,255,255,.35);
+      color: #000;
+      border-radius: 3px;
+      padding: 1px 3px;
+      font-weight: 700;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.6);
+    }
+    .search-faded .search-highlight-term {
+      background: rgba(255,255,255,.12);
+      color: var(--text);
+      box-shadow: none;
+    }
+    .search-faded .search-highlight-frame {
+      outline-color: rgba(255,255,255,.25);
+      box-shadow: 0 0 0 3px rgba(0,0,0,.3), 0 0 10px rgba(0,0,0,.2);
+    }
+
     .hidden { display:none !important; }
+
 
   </style>
   <!-- Markdown: marked (тот же origin, без внешнего CDN) -->
@@ -425,6 +525,9 @@
       <div style="flex:1"></div>
       <button id="models" class="hbtn" title="Браузер моделей" aria-label="Браузер моделей">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+      </button>
+      <button id="newChatBtn" class="hbtn" title="Начать новый диалог" aria-label="Начать новый диалог">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
       </button>
       <button id="searchBtn" class="hbtn" title="Поиск по чату" aria-label="Поиск по чату">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
@@ -535,7 +638,6 @@
                   <div class="section-title">API-ключи провайдеров</div>
                   <div class="settings-card-desc">Ключи хранятся только в вашем аккаунте. Каждый провайдер отдельно.</div>
                 </div>
-                <button class="btn ghost sm" onclick="loadKeyInfo()">🔄 Проверить</button>
               </div>
               <div id="s_keys" class="provkeys"></div>
             </div>
@@ -564,13 +666,14 @@
                   <div class="settings-card-desc">Сколько последних сообщений помнить.</div>
                 </div>
               </div>
-              <select id="s_limit">
-                <option value="5">5 сообщений</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
+              <div class="seg-picker" data-name="context_limit" data-value="10">
+                <button data-val="5" class="seg-btn">5</button>
+                <button data-val="10" class="seg-btn active">10</button>
+                <button data-val="20" class="seg-btn">20</button>
+                <button data-val="50" class="seg-btn">50</button>
+                <button data-val="100" class="seg-btn">100</button>
+              </div>
+              <input type="hidden" id="s_limit" value="10" />
             </div>
             <div class="settings-card">
               <div class="settings-card-head">
@@ -579,11 +682,12 @@
                   <div class="settings-card-desc">Показывать ли расход токенов под ответом.</div>
                 </div>
               </div>
-              <select id="s_stats">
-                <option value="disabled">Скрыть</option>
-                <option value="compact">Компактно</option>
-                <option value="full">Полная</option>
-              </select>
+              <div class="seg-picker" data-name="stats_display" data-value="compact">
+                <button data-val="disabled" class="seg-btn">Скрыть</button>
+                <button data-val="compact" class="seg-btn active">Компактно</button>
+                <button data-val="full" class="seg-btn">Полная</button>
+              </div>
+              <input type="hidden" id="s_stats" value="compact" />
             </div>
             <div class="settings-card">
               <div class="settings-card-head">
@@ -596,15 +700,6 @@
                 <button class="btn ghost sm" id="s_export_md" type="button">📄 Markdown</button>
                 <button class="btn ghost sm" id="s_export_txt" type="button">📝 TXT</button>
               </div>
-            </div>
-            <div class="settings-card">
-              <div class="settings-card-head">
-                <div>
-                  <div class="section-title">Опасная зона</div>
-                  <div class="settings-card-desc">Необратимые действия.</div>
-                </div>
-              </div>
-              <button id="s_clear" class="btn danger sm" type="button">🗑 Очистить всю историю</button>
             </div>
             <div class="settings-card">
               <div class="settings-card-head">
@@ -988,6 +1083,10 @@
       midnight: {},
       aurora: {},
       sunset: {},
+      cyber: {},
+      neon: {},
+      lava: {},
+      ocean: {},
     };
     function applyTheme(t) {
       document.documentElement.setAttribute("data-theme", t || "dark");
@@ -1004,7 +1103,7 @@
     let theme = "dark";
     try {
       const saved = localStorage.getItem("theme");
-      if (saved && ["dark","light","midnight","aurora","sunset","custom"].includes(saved)) {
+      if (saved && ["dark","light","midnight","aurora","sunset","cyber","neon","lava","ocean","custom"].includes(saved)) {
         theme = saved;
       } else if (saved) {
         theme = saved;
@@ -1088,7 +1187,7 @@
     }
 
     // --- Message rendering -------------------------------------------------
-    function addMessage(role, html, stats) {
+    function addMessage(role, html, stats, scroll) {
       const el = document.createElement("div");
       el.className = "msg " + role + (role === "bot" ? " md" : "");
       el.innerHTML = html;
@@ -1113,7 +1212,7 @@
       }
       box.appendChild(el);
       if (role === "bot") addCodeCopy(el);
-      box.scrollTop = box.scrollHeight;
+      if (scroll !== false) box.scrollTop = box.scrollHeight;
       updateEmptyState();
       return el;
     }
@@ -1216,6 +1315,11 @@
       const vib = $("#s_vibrate");
       if (sound) sound.checked = !!s.notify_sound;
       if (vib) vib.checked = !!s.notify_vibrate;
+      if (s.notify_sound_id) selectedSoundId = s.notify_sound_id;
+      if (s.vib_strength) $("#s_vib_strength").value = s.vib_strength;
+      syncSegPickers();
+      buildSoundPicker();
+      updateVibVal();
       checkVision();
     }
 
@@ -1514,7 +1618,6 @@
           } else if (ev.type === "delta") {
             full += ev.text || "";
             if (botText) botText.textContent = full;
-            box.scrollTop = box.scrollHeight;
           } else if (ev.type === "error") {
             if (botEl) botEl.remove();
             addMessage("bot", escapeHtml(ev.message || "ошибка"));
@@ -1531,7 +1634,6 @@
               botEl.appendChild(s);
             }
             if (botEl) addCodeCopy(botEl);
-            box.scrollTop = box.scrollHeight;
             notify();
           }
         };
@@ -2044,14 +2146,18 @@
     $("#s_save").addEventListener("click", async () => {
       const status = $("#s_status");
       status.textContent = "";
+      const contextLimit = $("#s_limit").value;
+      const statsDisplay = $("#s_stats").value;
       const payload = Object.assign(authBody(), {
         selected_model: currentModelId,
         system_prompt: $("#s_prompt").value,
-        context_limit: $("#s_limit").value,
-        stats_display: $("#s_stats").value,
+        context_limit: contextLimit,
+        stats_display: statsDisplay,
         theme: theme,
         notify_sound: $("#s_sound") ? $("#s_sound").checked : false,
         notify_vibrate: $("#s_vibrate") ? $("#s_vibrate").checked : false,
+        notify_sound_id: selectedSoundId,
+        vib_strength: getVibStrength(),
       });
       payload.provider_keys = collectProviderKeys();
       try {
@@ -2062,27 +2168,25 @@
         status.textContent = "сохранено ✔";
         PROVIDERS.forEach((p) => { $("#s_key_" + p).value = ""; });
         log("модель: " + data.settings.selected_model);
-        loadKeyInfo();
       } catch (err) {
         status.style.color = "#e06b6b";
         status.textContent = "⚠️ " + String(err);
       }
     });
 
-    $("#s_clear").addEventListener("click", async () => {
-      if (!confirm("Очистить всю историю переписки?")) return;
-      const status = $("#s_status");
-      try {
-        const res = await ef("chat-clear", {}, 15000);
-        const data = await res.json();
-        status.style.color = data.ok ? "#6fcf7f" : "#e06b6b";
-        status.textContent = data.ok ? "история очищена ✔" : (data.error || "ошибка");
-        if (data.ok) { box.innerHTML = ""; updateEmptyState(); }
-      } catch (err) {
-        status.style.color = "#e06b6b";
-        status.textContent = "⚠️ " + String(err);
-      }
+
+    document.querySelectorAll(".seg-picker").forEach((picker) => {
+      picker.addEventListener("click", (e) => {
+        const btn = e.target.closest(".seg-btn");
+        if (!btn) return;
+        picker.dataset.value = btn.dataset.val;
+        syncSegPickers();
+      });
     });
+    const vibSlider = $("#s_vib_strength");
+    if (vibSlider) {
+      vibSlider.addEventListener("input", updateVibVal);
+    }
 
     // --- Prompt templates -------------------------------------------------
     const DEFAULT_TEMPLATES = [
@@ -2223,6 +2327,36 @@
     }
 
     // --- Chat search ------------------------------------------------------
+    function clearSearchHighlight() {
+      box.querySelectorAll(".search-highlight-frame").forEach((el) => el.classList.remove("search-highlight-frame"));
+      box.querySelectorAll(".search-highlight-term").forEach((el) => {
+        const parent = el.parentNode;
+        if (parent) {
+          parent.replaceChild(document.createTextNode(el.textContent), el);
+          parent.normalize();
+        }
+      });
+      box.classList.remove("search-faded");
+    }
+    function highlightTermsInMsg(msgEl, term) {
+      if (!term || !msgEl) return;
+      const md = msgEl.querySelector(".md");
+      if (!md) return;
+      const text = md.innerText || md.textContent || "";
+      const terms = term.split(/\s+/).filter(Boolean);
+      if (!terms.length) return;
+      const regex = new RegExp(`(${terms.map(escRegex).join("|")})`, "gi");
+      const html = text.replace(regex, '<span class="search-highlight-term">$1</span>');
+      md.innerHTML = html;
+    }
+    function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+    box.addEventListener("scroll", () => {
+      if (box.scrollTop < box.scrollHeight - box.clientHeight - 60) {
+        box.classList.add("search-faded");
+      } else {
+        box.classList.remove("search-faded");
+      }
+    });
     function openChatSearch() {
       $("#chatSearch").style.display = "flex";
       $("#cs_input").value = "";
@@ -2256,12 +2390,99 @@
         const div = document.createElement("div");
         div.className = "cs-item";
         div.innerHTML = `<div class="cs-role">${esc(it.role)}</div><div class="cs-text">${esc(it.text)}</div>`;
-        div.addEventListener("click", () => { it.el.scrollIntoView({ behavior: "smooth", block: "center" }); closeChatSearch(); });
+        div.addEventListener("click", () => {
+          clearSearchHighlight();
+          it.el.classList.add("search-highlight-frame");
+          highlightTermsInMsg(it.el, q);
+          it.el.scrollIntoView({ behavior: "smooth", block: "center" });
+          closeChatSearch();
+        });
         wrap.appendChild(div);
       });
     }
     $("#cs_input").addEventListener("input", (e) => renderSearchResults(e.target.value));
     $("#searchBtn").addEventListener("click", openChatSearch);
+
+    $("#newChatBtn").addEventListener("click", () => {
+      if (!confirm("Начать новый диалог? История текущего чата будет удалена.")) return;
+      box.innerHTML = "";
+      updateEmptyState();
+      toast("Новый диалог начат", "ok");
+    });
+
+    // --- Sound / Vibration -------------------------------------------------
+    const SOUNDS = [
+      { id: "chime", name: "Чайм", type: "sine", freq: 880, dur: 0.15 },
+      { id: "ding", name: "Динь", type: "sine", freq: 1200, dur: 0.1 },
+      { id: "pop", name: "Поп", type: "square", freq: 400, dur: 0.08 },
+      { id: "blip", name: "Блип", type: "triangle", freq: 600, dur: 0.06 },
+      { id: "click", name: "Клик", type: "triangle", freq: 1000, dur: 0.04 },
+      { id: "chord", name: "Аккорд", type: "sine", freq: 523, dur: 0.3 },
+      { id: "ping", name: "Пинг", type: "sine", freq: 1500, dur: 0.05 },
+      { id: "alert", name: "Алерт", type: "sawtooth", freq: 440, dur: 0.2 },
+      { id: "gentle", name: "Мягкий", type: "sine", freq: 660, dur: 0.25 },
+      { id: "crystal", name: "Хрусталь", type: "sine", freq: 2000, dur: 0.08 },
+    ];
+    let selectedSoundId = "chime";
+    function buildSoundPicker() {
+      const wrap = $("#soundPicker");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      SOUNDS.forEach((s) => {
+        const btn = document.createElement("button");
+        btn.className = "sound-chip" + (s.id === selectedSoundId ? " active" : "");
+        btn.textContent = s.name;
+        btn.addEventListener("click", () => {
+          selectedSoundId = s.id;
+          wrap.querySelectorAll(".sound-chip").forEach((c) => c.classList.remove("active"));
+          btn.classList.add("active");
+          playSelectedSound();
+        });
+        wrap.appendChild(btn);
+      });
+    }
+    function playSelectedSound() {
+      const s = SOUNDS.find((x) => x.id === selectedSoundId) || SOUNDS[0];
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = s.freq;
+        osc.type = s.type;
+        gain.gain.value = 0.08;
+        osc.start(); osc.stop(ctx.currentTime + s.dur);
+      } catch (e) {}
+    }
+    function getVibStrength() {
+      const el = $("#s_vib_strength");
+      const val = el ? parseInt(el.value, 10) : 40;
+      return Math.max(10, Math.min(200, val || 40));
+    }
+    function notify() {
+      const sound = $("#s_sound");
+      const vib = $("#s_vibrate");
+      const doSound = sound ? sound.checked : false;
+      const doVib = vib ? vib.checked : false;
+      if (doSound) playSelectedSound();
+      if (doVib && navigator.vibrate) navigator.vibrate(getVibStrength());
+    }
+    function syncSegPickers() {
+      document.querySelectorAll(".seg-picker").forEach((picker) => {
+        const name = picker.dataset.name;
+        const val = picker.dataset.value;
+        picker.querySelectorAll(".seg-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.val === val);
+        });
+        const hidden = picker.parentElement.querySelector(`input[type="hidden"][id="${name === "context_limit" ? "s_limit" : "s_stats"}"]`);
+        if (hidden) hidden.value = val;
+      });
+    }
+    function updateVibVal() {
+      const el = $("#s_vib_strength");
+      const label = $("#vibVal");
+      if (el && label) label.textContent = el.value;
+    }
 
     // --- Chat export ------------------------------------------------------
     function exportChat(format) {
@@ -2341,6 +2562,9 @@
       $("#attach").style.display = "none";
       $("#vision").style.display = "none";
       $("#bar").style.display = "none";
+      buildSoundPicker();
+      syncSegPickers();
+      updateVibVal();
       loadKeyInfo();
     }
     function closeSettings() {
