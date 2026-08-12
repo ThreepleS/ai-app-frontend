@@ -64,7 +64,7 @@ async function ef(name, body, ms = 20000) {
     log("ef " + name + " status=" + response.status + " ok=" + response.ok);
     console.debug("[ef]", name, "status", response.status, response.ok);
     if (!response.ok) {
-      const txt = await response.text().catch(() => "");
+      const txt = await response.clone().text().catch(() => "");
       console.error("[ef]", name, "bad status", response.status, txt.slice(0, 500));
     }
     return response;
