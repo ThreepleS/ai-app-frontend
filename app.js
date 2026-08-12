@@ -10,13 +10,19 @@ window.addEventListener("error", (e) => {
       $("#alertModal").classList.add("open");
     }
   } catch {}
+  console.error("[global]", e.message || e.error || e);
 });
+console.log("[app] script start");
 const $ = (s) => document.querySelector(s);
 const log = (t) => {
   const el = $("#log");
   if (el) el.innerHTML = t;
 };
-document.body.setAttribute("data-ran", "1");
+if (document.body) {
+  document.body.setAttribute("data-ran", "1");
+} else {
+  console.warn("[app] document.body is null at line 19");
+}
 log("загрузка…");
 
 // Базовый URL Edge Functions Supabase. Формат:
@@ -3279,18 +3285,25 @@ async function tryAutoAdmin() {
 }
 
 (async () => {
+  console.log("[app] init start");
   try {
+    console.log("[app] buildKeyRows");
     buildKeyRows(keyMode);
+    console.log("[app] inTelegram=", inTelegram);
     if (inTelegram) {
-      // Внутри Telegram ID пользователя подтягивается автоматически из initData.
+      console.log("[app] calling auth");
       await auth("");
+      console.log("[app] auth done");
     } else {
+      console.log("[app] calling tryAutoAdmin");
       await tryAutoAdmin();
+      console.log("[app] tryAutoAdmin done");
     }
   } catch (e) {
+    console.error("[app] init error", e);
     log("<i data-lucide='alert-triangle' class='lucide'></i> ошибка инициализации: " + (e && e.message ? e.message : String(e)));
-    console.error(e);
   }
+  console.log("[app] init complete");
 })();
 
 // Явно показываем чат после загрузки DOM (страховка от вечной заглушки).
