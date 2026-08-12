@@ -2565,6 +2565,7 @@ async function startGoogleOAuth() {
   }
   const redirectUri = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1/google-auth";
   const state = Math.random().toString(36).slice(2);
+  const tgUserId = inTelegram ? (extractUser(currentInitData())?.id || "") : "";
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -2572,6 +2573,7 @@ async function startGoogleOAuth() {
     scope: "openid email profile",
     state,
   });
+  if (tgUserId) params.set("state", state + "|tg=" + tgUserId);
   try {
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.search = params.toString();
