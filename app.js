@@ -1086,7 +1086,11 @@ $("#s_web").addEventListener("click", async () => {
   }
 });
 
-const inTelegram = !!(window.Telegram && window.Telegram.WebApp);
+const inTelegram = !!(
+  window.Telegram &&
+  window.Telegram.WebApp &&
+  (window.Telegram.WebApp.initData || window.Telegram.WebApp.user)
+);
 if (inTelegram) {
   window.Telegram.WebApp.ready();
   window.Telegram.WebApp.expand();
