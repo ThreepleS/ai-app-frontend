@@ -1206,6 +1206,13 @@ async function auth(devId) {
   setStatus("loading");
   const d = currentInitData();
   log("init_data len: " + d.length + (inTelegram ? " (inTG)" : " (notTG)"));
+  if (!inTelegram && !d) {
+    const msg = "Открой это приложение через Telegram Mini App. Прямая ссылка в браузере не работает.";
+    log("<i data-lucide='alert-triangle' class='lucide'></i> " + msg);
+    await showAlert("Нужно открыть через Telegram", "<i data-lucide='alert-triangle' class='lucide'></i> " + msg);
+    setStatus("err");
+    return false;
+  }
   let res;
   try {
     res = await ef("auth", {}, 15000);
