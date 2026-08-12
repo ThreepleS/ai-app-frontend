@@ -1091,6 +1091,11 @@ const inTelegram = !!(
   window.Telegram.WebApp &&
   (window.Telegram.WebApp.initData || window.Telegram.WebApp.user)
 );
+console.log("[tg] inTelegram=", inTelegram, "WebApp=", !!(window.Telegram && window.Telegram.WebApp), "initData=", !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData), "user=", !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.user));
+if (inTelegram) {
+  console.log("[tg] WebApp keys:", Object.keys(window.Telegram.WebApp || {}));
+  console.log("[tg] initData snippet:", (window.Telegram.WebApp.initData || "").slice(0, 50));
+}
 if (inTelegram) {
   window.Telegram.WebApp.ready();
   window.Telegram.WebApp.expand();
@@ -1099,11 +1104,13 @@ function currentInitData() {
   if (inTelegram) {
     try {
       const d = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || "";
+      console.log("[tg] initData raw length=" + d.length + " empty=" + !d.trim());
       if (d && d.trim()) {
         log("initData from WebApp len=" + d.length);
         return d;
       }
     } catch (e) {
+      console.log("[tg] initData WebApp error", e);
       log("initData WebApp error: " + (e && e.message ? e.message : String(e)));
     }
   }
