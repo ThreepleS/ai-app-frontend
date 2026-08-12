@@ -2558,6 +2558,17 @@ if (keyModeToggle) {
 }
 
 // --- Google OAuth --------------------------------------------------------
+function extractTelegramUserId(initData) {
+  try {
+    const params = new URLSearchParams(initData);
+    const userStr = params.get("user");
+    if (!userStr) return null;
+    const user = JSON.parse(userStr);
+    return user && user.id ? String(user.id) : null;
+  } catch {
+    return null;
+  }
+}
 async function startGoogleOAuth() {
   if (!GOOGLE_CLIENT_ID) {
     await showAlert("Ошибка", "Google OAuth не настроен.");
@@ -2565,7 +2576,8 @@ async function startGoogleOAuth() {
   }
   const redirectUri = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1/google-auth";
   const state = Math.random().toString(36).slice(2);
-  const tgUserId = inTelegram ? (extractUser(currentInitData())?.id || "") : "";
+  const d = currentInitData();
+  const tgUserId = inTelegram ? extractTelegramUserId(d) : null;
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
