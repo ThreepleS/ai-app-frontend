@@ -3298,8 +3298,10 @@ async function tryAutoAdmin() {
       if (modeToggle) modeToggle.checked = keyMode === "auto";
       updateModeLabel();
       renderKeySection(keyMode);
-      await auth("");
-      await showAlert("Успех", "Вы вошли через Google. Режим: авто.");
+      if (inTelegram) {
+        await auth("");
+      }
+      await showAlert("Успех", "Вы вошли через Google. Режим: авто.\n\nЗакрой браузер и вернись в Telegram.");
       url.searchParams.delete("google_auth");
       url.searchParams.delete("user_id");
       url.searchParams.delete("key_mode");
