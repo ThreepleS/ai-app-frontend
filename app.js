@@ -2563,7 +2563,7 @@ async function startGoogleOAuth() {
     await showAlert("Ошибка", "Google OAuth не настроен.");
     return;
   }
-  const redirectUri = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1/google-auth/callback";
+  const redirectUri = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1/google-auth";
   const state = Math.random().toString(36).slice(2);
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
