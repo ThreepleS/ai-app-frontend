@@ -2591,9 +2591,9 @@ async function startGoogleOAuth() {
     url.search = params.toString();
     const authUrl = url.toString();
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
-      window.Telegram.WebApp.openLink(authUrl);
+      window.Telegram.WebApp.openLink(authUrl, { try_instant_view: false });
     } else {
-      const w = window.open(authUrl, "_blank");
+      const w = window.open(authUrl, "_blank", "noopener,noreferrer");
       if (!w) location.href = authUrl;
     }
   } catch (e) {
