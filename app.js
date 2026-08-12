@@ -2558,20 +2558,27 @@ if (keyModeToggle) {
 }
 
 // --- Google OAuth --------------------------------------------------------
-function loadGoogleScript() {
-  return new Promise((resolve, reject) => {
-    if (window.google && google.accounts && google.accounts.id) {
-      resolve();
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = "https://accounts.google.com/gsi/client";
-    s.async = true;
-    s.defer = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Не удалось загрузить Google Sign-In"));
-    document.head.appendChild(s);
+async function startGoogleOAuth() {
+  if (!GOOGLE_CLIENT_ID) {
+    await showAlert("Ошибка", "Google OAuth не настроен.");
+    return;
+  }
+  const redirectUri = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1/google-auth/callback";
+  const state = Math.random().toString(36).slice(2);
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    state,
   });
+  try {
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    url.search = params.toString();
+    location.href = url.toString();
+  } catch (e) {
+    await showAlert("Ошибка", "Не удалось открыть Google авторизацию.");
+  }
 }
 async function initGoogleAuth() {
   const container = $("#google_btn_container");
@@ -2585,47 +2592,10 @@ async function initGoogleAuth() {
     fallbackBtn.addEventListener("click", () => fallbackSection.style.display = fallbackSection.style.display === "none" ? "flex" : "none");
     return;
   }
-  try {
-    await loadGoogleScript();
-    container.style.display = "none";
-    fallbackBtn.style.display = "inline-flex";
-    fallbackSection.style.display = "none";
-    fallbackBtn.onclick = async () => {
-      vibClick();
-      try {
-        const res = await new Promise((resolve, reject) => {
-          google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: (response) => resolve(response),
-            error_callback: (err) => reject(err),
-          });
-          google.accounts.id.prompt((notification) => {
-            if (notification.isNotDisplayed()) {
-              reject(new Error("Google prompt не показан"));
-            }
-          });
-        });
-        const idToken = res.credential;
-        if (!idToken) throw new Error("Отсутствует credential");
-        const data = await ef("google-auth", { id_token: idToken }, 15000);
-        if (!data.ok) throw new Error(data.error || "Ошибка авторизации");
-        currentUserId = String(data.user_id);
-        keyMode = data.key_mode || "auto";
-        const modeToggle = $("#s_key_mode");
-        if (modeToggle) modeToggle.checked = keyMode === "auto";
-        updateModeLabel();
-        renderKeySection(keyMode);
-        await auth("");
-        await showAlert("Успех", "Вы вошли через Google. Режим: авто.");
-      } catch (e) {
-        await showAlert("Ошибка входа", String(e && e.message ? e.message : e));
-      }
-    };
-  } catch (e) {
-    container.style.display = "none";
-    fallbackBtn.style.display = "inline-flex";
-    fallbackSection.style.display = "flex";
-  }
+  container.style.display = "none";
+  fallbackBtn.style.display = "inline-flex";
+  fallbackSection.style.display = "none";
+  fallbackBtn.onclick = () => startGoogleOAuth();
 }
 if ($("#google_signin_fallback")) {
   $("#google_signin_fallback").addEventListener("click", async () => {
@@ -3311,6 +3281,32 @@ async function tryAutoAdmin() {
 (async () => {
   console.log("[app] init start");
   try {
+    const url = new URL(location.href);
+    const googleAuth = url.searchParams.get("google_auth");
+    if (googleAuth === "success") {
+      const userId = url.searchParams.get("user_id");
+      const keyModeParam = url.searchParams.get("key_mode");
+      if (userId) currentUserId = userId;
+      if (keyModeParam) keyMode = keyModeParam;
+      const modeToggle = $("#s_key_mode");
+      if (modeToggle) modeToggle.checked = keyMode === "auto";
+      updateModeLabel();
+      renderKeySection(keyMode);
+      await auth("");
+      await showAlert("Успех", "Вы вошли через Google. Режим: авто.");
+      url.searchParams.delete("google_auth");
+      url.searchParams.delete("user_id");
+      url.searchParams.delete("key_mode");
+      url.searchParams.delete("reason");
+      history.replaceState({}, "", url.toString());
+      return;
+    } else if (googleAuth === "error") {
+      const reason = url.searchParams.get("reason") || "unknown";
+      await showAlert("Ошибка авторизации", "Google auth error: " + reason);
+      url.searchParams.delete("google_auth");
+      url.searchParams.delete("reason");
+      history.replaceState({}, "", url.toString());
+    }
     console.log("[app] buildKeyRows");
     buildKeyRows(keyMode);
     console.log("[app] inTelegram=", inTelegram);
