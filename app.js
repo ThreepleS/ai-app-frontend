@@ -2587,34 +2587,40 @@ async function initGoogleAuth() {
   }
   try {
     await loadGoogleScript();
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: async (response) => {
-        if (!response.credential) return;
-        try {
-          const data = await ef("google-auth", { id_token: response.credential }, 15000);
-          if (!data.ok) throw new Error(data.error || "Ошибка авторизации");
-          currentUserId = String(data.user_id);
-          keyMode = data.key_mode || "auto";
-          const modeToggle = $("#s_key_mode");
-          if (modeToggle) modeToggle.checked = keyMode === "auto";
-          updateModeLabel();
-          renderKeySection(keyMode);
-          await auth("");
-          await showAlert("Успех", "Вы вошли через Google. Режим: авто.");
-        } catch (e) {
-          await showAlert("Ошибка входа", String(e && e.message ? e.message : e));
-        }
-      },
-    });
-    google.accounts.id.renderButton(container, {
-      theme: "outline",
-      size: "large",
-      width: 240,
-    });
-    container.style.display = "inline-flex";
-    fallbackBtn.style.display = "none";
+    container.style.display = "none";
+    fallbackBtn.style.display = "inline-flex";
     fallbackSection.style.display = "none";
+    fallbackBtn.onclick = async () => {
+      vibClick();
+      try {
+        const res = await new Promise((resolve, reject) => {
+          google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: (response) => resolve(response),
+            error_callback: (err) => reject(err),
+          });
+          google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed()) {
+              reject(new Error("Google prompt не показан"));
+            }
+          });
+        });
+        const idToken = res.credential;
+        if (!idToken) throw new Error("Отсутствует credential");
+        const data = await ef("google-auth", { id_token: idToken }, 15000);
+        if (!data.ok) throw new Error(data.error || "Ошибка авторизации");
+        currentUserId = String(data.user_id);
+        keyMode = data.key_mode || "auto";
+        const modeToggle = $("#s_key_mode");
+        if (modeToggle) modeToggle.checked = keyMode === "auto";
+        updateModeLabel();
+        renderKeySection(keyMode);
+        await auth("");
+        await showAlert("Успех", "Вы вошли через Google. Режим: авто.");
+      } catch (e) {
+        await showAlert("Ошибка входа", String(e && e.message ? e.message : e));
+      }
+    };
   } catch (e) {
     container.style.display = "none";
     fallbackBtn.style.display = "inline-flex";
