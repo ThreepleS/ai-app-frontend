@@ -2575,7 +2575,13 @@ async function startGoogleOAuth() {
   try {
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.search = params.toString();
-    location.href = url.toString();
+    const authUrl = url.toString();
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+      window.Telegram.WebApp.openLink(authUrl);
+    } else {
+      const w = window.open(authUrl, "_blank");
+      if (!w) location.href = authUrl;
+    }
   } catch (e) {
     await showAlert("Ошибка", "Не удалось открыть Google авторизацию.");
   }
