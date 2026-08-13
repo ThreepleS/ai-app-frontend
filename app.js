@@ -197,15 +197,19 @@ function renderDialog(dialog) {
     return;
   }
   currentDialogData = dialog;
-  box.innerHTML = "";
-  const msgs = dialog.messages || [];
-  msgs.forEach((m) => {
-    addHistoryMessage(m.role, m.content || "", m.image || null);
-  });
-  box.scrollTop = box.scrollHeight;
-  updateEmptyState();
-  currentModelId = dialog.model || currentModelId;
-  if (window.lucide) lucide.createIcons();
+  box.classList.add("switching");
+  setTimeout(() => {
+    box.innerHTML = "";
+    const msgs = dialog.messages || [];
+    msgs.forEach((m) => {
+      addHistoryMessage(m.role, m.content || "", m.image || null);
+    });
+    box.scrollTop = box.scrollHeight;
+    box.classList.remove("switching");
+    updateEmptyState();
+    currentModelId = dialog.model || currentModelId;
+    if (window.lucide) lucide.createIcons();
+  }, 180);
 }
 
 function renderDialogsPanel() {
@@ -260,6 +264,7 @@ function renderDialogsPanel() {
           });
         };
         item.querySelector(".dialog-item-main").addEventListener("click", async () => {
+          await autoSaveCurrentDialog();
           activeDialogId = d.id;
           renderDialog(d);
           renderDialogsPanel();
@@ -303,39 +308,43 @@ function closeDialogs() {
   $("#dialogs").classList.remove("open");
 }
 
+let saveTimer = null;
 async function autoSaveCurrentDialog() {
   if (!activeDialogId) return;
-  const msgs = [];
-  box.querySelectorAll(".msg").forEach((el) => {
-    const role = el.classList.contains("user") ? "user" : "bot";
-    let text = "";
-    const md = el.querySelector(".md");
-    if (md) text = md.innerText || md.textContent;
-    else text = el.innerText || el.textContent;
-    const imgEl = el.querySelector("img");
-    msgs.push({
-      role,
-      content: text.replace("&#x27F3; перегенерировать", "").trim(),
-      image: imgEl ? imgEl.src : null,
-    });
-  });
-  const dialog = { id: activeDialogId, messages: msgs, model: currentModelId || "", name: "", updated_at: Date.now() };
-  try {
-    const saved = await saveDialogToDb(dialog);
-    if (saved && saved.name) {
-      const items = document.querySelectorAll(".dialog-item");
-      items.forEach((item) => {
-        if (item.querySelector(`[data-id="${saved.id}"]`)) {
-          const nameEl = item.querySelector(".dialog-name-text");
-          if (nameEl && (!nameEl.textContent || nameEl.textContent === "")) nameEl.textContent = saved.name;
-        }
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const msgs = [];
+    box.querySelectorAll(".msg").forEach((el) => {
+      const role = el.classList.contains("user") ? "user" : "bot";
+      let text = "";
+      const md = el.querySelector(".md");
+      if (md) text = md.innerText || md.textContent;
+      else text = el.innerText || el.textContent;
+      const imgEl = el.querySelector("img");
+      msgs.push({
+        role,
+        content: text.replace("&#x27F3; перегенерировать", "").trim(),
+        image: imgEl ? imgEl.src : null,
       });
-      const title = $("#dialogs_title");
-      if (title && title.dataset.id === saved.id) title.textContent = saved.name;
+    });
+    const dialog = { id: activeDialogId, messages: msgs, model: currentModelId || "", name: "", updated_at: Date.now() };
+    try {
+      const saved = await saveDialogToDb(dialog);
+      if (saved && saved.name) {
+        const items = document.querySelectorAll(".dialog-item");
+        items.forEach((item) => {
+          if (item.querySelector(`[data-id="${saved.id}"]`)) {
+            const nameEl = item.querySelector(".dialog-name-text");
+            if (nameEl && (!nameEl.textContent || nameEl.textContent === "")) nameEl.textContent = saved.name;
+          }
+        });
+        const title = $("#dialogs_title");
+        if (title && title.dataset.id === saved.id) title.textContent = saved.name;
+      }
+    } catch (e) {
+      log("Не удалось сохранить диалог: " + e.message);
     }
-  } catch (e) {
-    log("Не удалось сохранить диалог: " + e.message);
-  }
+  }, 300);
 }
 
 // --- Markdown rendering (через marked + санитайзер) -------------------
@@ -1052,7 +1061,6 @@ function addHistoryMessage(role, content, image) {
     html = content ? renderMarkdown(content) : imgHtml;
   }
   addMessage(role, html);
-  autoSaveCurrentDialog();
   if (window.lucide) lucide.createIcons();
 }
 

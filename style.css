@@ -569,6 +569,11 @@ header {
   overflow-y: auto;
   scroll-behavior: smooth;
   overflow-anchor: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+#messages.switching {
+  opacity: 0;
+  transform: translateY(6px);
 }
 .msg {
   max-width: 86%;
