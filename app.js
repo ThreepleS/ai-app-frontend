@@ -317,9 +317,10 @@ async function autoSaveCurrentDialog() {
     box.querySelectorAll(".msg").forEach((el) => {
       const role = el.classList.contains("user") ? "user" : "bot";
       let text = "";
-      const md = el.querySelector(".md");
-      if (md) text = md.innerText || md.textContent;
-      else text = el.innerText || el.textContent;
+    const md = el.querySelector(".md");
+    if (md) text = md.innerText || md.textContent;
+    else text = el.innerText || el.textContent;
+    if (role === "bot" && el.dataset.raw) text = el.dataset.raw;
       const imgEl = el.querySelector("img");
       msgs.push({
         role,
@@ -1014,7 +1015,6 @@ function addMessage(role, html, stats, scroll) {
   if (role === "bot") addCodeCopy(el);
   if (scroll !== false) box.scrollTop = box.scrollHeight;
   updateEmptyState();
-
   return el;
 }
 
@@ -1058,7 +1058,8 @@ function addHistoryMessage(role, content, image) {
       : "";
     html = textHtml + imgHtml;
   } else {
-    html = content ? renderMarkdown(content) : imgHtml;
+    const isHtml = typeof content === "string" && content.trim().startsWith("<");
+    html = content ? (isHtml ? content : renderMarkdown(content)) : imgHtml;
   }
   addMessage(role, html);
   if (window.lucide) lucide.createIcons();
@@ -1740,6 +1741,7 @@ $("#bar").addEventListener("submit", async (e) => { vibClick();
             botText.textContent = ev.markdown || full;
           }
         }
+        if (botEl) botEl.dataset.raw = ev.markdown || full;
         if (ev.stats) {
           const s = document.createElement("div");
           s.className = "stats";
