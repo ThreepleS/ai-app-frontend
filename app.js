@@ -1411,7 +1411,7 @@ async function loadKeyInfo() {
     const modeToggle = $("#s_key_mode");
     if (modeToggle) modeToggle.checked = mode === "auto";
     updateModeLabel();
-    hasGoogleAuth = !!(data.keys && Object.values(data.keys).some((k: any) => k && k.auto));
+    hasGoogleAuth = !!(data.keys && Object.values(data.keys).some((k) => k && k.auto));
     PROVIDERS.forEach((p) => {
       const k = (data.keys && data.keys[p]) || {};
       const st = $("#key_status_" + p);
