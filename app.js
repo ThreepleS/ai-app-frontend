@@ -3397,7 +3397,7 @@ async function tryAutoAdmin() {
       } else {
         const modal = $("#googleReturn");
         if (modal) modal.style.display = "flex";
-        else window.location.replace("tg://resolve?domain=" + encodeURIComponent("ThreepleS_bot"));
+        else window.location.replace("tg://resolve?domain=" + encodeURIComponent("openrouter_bot"));
       }
       url.searchParams.delete("google_auth");
       url.searchParams.delete("user_id");
