@@ -2661,6 +2661,7 @@ async function startGoogleOAuth() {
     response_type: "code",
     scope: "openid email profile",
     state,
+    prompt: "select_account",
   });
   if (tgUserId) params.set("state", state + "|tg=" + tgUserId);
   try {
