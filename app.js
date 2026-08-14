@@ -95,6 +95,23 @@ let pendingImage = null;
 let lastUserMessage = "";
 const GOOGLE_CLIENT_ID = (typeof window !== "undefined" && window.GOOGLE_CLIENT_ID) ? String(window.GOOGLE_CLIENT_ID) : "688453339516-n83aael6s514cfk93n7mrsna07b1i5bk.apps.googleusercontent.com";
 
+function imageToJpegBase64(dataUrl, maxWidth = 1024, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => reject(new Error("Не удалось обработать изображение"));
+    img.src = dataUrl;
+  });
+}
+
 function escapeHtml(s) {
   return String(s).replace(
     /[&<>"']/g,
@@ -959,7 +976,16 @@ function updateEmptyState() {
   const isEmpty = box.querySelectorAll(".msg").length === 0;
   if (isEmpty) {
     if (!box.querySelector(".empty-state")) {
-      if (needsKey) {
+      if (needsKey && !hasGoogleAuth) {
+        box.innerHTML = `<div class="empty-state" style="margin: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--muted); padding: 20px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><div><b style="font-size: 16px; color: var(--text);">Войдите через Google</b><br/>чтобы получить автоключи и начать общаться с ИИ.<br/><button id="es_google_signin" class="btn primary sm" style="margin-top:12px"><i data-lucide="key" class="icon"></i> Войти через Google</button></div></div>`;
+        setTimeout(() => {
+          const btn = $("#es_google_signin");
+          if (btn) {
+            btn.addEventListener("click", () => { startGoogleOAuth(); });
+            if (window.lucide) lucide.createIcons();
+          }
+        }, 0);
+      } else if (needsKey) {
         box.innerHTML = `<div class="empty-state" style="margin: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--muted); padding: 20px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg><div><b style="font-size: 16px; color: var(--text);">Добавьте API-ключ</b><br/>чтобы начать общаться с ИИ.<br/><button id="es_open_settings" class="btn primary sm" style="margin-top:12px"><i data-lucide="key" class="icon"></i> Открыть настройки</button></div></div>`;
         setTimeout(() => {
           const btn = $("#es_open_settings");
@@ -1265,8 +1291,10 @@ async function auth(devId) {
     needsKey = !!data.needs_key;
     if (isAdmin) $("#s_admin").style.display = "inline-block";
     fillSettings(data.settings);
+    hasGoogleAuth = keyMode === "auto";
     setStatus("ok");
     updateInputState();
+    updateKeysTabVisibility();
 
     if (data.needs_key && !tourActive) {
       const historyEmpty = !Array.isArray(data.history) || data.history.length === 0;
@@ -1305,6 +1333,7 @@ async function auth(devId) {
 // --- Per-provider keys ------------------------------------------------
 const PROVIDERS = ["openrouter", "gemini", "venice"];
 const AUTO_PROVIDERS = ["openrouter", "gemini"];
+let hasGoogleAuth = false;
 function updateModeLabel() {
   const label = $("#mode_label");
   if (label) label.textContent = keyMode === "auto" ? "Авто-режим" : "Ручной режим";
@@ -1316,11 +1345,13 @@ function renderKeySection(mode) {
 function buildKeyRows(mode) {
   const box = $("#s_keys");
   box.innerHTML = "";
-  updateEmptyState();
   PROVIDERS.forEach((p) => {
     const isAuto = mode === "auto" && AUTO_PROVIDERS.includes(p);
     const row = document.createElement("div");
     row.className = "pkrow" + (isAuto ? " auto" : "");
+    const name = document.createElement("span");
+    name.style.cssText = "font-size:12px; font-weight:600; color:var(--text); min-width:90px; flex:0 0 auto;";
+    name.textContent = PROVIDER_LABELS[p] || p;
     const inp = document.createElement("input");
     inp.type = "password";
     inp.id = "s_key_" + p;
@@ -1329,11 +1360,6 @@ function buildKeyRows(mode) {
       inp.disabled = true;
       inp.value = "";
       inp.placeholder = "Автоключ — " + (PROVIDER_LABELS[p] || p);
-    } else if (mode === "auto") {
-      inp.disabled = true;
-      inp.value = "";
-      inp.placeholder = "Только ручное добавление";
-      row.classList.add("manual-only");
     } else {
       inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
     }
@@ -1347,7 +1373,7 @@ function buildKeyRows(mode) {
       badge.className = "pk-badge auto-badge";
       badge.textContent = "АВТО";
       right.appendChild(badge);
-    } else if (mode === "auto") {
+    } else {
       const badge = document.createElement("span");
       badge.className = "pk-badge manual-badge";
       badge.textContent = "РУЧНОЙ";
@@ -1358,6 +1384,7 @@ function buildKeyRows(mode) {
     st.id = "key_status_" + p;
     st.textContent = "—";
     right.appendChild(st);
+    row.appendChild(name);
     row.appendChild(inp);
     row.appendChild(right);
     box.appendChild(row);
@@ -1380,13 +1407,23 @@ async function loadKeyInfo() {
     console.debug("[keyinfo] response", data);
     if (!data.ok) return;
     const mode = data.key_mode || "manual";
+    keyMode = mode;
+    const modeToggle = $("#s_key_mode");
+    if (modeToggle) modeToggle.checked = mode === "auto";
+    updateModeLabel();
+    hasGoogleAuth = !!(data.keys && Object.values(data.keys).some((k: any) => k && k.auto));
     PROVIDERS.forEach((p) => {
       const k = (data.keys && data.keys[p]) || {};
       const st = $("#key_status_" + p);
       const inp = $("#s_key_" + p);
       if (!st) return;
-      if (mode === "auto" && AUTO_PROVIDERS.includes(p) && k.auto) {
-        st.innerHTML = "<i data-lucide='check' class='lucide'></i> авто";
+      const isAutoMode = mode === "auto" && AUTO_PROVIDERS.includes(p);
+      if (isAutoMode && k.auto) {
+        st.innerHTML = "<i data-lucide='check' class='lucide'></i> автоключ";
+        if (inp && !inp.disabled && !inp.value) {
+          inp.value = "••••••••••••••••";
+          inp.disabled = true;
+        }
       } else if (k.has) {
         st.innerHTML = "<i data-lucide='check' class='lucide'></i> сохранён";
         if (inp && !inp.disabled && !inp.value) {
@@ -1397,8 +1434,31 @@ async function loadKeyInfo() {
         if (inp && !inp.disabled) inp.value = "";
       }
     });
+    updateGoogleAuthUI();
     if (window.lucide) lucide.createIcons();
   } catch {}
+}
+function updateGoogleAuthUI() {
+  const status = $("#google_auth_status");
+  if (status) {
+    status.textContent = hasGoogleAuth ? "✓ Авторизован через Google" : "";
+  }
+  updateKeysTabVisibility();
+}
+
+function updateKeysTabVisibility() {
+  const card = $("#google_auth_card");
+  const manual = $("#manual_keys_section");
+  if (!card || !manual) return;
+  const root = document.querySelector(".tab-content[data-content='keys']");
+  if (!root) return;
+  if (hasGoogleAuth) {
+    root.classList.remove("keys-locked");
+    manual.style.display = "";
+  } else {
+    root.classList.add("keys-locked");
+    manual.style.display = "none";
+  }
 }
 
 // --- Vision hint ------------------------------------------------------
@@ -1473,8 +1533,13 @@ $("#imgfile").addEventListener("change", (e) => {
     return;
   }
   const reader = new FileReader();
-  reader.onload = () => {
-    pendingImage = { dataUrl: reader.result };
+  reader.onload = async () => {
+    try {
+      const jpeg = await imageToJpegBase64(reader.result);
+      pendingImage = { dataUrl: jpeg };
+    } catch {
+      pendingImage = { dataUrl: reader.result };
+    }
     showAttach();
   };
   reader.readAsDataURL(f);
@@ -1639,7 +1704,6 @@ $("#lb_reply").addEventListener("click", async () => {
   try {
     let dataUrl = lbSrc;
     if (!/^data:/i.test(lbSrc)) {
-      // Проксированный/внешний URL -> скачиваем и превращаем в dataURL.
       const r = await fetch(lbSrc);
       const blob = await r.blob();
       dataUrl = await new Promise((res, rej) => {
@@ -1649,6 +1713,9 @@ $("#lb_reply").addEventListener("click", async () => {
         fr.readAsDataURL(blob);
       });
     }
+    try {
+      dataUrl = await imageToJpegBase64(dataUrl);
+    } catch {}
     pendingImage = { dataUrl };
     showAttach();
     closeLightbox();
@@ -2611,6 +2678,8 @@ async function startGoogleOAuth() {
   }
 }
 async function initGoogleAuth() {
+  if (googleAuthInitialized) return;
+  googleAuthInitialized = true;
   const container = $("#google_btn_container");
   const fallbackBtn = $("#google_signin_fallback");
   const fallbackSection = $("#google_token_fallback");
@@ -3245,10 +3314,7 @@ function openSettings(tab = null) {
   syncSegPickers();
   updateVibVal();
   loadKeyInfo();
-  if (tab === "keys" && !googleAuthInitialized) {
-    googleAuthInitialized = true;
-    initGoogleAuth();
-  }
+  initGoogleAuth();
   if (tab) {
     document.querySelectorAll(".stab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
@@ -3294,6 +3360,7 @@ document.querySelectorAll(".settings-tabs .stab").forEach((tab) => {
       `.tab-content[data-content="${target}"]`,
     );
     if (content) content.classList.add("active");
+    if (target === "keys") initGoogleAuth();
   });
 });
 async function tryAutoAdmin() {

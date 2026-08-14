@@ -303,41 +303,53 @@
             </div>
           </div>
 
-           <div class="tab-content" data-content="keys">
-             <div class="settings-card">
-               <div class="settings-card-head" style="flex-wrap: wrap; gap: 10px;">
-                 <div style="flex: 1; min-width: 200px;">
-                   <div class="section-title">API-ключи провайдеров</div>
+            <div class="tab-content" data-content="keys">
+               <div class="settings-card">
+                 <div id="google_auth_card" style="padding: 14px; background: linear-gradient(135deg, rgba(79,140,255,.08), rgba(79,140,255,.03)); border: 1px solid rgba(79,140,255,.2); border-radius: 14px; margin-bottom: 14px;">
+                   <div class="section-title">Авторизация</div>
                    <div class="settings-card-desc">
-                     Ключи хранятся только в вашем аккаунте. Каждый провайдер
-                     отдельно.
+                     Войдите через Google для получения автоключей OpenRouter и Gemini.
+                     После входа вы сможете использовать ручные ключи для любого провайдера.
+                   </div>
+                   <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
+                     <span id="google_btn_container"></span>
+                     <button id="google_signin_fallback" class="btn ghost sm" type="button" style="display: none;">
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                       Войти через Google
+                     </button>
+                     <span id="google_auth_status" style="font-size: 12px; color: var(--muted);"></span>
                    </div>
                  </div>
-                 <div style="display: flex; align-items: center; gap: 10px;">
-                   <span id="mode_label" style="font-size: 13px; color: var(--muted); white-space: nowrap;">Ручной режим</span>
-                   <label class="custom-toggle">
-                     <input type="checkbox" id="s_key_mode" />
-                     <div class="toggle-slider"></div>
-                   </label>
-                 </div>
-               </div>
-              <div id="s_keys" class="provkeys"></div>
-              <div id="google_auth_section" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
-                <a id="s_keys_help" class="btn ghost sm" href="https://cat-penguin-ac7.notion.site/API-3a753a5bca1a808bb9b6e2f4be78d865?source=copy_link" target="_blank" rel="noopener noreferrer">
-                  <i data-lucide="file-text" class="icon"></i> Где взять ключ?
-                </a>
-                <span id="google_btn_container"></span>
-                <button id="google_signin_fallback" class="btn ghost sm" type="button" style="display: none;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                  Войти через Google
-                </button>
+                 <div id="manual_keys_section">
+                   <div class="settings-card-head" style="flex-wrap: wrap; gap: 10px;">
+                     <div style="flex: 1; min-width: 200px;">
+                       <div class="section-title">API-ключи провайдеров</div>
+                       <div class="settings-card-desc">
+                         Ключи хранятся только в вашем аккаунте. Каждый провайдер
+                         отдельно.
+                       </div>
+                     </div>
+                     <div style="display: flex; align-items: center; gap: 10px;">
+                       <span id="mode_label" style="font-size: 13px; color: var(--muted); white-space: nowrap;">Ручной режим</span>
+                       <label class="custom-toggle">
+                         <input type="checkbox" id="s_key_mode" />
+                         <div class="toggle-slider"></div>
+                       </label>
+                     </div>
+                   </div>
+                  <div id="s_keys" class="provkeys"></div>
+                  <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
+                     <a id="s_keys_help" class="btn ghost sm" href="https://cat-penguin-ac7.notion.site/API-3a753a5bca1a808bb9b6e2f4be78d865?source=copy_link" target="_blank" rel="noopener noreferrer">
+                       <i data-lucide="file-text" class="icon"></i> Где взять ключ?
+                     </a>
+                  </div>
+                  <div id="google_token_fallback" style="display: none; margin-top: 8px; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <input type="text" id="google_id_token" placeholder="Вставьте Google ID token" style="flex: 1; min-width: 200px;" />
+                    <button id="google_token_submit" class="btn primary sm" type="button">Войти</button>
+                  </div>
+                </div>
               </div>
-              <div id="google_token_fallback" style="display: none; margin-top: 8px; gap: 8px; flex-wrap: wrap; align-items: center;">
-                <input type="text" id="google_id_token" placeholder="Вставьте Google ID token" style="flex: 1; min-width: 200px;" />
-                <button id="google_token_submit" class="btn primary sm" type="button">Войти</button>
-              </div>
-             </div>
-           </div>
+            </div>
 
           <div class="tab-content" data-content="notify">
             <div class="settings-card">

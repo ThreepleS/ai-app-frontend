@@ -1360,14 +1360,6 @@ textarea {
   opacity: 0.6;
   cursor: not-allowed;
 }
-.pkrow.manual-only input {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.pkrow.manual-only .pkstatus {
-  color: var(--muted);
-  font-size: 10px;
-}
 .pk-badge {
   font-size: 10px;
   padding: 2px 8px;
@@ -1387,6 +1379,29 @@ textarea {
   background: rgba(255, 180, 84, 0.16);
   color: var(--amber);
   border-color: rgba(255, 180, 84, 0.3);
+}
+.google-auth-card {
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(79,140,255,.08), rgba(79,140,255,.03));
+  border: 1px solid rgba(79,140,255,.2);
+  border-radius: 14px;
+}
+.google-auth-card .section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.keys-locked #manual_keys_section {
+  display: none;
+}
+.keys-locked #google_auth_card {
+  margin-bottom: 0;
+}
+.google-auth-card .settings-card-desc {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.45;
 }
 .mb-grid {
   display: grid;
