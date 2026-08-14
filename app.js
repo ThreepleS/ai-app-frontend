@@ -103,7 +103,7 @@ function imageToJpegBase64(dataUrl, maxWidth = 1024, quality = 0.82) {
       if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, w, h);
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
