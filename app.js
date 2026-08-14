@@ -90,7 +90,7 @@ let keyMode = "manual";
 let currentUserId = "";
 let currentModelId = "";
 let isAdmin = false;
-let needsKey = false;
+let needsKey = true;
 let pendingImage = null;
 let lastUserMessage = "";
 const GOOGLE_CLIENT_ID = (typeof window !== "undefined" && window.GOOGLE_CLIENT_ID) ? String(window.GOOGLE_CLIENT_ID) : "688453339516-n83aael6s514cfk93n7mrsna07b1i5bk.apps.googleusercontent.com";
@@ -3409,14 +3409,19 @@ async function tryAutoAdmin() {
     console.log("[app] buildKeyRows");
     buildKeyRows(keyMode);
     console.log("[app] inTelegram=", inTelegram);
+    $("#messages").style.display = "";
+    $("#bar").style.display = "";
+    $("#vision").style.display = "";
     if (inTelegram) {
       console.log("[app] calling auth");
-      await auth("");
-      console.log("[app] auth done");
+      const ok = await auth("");
+      console.log("[app] auth done ok=" + ok);
+      if (!ok) updateEmptyState();
     } else {
       console.log("[app] calling tryAutoAdmin");
       await tryAutoAdmin();
       console.log("[app] tryAutoAdmin done");
+      updateEmptyState();
     }
   } catch (e) {
     console.error("[app] init error", e);
