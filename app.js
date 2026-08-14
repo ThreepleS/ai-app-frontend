@@ -3395,9 +3395,9 @@ async function tryAutoAdmin() {
       if (inTelegram) {
         await auth("");
       } else {
-        updateEmptyState();
-        const tgUrl = "tg://resolve?domain=" + encodeURIComponent("ThreepleS_bot");
-        window.location.replace(tgUrl);
+        const modal = $("#googleReturn");
+        if (modal) modal.style.display = "flex";
+        else window.location.replace("tg://resolve?domain=" + encodeURIComponent("ThreepleS_bot"));
       }
       url.searchParams.delete("google_auth");
       url.searchParams.delete("user_id");
@@ -3542,6 +3542,16 @@ document.querySelectorAll("[data-close]").forEach((btn) => {
     else if (id === "settings") closeSettings();
     else if (id === "chatSearch") closeChatSearch();
     else if (id === "dialogsPanel") closeDialogs();
+    else if (id === "googleReturn") {
+      const modal = $("#googleReturn");
+      if (modal) modal.style.display = "none";
+      const url = new URL(location.href);
+      url.searchParams.delete("google_auth");
+      url.searchParams.delete("user_id");
+      url.searchParams.delete("key_mode");
+      url.searchParams.delete("reason");
+      history.replaceState({}, "", url.toString());
+    }
   });
 });
 
