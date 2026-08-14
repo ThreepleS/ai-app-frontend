@@ -3390,10 +3390,15 @@ async function tryAutoAdmin() {
       if (modeToggle) modeToggle.checked = keyMode === "auto";
       updateModeLabel();
       renderKeySection(keyMode);
+      hasGoogleAuth = keyMode === "auto";
+      updateKeysTabVisibility();
       if (inTelegram) {
         await auth("");
+      } else {
+        updateEmptyState();
+        const tgUrl = "tg://resolve?domain=" + encodeURIComponent("ThreepleS_bot");
+        window.location.replace(tgUrl);
       }
-      await showAlert("Успех", "Вы вошли через Google. Режим: авто.\n\nЗакрой браузер и вернись в Telegram.");
       url.searchParams.delete("google_auth");
       url.searchParams.delete("user_id");
       url.searchParams.delete("key_mode");
