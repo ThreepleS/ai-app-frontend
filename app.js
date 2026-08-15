@@ -1309,24 +1309,17 @@ async function auth(devId) {
     updateInputState();
     updateKeysTabVisibility();
 
-    if (data.needs_key && !tourActive) {
+    if (data.needs_key && !tourActive && !justReturnedFromGoogle) {
       const historyEmpty = !Array.isArray(data.history) || data.history.length === 0;
       const seen = localStorage.getItem(TOUR_KEY) === "true";
       console.debug("[auth] needs_key=" + data.needs_key + " historyEmpty=" + historyEmpty + " seen=" + seen);
       if (historyEmpty || !seen) {
         localStorage.removeItem(TOUR_KEY);
-        deferredOpenSettings = true;
         console.debug("[auth] triggering tour for fresh or first-time user");
         await initTour(true);
-      } else {
-        await ensureCurrentDialog();
-        openSettings("keys");
       }
     } else {
       await ensureCurrentDialog();
-      if (data.needs_key && tourActive) {
-        deferredOpenSettings = true;
-      }
     }
 
     log("модель: " + (data.settings.selected_model || "—"));
@@ -3412,7 +3405,6 @@ async function tryAutoAdmin() {
       } else {
         const modal = $("#googleReturn");
         if (modal) modal.style.display = "flex";
-        else window.location.replace("tg://resolve?domain=" + encodeURIComponent("openrouter_bot"));
       }
       url.searchParams.delete("google_auth");
       url.searchParams.delete("user_id");
