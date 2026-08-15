@@ -2100,11 +2100,11 @@ function mbRenderDetail() {
 }
 function mbModelsForGroup(gkey) {
   if (gkey === "recommended") {
-    const all = mbState.cache.openrouter || [];
+    const all = Array.isArray(mbState.cache.openrouter) ? mbState.cache.openrouter : [];
     const recSet = new Set(RECOMMENDED_MODELS.map((id) => id.toLowerCase()));
     return all.filter((m) => recSet.has((m.model_id || m.id || "").toLowerCase()));
   }
-  const arr = gkey === "favorite" ? mbState.favorites : mbState.cache[gkey];
+  const arr = gkey === "favorite" ? mbState.favorites : gkey === "paid" ? mbState.cache.openrouter : mbState.cache[gkey];
   if (!Array.isArray(arr)) return arr;
   const q = mbState.search.trim().toLowerCase();
   const grp = MB_GROUPS.find((g) => g.key === gkey);
@@ -2126,7 +2126,7 @@ async function mbRenderList() {
   for (const g of MB_GROUPS) {
     const collapsed = mbState.collapsed[g.key];
     let body;
-    if (g.key === "favorite") body = mbModelsForGroup("favorite");
+    if (g.key === "favorite" || g.key === "paid") body = mbModelsForGroup(g.key);
     else {
       const c = mbState.cache[g.key];
       if (c === null) body = null;
@@ -2185,7 +2185,7 @@ async function mbRenderList() {
 // чтобы медленный туннель не задыхался от одновременных 179КБ-запросов.
 async function mbLoadAll() {
   for (const g of MB_GROUPS) {
-    if (g.key === "favorite" || g.key === "recommended") continue;
+    if (g.key === "favorite" || g.key === "recommended" || g.key === "paid") continue;
     if (mbState.cache[g.key] === null) {
       await mbLoadProvider(g.key);
       mbRenderList();
