@@ -84,6 +84,7 @@ const PROVIDER_LABELS = {
   gemini: "Gemini",
   groq: "Groq",
   venice: "Venice AI",
+  alibaba: "Alibaba",
 };
 
 let keyMode = "manual";
@@ -1312,7 +1313,7 @@ async function auth(devId) {
 }
 
 // --- Per-provider keys ------------------------------------------------
-const PROVIDERS = ["openrouter", "gemini", "venice"];
+const PROVIDERS = ["openrouter", "gemini", "venice", "alibaba"];
 function updateModeLabel() {
   const label = $("#mode_label");
   if (label) label.textContent = "Ручной режим";
@@ -1326,7 +1327,7 @@ function buildKeyRows(mode) {
   box.innerHTML = "";
   PROVIDERS.forEach((p) => {
     const row = document.createElement("div");
-    row.className = "pkrow";
+    row.className = "pkrow" + (p === "alibaba" ? " alibaba" : "");
     const name = document.createElement("span");
     name.style.cssText = "font-size:12px; font-weight:600; color:var(--text); min-width:90px; flex:0 0 auto;";
     name.textContent = PROVIDER_LABELS[p] || p;
@@ -1334,7 +1335,14 @@ function buildKeyRows(mode) {
     inp.type = "password";
     inp.id = "s_key_" + p;
     inp.autocomplete = "off";
-    inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
+    if (p === "alibaba") {
+      inp.disabled = true;
+      inp.value = "";
+      inp.placeholder = "В полной версии";
+      inp.style.cssText = "background: repeating-linear-gradient(135deg, #ffd700, #ffd700 10px, #000 10px, #000 20px); color: #fff; text-align: center; font-weight: 700;";
+    } else {
+      inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
+    }
     const right = document.createElement("span");
     right.style.display = "inline-flex";
     right.style.alignItems = "center";
@@ -1769,14 +1777,38 @@ $("#bar").addEventListener("submit", async (e) => { vibClick();
 });
 
 // --- Model Browser --------------------------------------------------
-const MB_PROVIDERS = ["openrouter", "paid", "gemini", "venice"];
-const RECOMMENDED_MODELS = [
-  "google/gemini-2.0-flash-exp:free",
-  "meta-llama/llama-4-maverick:free",
-  "mistralai/mistral-small-24b-instruct-2501:free",
-  "qwen/qwen-2.5-72b-instruct:free",
-  "huggingfaceh4/zephyr-7b-beta:free",
-];
+const MB_PROVIDERS = ["openrouter", "paid", "gemini", "venice", "alibaba"];
+let RECOMMENDED_MODELS = (() => {
+  try {
+    const raw = localStorage.getItem("recommended_models");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch {}
+  return [
+    "google/gemini-2.0-flash-exp:free",
+    "meta-llama/llama-4-maverick:free",
+    "mistralai/mistral-small-24b-instruct-2501:free",
+    "qwen/qwen-2.5-72b-instruct:free",
+    "huggingfaceh4/zephyr-7b-beta:free",
+  ];
+})();
+function persistRecommended() {
+  try { localStorage.setItem("recommended_models", JSON.stringify(RECOMMENDED_MODELS)); } catch {}
+}
+function addToRecommended(id) {
+  if (!id || RECOMMENDED_MODELS.includes(id)) return;
+  RECOMMENDED_MODELS = [id, ...RECOMMENDED_MODELS];
+  persistRecommended();
+  mbRenderList();
+}
+function removeFromRecommended(id) {
+  if (!id) return;
+  RECOMMENDED_MODELS = RECOMMENDED_MODELS.filter((x) => x !== id);
+  persistRecommended();
+  mbRenderList();
+}
 
 const MB_GROUPS = [
   { key: "recommended", label: "🚀 Рекомендуемые" },
@@ -1785,6 +1817,7 @@ const MB_GROUPS = [
   { key: "paid", label: "OpenRouter" },
   { key: "gemini", label: "Gemini FREE", free: true },
   { key: "venice", label: "Venice AI" },
+  { key: "alibaba", label: "Alibaba PRO", pro: true },
 ];
 const mbState = {
   favorites: [],
@@ -1885,6 +1918,7 @@ function mbDetectProvider(id) {
   if (l.startsWith("groq:")) return "groq";
   if (l.startsWith("hf:")) return "huggingface";
   if (l.startsWith("venice:")) return "venice";
+  if (l.startsWith("alibaba:")) return "alibaba";
   return "openrouter";
 }
 function mbView(m) {
@@ -1953,6 +1987,10 @@ async function mbLoadFavorites() {
 async function mbLoadProvider(p) {
   if (mbState.cache[p] !== null) return;
   mbState.cache[p] = [];
+  if (p === "alibaba") {
+    mbState.cache[p] = { error: "Alibaba — заглушка. Будет в полной версии." };
+    return;
+  }
   // Сначала пробуем клиентский кеш (свежий — не грузим с сервера).
   const cached = mbLoadListCache(p);
   if (cached) {
@@ -2143,7 +2181,7 @@ async function mbRenderList() {
       isFree && mbState.lastPing[g.key]
         ? `<span class="ping-time">последний пинг: ${esc(mbFmtPing(mbState.lastPing[g.key]))}</span>`
         : "";
-    html += `<div class="mb-group ${collapsed ? "collapsed" : ""}" data-group="${g.key}">
+    html += `<div class="mb-group ${collapsed ? "collapsed" : ""} ${g.pro ? "pro" : ""}" data-group="${g.key}">
           <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span><span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
           <div class="gbody">`;
     if (body === null) html += `<div class="mb-loading">Загрузка…</div>`;
@@ -2172,6 +2210,7 @@ async function mbRenderList() {
               <span class="iname">${esc(name)}</span>
               ${isFreeModel ? '<span class="ibadges"><span class="mb-mini">FREE</span></span>' : ""}
               ${typeBadge}
+              ${isAdmin ? '<span class="iadmin"><button class="mb-recommend" data-recommend="' + esc(id) + '" title="Добавить в рекомендуемые"><i data-lucide="star" class="lucide"></i></button></span>' : ""}
               <span class="istar ${fav ? "on" : ""}"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></span>
             </div>`;
       });
@@ -2185,7 +2224,7 @@ async function mbRenderList() {
 // чтобы медленный туннель не задыхался от одновременных 179КБ-запросов.
 async function mbLoadAll() {
   for (const g of MB_GROUPS) {
-    if (g.key === "favorite" || g.key === "recommended" || g.key === "paid") continue;
+    if (g.key === "favorite" || g.key === "recommended" || g.key === "paid" || g.key === "alibaba") continue;
     if (mbState.cache[g.key] === null) {
       await mbLoadProvider(g.key);
       mbRenderList();
@@ -2462,6 +2501,16 @@ $("#mb_detail").addEventListener("click", async (e) => {
   if (pick) {
     e.stopPropagation();
     await mbPick(pick.dataset.pick);
+  }
+  const rec = e.target.closest("[data-recommend]");
+  if (rec) {
+    e.stopPropagation();
+    const id = rec.dataset.recommend;
+    if (RECOMMENDED_MODELS.includes(id)) {
+      removeFromRecommended(id);
+    } else {
+      addToRecommended(id);
+    }
   }
 });
 
