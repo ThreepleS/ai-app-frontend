@@ -1284,9 +1284,21 @@ textarea {
   z-index: 1;
 }
 .fbtn.pro {
+  pointer-events: none;
+}
+.fbtn.pro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  border-radius: inherit;
   filter: blur(2px);
   opacity: 0.6;
-  pointer-events: none;
+  z-index: 0;
+}
+.fbtn.pro svg {
+  visibility: hidden;
 }
 .fbtn.pro::after {
   content: "";
@@ -1525,6 +1537,8 @@ textarea {
   transition:
     color 0.2s,
     transform 0.15s;
+  pointer-events: auto;
+  cursor: pointer;
 }
 .mb-item .istar.on {
   color: #ffce4d;
@@ -2744,6 +2758,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
 }
 .mb-recommend:hover {
   background: rgba(79, 140, 255, 0.12);
@@ -2755,17 +2770,13 @@ textarea {
 }
 .mb-item.locked {
   position: relative;
-  filter: blur(2px);
   opacity: 0.7;
   pointer-events: none;
 }
-.mb-item.locked::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(135deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 10px, rgba(0,0,0,0.25) 10px, rgba(0,0,0,0.25) 20px);
-  border-radius: inherit;
-  pointer-events: none;
+.mb-item.locked > * {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 .ikey-lock {
   font-size: 10px;
@@ -2779,6 +2790,24 @@ textarea {
   margin-left: 6px;
   white-space: nowrap;
 }
+.pkrow.alibaba {
+  position: relative;
+}
+.pkrow.alibaba .alibaba-wrap {
+  position: relative;
+  flex: 1;
+}
+.pkrow.alibaba .alibaba-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  filter: blur(2px);
+  opacity: 0.6;
+  z-index: 0;
+}
 .pkrow.alibaba input {
   border: 2px solid #000;
   outline: none;
@@ -2787,15 +2816,11 @@ textarea {
   font-weight: 700;
   letter-spacing: 0.05em;
   position: relative;
-  filter: blur(2px);
-  opacity: 0.6;
-  pointer-events: none;
   background: rgba(0,0,0,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center no-repeat;
+  z-index: 1;
 }
 .mb-group[data-group="alibaba"] .ghead,
 .mb-group.pro .ghead {
-  filter: blur(2px);
-  opacity: 0.6;
   position: relative;
   overflow: hidden;
   color: #fff;
@@ -2807,7 +2832,10 @@ textarea {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: rgba(0,0,0,0.5);
+  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 4px, #000 4px, #000 8px);
+  filter: blur(2px);
+  opacity: 0.6;
+  z-index: 0;
 }
 .mb-group[data-group="alibaba"] .ghead::after,
 .mb-group.pro .ghead::after {
@@ -2816,5 +2844,11 @@ textarea {
   inset: 0;
   pointer-events: none;
   background: rgba(0,0,0,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center no-repeat;
+  z-index: 2;
+}
+.mb-group[data-group="alibaba"] .ghead > *,
+.mb-group.pro .ghead > * {
+  position: relative;
+  z-index: 1;
 }
 

@@ -1341,9 +1341,15 @@ function buildKeyRows(mode) {
     if (p === "alibaba") {
       inp.disabled = true;
       inp.value = "";
-      inp.placeholder = "В полной версии";
+      const wrap = document.createElement("div");
+      wrap.className = "alibaba-wrap";
+      row.appendChild(name);
+      row.appendChild(wrap);
+      wrap.appendChild(inp);
     } else {
       inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
+      row.appendChild(name);
+      row.appendChild(inp);
     }
     const right = document.createElement("span");
     right.style.display = "inline-flex";
@@ -1355,8 +1361,6 @@ function buildKeyRows(mode) {
     st.id = "key_status_" + p;
     st.textContent = "—";
     right.appendChild(st);
-    row.appendChild(name);
-    row.appendChild(inp);
     row.appendChild(right);
     box.appendChild(row);
   });
@@ -2127,6 +2131,7 @@ function mbRenderDetail() {
   el.innerHTML = `
         <div class="dhead">
           <div class="dname">${esc(v.name)}${needsKey ? '<span class="ikey-lock" style="margin-left:8px"><i data-lucide="lock" class="lucide"></i> ' + esc(providerLabel) + '</span>' : ''}</div>
+          ${isAdmin ? '<button class="mb-recommend" data-recommend="' + esc(id) + '" title="Добавить в рекомендуемые"><i data-lucide="star" class="lucide"></i></button>' : ''}
           <button class="mb-star ${fav ? "on" : ""}" data-star="${esc(id)}" title="В избранное"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></button>
         </div>
         <div class="mb-badges">${badges.join("")}${caps}</div>
@@ -2134,6 +2139,7 @@ function mbRenderDetail() {
         ${v.description ? `<div class="mb-desc mb-desc-hidden" data-desc>${esc(v.description)}</div><button class="mb-desc-toggle" data-desctoggle>Показать описание ▾</button>` : ""}
         <button class="mb-pick" data-pick="${esc(id)}" ${pickDisabled ? "disabled" : ""}>${pickLabel}</button>
       `;
+  if (window.lucide) lucide.createIcons();
 }
 function mbModelsForGroup(gkey) {
   if (gkey === "recommended") {
