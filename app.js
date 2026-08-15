@@ -93,6 +93,7 @@ let isAdmin = false;
 let needsKey = true;
 let pendingImage = null;
 let lastUserMessage = "";
+let justReturnedFromGoogle = false;
 const GOOGLE_CLIENT_ID = (typeof window !== "undefined" && window.GOOGLE_CLIENT_ID) ? String(window.GOOGLE_CLIENT_ID) : "688453339516-n83aael6s514cfk93n7mrsna07b1i5bk.apps.googleusercontent.com";
 
 function imageToJpegBase64(dataUrl, maxWidth = 1024, quality = 0.82) {
@@ -1258,6 +1259,18 @@ async function auth(devId) {
     await showAlert("Нужно открыть через Telegram", "<i data-lucide='alert-triangle' class='lucide'></i> " + msg);
     setStatus("err");
     return false;
+  }
+  if (justReturnedFromGoogle && inTelegram && !d) {
+    log("[auth] waiting for Telegram initData after Google OAuth...");
+    for (let i = 0; i < 10; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      const retry = currentInitData();
+      if (retry && retry.trim()) {
+        log("[auth] initData appeared after " + (i + 1) * 500 + "ms");
+        return await auth(devId);
+      }
+    }
+    log("[auth] initData did not appear after 5s");
   }
   let res;
   try {
@@ -3393,7 +3406,9 @@ async function tryAutoAdmin() {
       hasGoogleAuth = keyMode === "auto";
       updateKeysTabVisibility();
       if (inTelegram) {
+        justReturnedFromGoogle = true;
         await auth("");
+        justReturnedFromGoogle = false;
       } else {
         const modal = $("#googleReturn");
         if (modal) modal.style.display = "flex";
