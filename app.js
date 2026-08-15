@@ -1281,7 +1281,13 @@ async function auth(devId) {
     isAdmin = !!data.is_admin;
     needsKey = !!data.needs_key;
     if (isAdmin) $("#s_admin").style.display = "inline-block";
+    const adminRecCard = $("#admin_recommended_card");
+    if (adminRecCard) adminRecCard.style.display = isAdmin ? "" : "none";
+    if (isAdmin) renderAdminRecommendedList();
     fillSettings(data.settings);
+    if (data.settings && Array.isArray(data.settings.recommended_models)) {
+      RECOMMENDED_MODELS = data.settings.recommended_models;
+    }
     setStatus("ok");
     updateInputState();
 
@@ -1368,6 +1374,21 @@ function collectProviderKeys() {
     if (v) keys[p] = v;
   });
   return keys;
+}
+function hasProviderKey(provider) {
+  const k = ($("#s_key_" + provider) || {}).value || "";
+  return !!k.trim();
+}
+function renderAdminRecommendedList() {
+  const list = $("#admin_rec_list");
+  if (!list) return;
+  list.innerHTML = "";
+  (RECOMMENDED_MODELS || []).forEach((id) => {
+    const chip = document.createElement("span");
+    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--stroke);padding:4px 10px;border-radius:99px;font-size:12px;";
+    chip.innerHTML = esc(id) + ' <button data-remove-rec="' + esc(id) + '" style="background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;">✕</button>';
+    list.appendChild(chip);
+  });
 }
 async function loadKeyInfo() {
   try {
@@ -1778,36 +1799,24 @@ $("#bar").addEventListener("submit", async (e) => { vibClick();
 
 // --- Model Browser --------------------------------------------------
 const MB_PROVIDERS = ["openrouter", "paid", "gemini", "venice", "alibaba"];
-let RECOMMENDED_MODELS = (() => {
-  try {
-    const raw = localStorage.getItem("recommended_models");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
-    }
-  } catch {}
-  return [
-    "google/gemini-2.0-flash-exp:free",
-    "meta-llama/llama-4-maverick:free",
-    "mistralai/mistral-small-24b-instruct-2501:free",
-    "qwen/qwen-2.5-72b-instruct:free",
-    "huggingfaceh4/zephyr-7b-beta:free",
-  ];
-})();
+let RECOMMENDED_MODELS = [];
 function persistRecommended() {
-  try { localStorage.setItem("recommended_models", JSON.stringify(RECOMMENDED_MODELS)); } catch {}
+  // Рекомендуемые модели теперь хранятся в site_settings (глобально для всех).
 }
 function addToRecommended(id) {
   if (!id || RECOMMENDED_MODELS.includes(id)) return;
   RECOMMENDED_MODELS = [id, ...RECOMMENDED_MODELS];
-  persistRecommended();
   mbRenderList();
 }
 function removeFromRecommended(id) {
   if (!id) return;
   RECOMMENDED_MODELS = RECOMMENDED_MODELS.filter((x) => x !== id);
-  persistRecommended();
   mbRenderList();
+}
+async function saveRecommendedToBackend() {
+  try {
+    await ef("settings", { recommended_models: RECOMMENDED_MODELS }, 15000);
+  } catch {}
 }
 
 const MB_GROUPS = [
@@ -2149,7 +2158,11 @@ function mbModelsForGroup(gkey) {
   const isFreeGroup = !!(grp && grp.free);
   const workingSet =
     gkey === "openrouter" || gkey === "gemini" ? mbState.working[gkey] : null;
-  return arr.filter((m) => {
+  return arr.map((m) => {
+    const provider = m.provider || mbDetectProvider(m.model_id || m.id);
+    const needsKey = !hasProviderKey(provider);
+    return { ...m, _needsKey: needsKey, _provider: provider };
+  }).filter((m) => {
     if (gkey === "paid" && m.is_free) return false;
     if (workingSet && workingSet.size && !workingSet.has(m.model_id || m.id))
       return false;
@@ -2206,12 +2219,15 @@ async function mbRenderList() {
         const typeBadge = mtype
           ? `<span class="ibadges"><span class="mb-mini" style="background:#5b3a5a">${esc(mtype)}</span></span>`
           : "";
-        html += `<div class="mb-item ${sel} ${act}" data-id="${esc(id)}">
+        const needsKey = !!m._needsKey;
+        const providerLabel = needsKey ? PROVIDER_LABELS[m._provider] || m._provider : "";
+        html += `<div class="mb-item ${sel} ${act} ${needsKey ? "locked" : ""}" data-id="${esc(id)}">
               <span class="iname">${esc(name)}</span>
               ${isFreeModel ? '<span class="ibadges"><span class="mb-mini">FREE</span></span>' : ""}
               ${typeBadge}
               ${isAdmin ? '<span class="iadmin"><button class="mb-recommend" data-recommend="' + esc(id) + '" title="Добавить в рекомендуемые"><i data-lucide="star" class="lucide"></i></button></span>' : ""}
               <span class="istar ${fav ? "on" : ""}"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></span>
+              ${needsKey ? '<span class="ikey-lock"><i data-lucide="lock" class="lucide"></i> Добавьте ключ ' + esc(providerLabel) + '</span>' : ""}
             </div>`;
       });
     }
@@ -2596,6 +2612,34 @@ $("#s_save").addEventListener("click", async () => { vibClick();
     console.error("[settings] save failed", err);
   }
 });
+
+const adminRecAdd = $("#admin_rec_add");
+if (adminRecAdd) {
+  adminRecAdd.addEventListener("click", async () => {
+    vibClick();
+    const input = $("#admin_rec_input");
+    const id = (input && input.value || "").trim();
+    if (!id) return;
+    if (!isAdmin) return;
+    RECOMMENDED_MODELS = [id, ...RECOMMENDED_MODELS.filter((x) => x !== id)];
+    renderAdminRecommendedList();
+    await saveRecommendedToBackend();
+    input.value = "";
+  });
+}
+const adminRecList = $("#admin_rec_list");
+if (adminRecList) {
+  adminRecList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-remove-rec]");
+    if (!btn) return;
+    vibClick();
+    const id = btn.dataset.removeRec;
+    if (!isAdmin) return;
+    RECOMMENDED_MODELS = RECOMMENDED_MODELS.filter((x) => x !== id);
+    renderAdminRecommendedList();
+    await saveRecommendedToBackend();
+  });
+}
 
 const keyModeToggle = $("#s_key_mode");
 if (keyModeToggle) {
@@ -3163,6 +3207,9 @@ function openSettings(tab = null) {
   syncSegPickers();
   updateVibVal();
   loadKeyInfo();
+  const adminRecCard = $("#admin_recommended_card");
+  if (adminRecCard) adminRecCard.style.display = isAdmin ? "" : "none";
+  if (isAdmin) renderAdminRecommendedList();
   if (tab) {
     document.querySelectorAll(".stab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
