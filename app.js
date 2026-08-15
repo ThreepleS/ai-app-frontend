@@ -93,8 +93,6 @@ let isAdmin = false;
 let needsKey = true;
 let pendingImage = null;
 let lastUserMessage = "";
-let justReturnedFromGoogle = false;
-const GOOGLE_CLIENT_ID = (typeof window !== "undefined" && window.GOOGLE_CLIENT_ID) ? String(window.GOOGLE_CLIENT_ID) : "688453339516-n83aael6s514cfk93n7mrsna07b1i5bk.apps.googleusercontent.com";
 
 function imageToJpegBase64(dataUrl, maxWidth = 1024, quality = 0.82) {
   return new Promise((resolve, reject) => {
@@ -977,16 +975,7 @@ function updateEmptyState() {
   const isEmpty = box.querySelectorAll(".msg").length === 0;
   if (isEmpty) {
     if (!box.querySelector(".empty-state")) {
-      if (needsKey && !hasGoogleAuth) {
-        box.innerHTML = `<div class="empty-state" style="margin: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--muted); padding: 20px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><div><b style="font-size: 16px; color: var(--text);">Войдите через Google</b><br/>чтобы получить автоключи и начать общаться с ИИ.<br/><button id="es_google_signin" class="btn primary sm" style="margin-top:12px"><i data-lucide="key" class="icon"></i> Войти через Google</button></div></div>`;
-        setTimeout(() => {
-          const btn = $("#es_google_signin");
-          if (btn) {
-            btn.addEventListener("click", () => { startGoogleOAuth(); });
-            if (window.lucide) lucide.createIcons();
-          }
-        }, 0);
-      } else if (needsKey) {
+      if (needsKey) {
         box.innerHTML = `<div class="empty-state" style="margin: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--muted); padding: 20px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg><div><b style="font-size: 16px; color: var(--text);">Добавьте API-ключ</b><br/>чтобы начать общаться с ИИ.<br/><button id="es_open_settings" class="btn primary sm" style="margin-top:12px"><i data-lucide="key" class="icon"></i> Открыть настройки</button></div></div>`;
         setTimeout(() => {
           const btn = $("#es_open_settings");
@@ -1260,18 +1249,6 @@ async function auth(devId) {
     setStatus("err");
     return false;
   }
-  if (justReturnedFromGoogle && inTelegram && !d) {
-    log("[auth] waiting for Telegram initData after Google OAuth...");
-    for (let i = 0; i < 10; i++) {
-      await new Promise((r) => setTimeout(r, 500));
-      const retry = currentInitData();
-      if (retry && retry.trim()) {
-        log("[auth] initData appeared after " + (i + 1) * 500 + "ms");
-        return await auth(devId);
-      }
-    }
-    log("[auth] initData did not appear after 5s");
-  }
   let res;
   try {
     res = await ef("auth", {}, 15000);
@@ -1304,12 +1281,10 @@ async function auth(devId) {
     needsKey = !!data.needs_key;
     if (isAdmin) $("#s_admin").style.display = "inline-block";
     fillSettings(data.settings);
-    hasGoogleAuth = keyMode === "auto";
     setStatus("ok");
     updateInputState();
-    updateKeysTabVisibility();
 
-    if (data.needs_key && !tourActive && !justReturnedFromGoogle) {
+    if (data.needs_key && !tourActive) {
       const historyEmpty = !Array.isArray(data.history) || data.history.length === 0;
       const seen = localStorage.getItem(TOUR_KEY) === "true";
       console.debug("[auth] needs_key=" + data.needs_key + " historyEmpty=" + historyEmpty + " seen=" + seen);
@@ -1338,11 +1313,9 @@ async function auth(devId) {
 
 // --- Per-provider keys ------------------------------------------------
 const PROVIDERS = ["openrouter", "gemini", "venice"];
-const AUTO_PROVIDERS = ["openrouter", "gemini"];
-let hasGoogleAuth = false;
 function updateModeLabel() {
   const label = $("#mode_label");
-  if (label) label.textContent = keyMode === "auto" ? "Авто-режим" : "Ручной режим";
+  if (label) label.textContent = "Ручной режим";
 }
 function renderKeySection(mode) {
   buildKeyRows(mode);
@@ -1352,9 +1325,8 @@ function buildKeyRows(mode) {
   const box = $("#s_keys");
   box.innerHTML = "";
   PROVIDERS.forEach((p) => {
-    const isAuto = mode === "auto" && AUTO_PROVIDERS.includes(p);
     const row = document.createElement("div");
-    row.className = "pkrow" + (isAuto ? " auto" : "");
+    row.className = "pkrow";
     const name = document.createElement("span");
     name.style.cssText = "font-size:12px; font-weight:600; color:var(--text); min-width:90px; flex:0 0 auto;";
     name.textContent = PROVIDER_LABELS[p] || p;
@@ -1362,29 +1334,12 @@ function buildKeyRows(mode) {
     inp.type = "password";
     inp.id = "s_key_" + p;
     inp.autocomplete = "off";
-    if (isAuto) {
-      inp.disabled = true;
-      inp.value = "";
-      inp.placeholder = "Автоключ — " + (PROVIDER_LABELS[p] || p);
-    } else {
-      inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
-    }
+    inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
     const right = document.createElement("span");
     right.style.display = "inline-flex";
     right.style.alignItems = "center";
     right.style.gap = "6px";
     right.style.flex = "0 0 auto";
-    if (isAuto) {
-      const badge = document.createElement("span");
-      badge.className = "pk-badge auto-badge";
-      badge.textContent = "АВТО";
-      right.appendChild(badge);
-    } else {
-      const badge = document.createElement("span");
-      badge.className = "pk-badge manual-badge";
-      badge.textContent = "РУЧНОЙ";
-      right.appendChild(badge);
-    }
     const st = document.createElement("span");
     st.className = "pkstatus";
     st.id = "key_status_" + p;
@@ -1412,25 +1367,16 @@ async function loadKeyInfo() {
     const data = await res.json();
     console.debug("[keyinfo] response", data);
     if (!data.ok) return;
-    const mode = data.key_mode || "manual";
-    keyMode = mode;
+    keyMode = "manual";
     const modeToggle = $("#s_key_mode");
-    if (modeToggle) modeToggle.checked = mode === "auto";
+    if (modeToggle) modeToggle.checked = false;
     updateModeLabel();
-    hasGoogleAuth = !!(data.keys && Object.values(data.keys).some((k) => k && k.auto));
     PROVIDERS.forEach((p) => {
       const k = (data.keys && data.keys[p]) || {};
       const st = $("#key_status_" + p);
       const inp = $("#s_key_" + p);
       if (!st) return;
-      const isAutoMode = mode === "auto" && AUTO_PROVIDERS.includes(p);
-      if (isAutoMode && k.auto) {
-        st.innerHTML = "<i data-lucide='check' class='lucide'></i> автоключ";
-        if (inp && !inp.disabled && !inp.value) {
-          inp.value = "••••••••••••••••";
-          inp.disabled = true;
-        }
-      } else if (k.has) {
+      if (k.has) {
         st.innerHTML = "<i data-lucide='check' class='lucide'></i> сохранён";
         if (inp && !inp.disabled && !inp.value) {
           inp.value = "••••••••••••••••";
@@ -1440,33 +1386,9 @@ async function loadKeyInfo() {
         if (inp && !inp.disabled) inp.value = "";
       }
     });
-    updateGoogleAuthUI();
     if (window.lucide) lucide.createIcons();
   } catch {}
 }
-function updateGoogleAuthUI() {
-  const status = $("#google_auth_status");
-  if (status) {
-    status.textContent = hasGoogleAuth ? "✓ Авторизован через Google" : "";
-  }
-  updateKeysTabVisibility();
-}
-
-function updateKeysTabVisibility() {
-  const card = $("#google_auth_card");
-  const manual = $("#manual_keys_section");
-  if (!card || !manual) return;
-  const root = document.querySelector(".tab-content[data-content='keys']");
-  if (!root) return;
-  if (hasGoogleAuth) {
-    root.classList.remove("keys-locked");
-    manual.style.display = "";
-  } else {
-    root.classList.add("keys-locked");
-    manual.style.display = "none";
-  }
-}
-
 // --- Vision hint ------------------------------------------------------
 function modelSupportsVision(id) {
   const p = String(id || "").toLowerCase();
@@ -2640,94 +2562,6 @@ if (keyModeToggle) {
   });
 }
 
-// --- Google OAuth --------------------------------------------------------
-function extractTelegramUserId(initData) {
-  try {
-    const params = new URLSearchParams(initData);
-    const userStr = params.get("user");
-    if (!userStr) return null;
-    const user = JSON.parse(userStr);
-    return user && user.id ? String(user.id) : null;
-  } catch {
-    return null;
-  }
-}
-async function startGoogleOAuth() {
-  if (!GOOGLE_CLIENT_ID) {
-    await showAlert("Ошибка", "Google OAuth не настроен.");
-    return;
-  }
-  const redirectUri = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1/google-auth";
-  const state = Math.random().toString(36).slice(2);
-  const d = currentInitData();
-  const tgUserId = inTelegram ? extractTelegramUserId(d) : null;
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: redirectUri,
-    response_type: "code",
-    scope: "openid email profile",
-    state,
-    prompt: "select_account",
-  });
-  if (tgUserId) params.set("state", state + "|tg=" + tgUserId);
-  try {
-    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-    url.search = params.toString();
-    const authUrl = url.toString();
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
-      window.Telegram.WebApp.openLink(authUrl, { try_instant_view: false });
-    } else {
-      const w = window.open(authUrl, "_blank", "noopener,noreferrer");
-      if (!w) location.href = authUrl;
-    }
-  } catch (e) {
-    await showAlert("Ошибка", "Не удалось открыть Google авторизацию.");
-  }
-}
-async function initGoogleAuth() {
-  if (googleAuthInitialized) return;
-  googleAuthInitialized = true;
-  const container = $("#google_btn_container");
-  const fallbackBtn = $("#google_signin_fallback");
-  const fallbackSection = $("#google_token_fallback");
-  if (!container || !fallbackBtn || !fallbackSection) return;
-  if (!GOOGLE_CLIENT_ID) {
-    container.style.display = "none";
-    fallbackBtn.style.display = "inline-flex";
-    fallbackSection.style.display = "flex";
-    fallbackBtn.addEventListener("click", () => fallbackSection.style.display = fallbackSection.style.display === "none" ? "flex" : "none");
-    return;
-  }
-  container.style.display = "none";
-  fallbackBtn.style.display = "inline-flex";
-  fallbackSection.style.display = "none";
-  fallbackBtn.onclick = () => startGoogleOAuth();
-}
-if ($("#google_signin_fallback")) {
-  $("#google_signin_fallback").addEventListener("click", async () => {
-    vibClick();
-    const token = ($("#google_id_token").value || "").trim();
-    if (!token) {
-      await showAlert("Ошибка", "Вставьте Google ID token");
-      return;
-    }
-    try {
-      const data = await ef("google-auth", { id_token: token }, 15000);
-      if (!data.ok) throw new Error(data.error || "Ошибка авторизации");
-      currentUserId = String(data.user_id);
-      keyMode = data.key_mode || "auto";
-      const modeToggle = $("#s_key_mode");
-      if (modeToggle) modeToggle.checked = keyMode === "auto";
-      updateModeLabel();
-      renderKeySection(keyMode);
-      await auth("");
-      await showAlert("Успех", "Вы вошли через Google. Режим: авто.");
-    } catch (e) {
-      await showAlert("Ошибка входа", String(e?.message || e));
-    }
-  });
-}
-
 document.querySelectorAll(".seg-picker").forEach((picker) => {
   picker.addEventListener("click", (e) => { vibClick();
     const btn = e.target.closest(".seg-btn");
@@ -3122,47 +2956,6 @@ function vibClick() {
   if (vib && vib.checked && navigator.vibrate) navigator.vibrate(10);
 }
 function syncSegPickers() {
-const googleBtn = $("#google_signin");
-if (googleBtn) {
-  googleBtn.addEventListener("click", async () => {
-    vibClick();
-    if (!GOOGLE_CLIENT_ID) {
-      await showAlert("Google OAuth не настроен", "Добавьте GOOGLE_CLIENT_ID в конфиг приложения.");
-      return;
-    }
-    if (!window.google || !google.accounts) {
-      await showAlert("Ошибка", "Google Sign-In не загружен. Попробуйте обновить страницу.");
-      return;
-    }
-    try {
-      const res = await new Promise((resolve, reject) => {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: (response) => resolve(response),
-          error_callback: (err) => reject(err),
-        });
-        google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed()) {
-            reject(new Error("Google prompt не показан"));
-          }
-        });
-      });
-      const idToken = res.credential;
-      if (!idToken) throw new Error("Отсутствует credential");
-      const data = await ef("google-auth", { id_token: idToken }, 15000);
-      if (!data.ok) throw new Error(data.error || "Ошибка авторизации");
-      currentUserId = String(data.user_id);
-      keyMode = data.key_mode || "auto";
-      const modeToggle = $("#s_key_mode");
-      if (modeToggle) modeToggle.checked = keyMode === "auto";
-      updateModeLabel();
-      renderKeySection(keyMode);
-      await auth("");
-    } catch (e) {
-      await showAlert("Ошибка входа", String(e?.message || e));
-    }
-  });
-}
 
 document.querySelectorAll(".seg-picker").forEach((picker) => {
     const name = picker.dataset.name;
@@ -3321,7 +3114,6 @@ function openSettings(tab = null) {
   syncSegPickers();
   updateVibVal();
   loadKeyInfo();
-  initGoogleAuth();
   if (tab) {
     document.querySelectorAll(".stab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
@@ -3367,7 +3159,6 @@ document.querySelectorAll(".settings-tabs .stab").forEach((tab) => {
       `.tab-content[data-content="${target}"]`,
     );
     if (content) content.classList.add("active");
-    if (target === "keys") initGoogleAuth();
   });
 });
 async function tryAutoAdmin() {
@@ -3385,40 +3176,6 @@ async function tryAutoAdmin() {
 (async () => {
   console.log("[app] init start");
   try {
-    const url = new URL(location.href);
-    const googleAuth = url.searchParams.get("google_auth");
-    if (googleAuth === "success") {
-      const userId = url.searchParams.get("user_id");
-      const keyModeParam = url.searchParams.get("key_mode");
-      if (userId) currentUserId = userId;
-      if (keyModeParam) keyMode = keyModeParam;
-      const modeToggle = $("#s_key_mode");
-      if (modeToggle) modeToggle.checked = keyMode === "auto";
-      updateModeLabel();
-      renderKeySection(keyMode);
-      hasGoogleAuth = keyMode === "auto";
-      updateKeysTabVisibility();
-      if (inTelegram) {
-        justReturnedFromGoogle = true;
-        await auth("");
-        justReturnedFromGoogle = false;
-      } else {
-        const modal = $("#googleReturn");
-        if (modal) modal.style.display = "flex";
-      }
-      url.searchParams.delete("google_auth");
-      url.searchParams.delete("user_id");
-      url.searchParams.delete("key_mode");
-      url.searchParams.delete("reason");
-      history.replaceState({}, "", url.toString());
-      return;
-    } else if (googleAuth === "error") {
-      const reason = url.searchParams.get("reason") || "unknown";
-      await showAlert("Ошибка авторизации", "Google auth error: " + reason);
-      url.searchParams.delete("google_auth");
-      url.searchParams.delete("reason");
-      history.replaceState({}, "", url.toString());
-    }
     console.log("[app] buildKeyRows");
     buildKeyRows(keyMode);
     console.log("[app] inTelegram=", inTelegram);
@@ -3549,16 +3306,6 @@ document.querySelectorAll("[data-close]").forEach((btn) => {
     else if (id === "settings") closeSettings();
     else if (id === "chatSearch") closeChatSearch();
     else if (id === "dialogsPanel") closeDialogs();
-    else if (id === "googleReturn") {
-      const modal = $("#googleReturn");
-      if (modal) modal.style.display = "none";
-      const url = new URL(location.href);
-      url.searchParams.delete("google_auth");
-      url.searchParams.delete("user_id");
-      url.searchParams.delete("key_mode");
-      url.searchParams.delete("reason");
-      history.replaceState({}, "", url.toString());
-    }
   });
 });
 
