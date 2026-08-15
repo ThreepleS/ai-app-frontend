@@ -1281,9 +1281,6 @@ async function auth(devId) {
     isAdmin = !!data.is_admin;
     needsKey = !!data.needs_key;
     if (isAdmin) $("#s_admin").style.display = "inline-block";
-    const adminRecCard = $("#admin_recommended_card");
-    if (adminRecCard) adminRecCard.style.display = isAdmin ? "" : "none";
-    if (isAdmin) renderAdminRecommendedList();
     fillSettings(data.settings);
     if (data.settings && Array.isArray(data.settings.recommended_models)) {
       RECOMMENDED_MODELS = data.settings.recommended_models;
@@ -1378,17 +1375,6 @@ function collectProviderKeys() {
 function hasProviderKey(provider) {
   const k = ($("#s_key_" + provider) || {}).value || "";
   return !!k.trim();
-}
-function renderAdminRecommendedList() {
-  const list = $("#admin_rec_list");
-  if (!list) return;
-  list.innerHTML = "";
-  (RECOMMENDED_MODELS || []).forEach((id) => {
-    const chip = document.createElement("span");
-    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--stroke);padding:4px 10px;border-radius:99px;font-size:12px;";
-    chip.innerHTML = esc(id) + ' <button data-remove-rec="' + esc(id) + '" style="background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;">✕</button>';
-    list.appendChild(chip);
-  });
 }
 async function loadKeyInfo() {
   try {
@@ -2197,10 +2183,10 @@ async function mbRenderList() {
     html += `<div class="mb-group ${collapsed ? "collapsed" : ""} ${g.pro ? "pro" : ""}" data-group="${g.key}">
           <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span><span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
           <div class="gbody">`;
-    if (body === null) html += `<div class="mb-loading">Загрузка…</div>`;
-    else if (body && body.error)
+    if (!body || body === null) html += `<div class="mb-loading">Загрузка…</div>`;
+    else if (body.error)
       html += `<div class="mb-empty"><i data-lucide='alert-triangle' class='lucide'></i> ${esc(body.error)}</div>`;
-    else if (!body.length)
+    else if (!Array.isArray(body) || !body.length)
       html += `<div class="mb-empty">${g.key === "favorite" ? "Избранное пусто — добавь звездой <i data-lucide='star' class='lucide'></i> в карточке." : "Нет моделей."}</div>`;
     else {
       body.forEach((m) => {
@@ -2612,34 +2598,6 @@ $("#s_save").addEventListener("click", async () => { vibClick();
     console.error("[settings] save failed", err);
   }
 });
-
-const adminRecAdd = $("#admin_rec_add");
-if (adminRecAdd) {
-  adminRecAdd.addEventListener("click", async () => {
-    vibClick();
-    const input = $("#admin_rec_input");
-    const id = (input && input.value || "").trim();
-    if (!id) return;
-    if (!isAdmin) return;
-    RECOMMENDED_MODELS = [id, ...RECOMMENDED_MODELS.filter((x) => x !== id)];
-    renderAdminRecommendedList();
-    await saveRecommendedToBackend();
-    input.value = "";
-  });
-}
-const adminRecList = $("#admin_rec_list");
-if (adminRecList) {
-  adminRecList.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-remove-rec]");
-    if (!btn) return;
-    vibClick();
-    const id = btn.dataset.removeRec;
-    if (!isAdmin) return;
-    RECOMMENDED_MODELS = RECOMMENDED_MODELS.filter((x) => x !== id);
-    renderAdminRecommendedList();
-    await saveRecommendedToBackend();
-  });
-}
 
 const keyModeToggle = $("#s_key_mode");
 if (keyModeToggle) {
@@ -3207,9 +3165,6 @@ function openSettings(tab = null) {
   syncSegPickers();
   updateVibVal();
   loadKeyInfo();
-  const adminRecCard = $("#admin_recommended_card");
-  if (adminRecCard) adminRecCard.style.display = isAdmin ? "" : "none";
-  if (isAdmin) renderAdminRecommendedList();
   if (tab) {
     document.querySelectorAll(".stab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));

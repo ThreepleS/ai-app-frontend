@@ -1274,10 +1274,27 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 .fbtn svg {
   width: 20px;
   height: 20px;
+  position: relative;
+  z-index: 1;
+}
+.fbtn.pro::before,
+.fbtn.pro::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.fbtn.pro::before {
+  background: repeating-linear-gradient(135deg, transparent, transparent 18px, rgba(255,215,0,0.35) 18px, rgba(255,215,0,0.35) 20px);
+}
+.fbtn.pro::after {
+  background: repeating-linear-gradient(-135deg, transparent, transparent 18px, rgba(0,0,0,0.35) 18px, rgba(0,0,0,0.35) 20px);
 }
 .mb-detail {
   margin: 4px 16px 0;
@@ -2770,13 +2787,41 @@ textarea {
   letter-spacing: 0.05em;
 }
 .mb-group[data-group="alibaba"] .ghead {
-  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 10px, #000 10px, #000 20px);
+  position: relative;
+  overflow: hidden;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
+.mb-group[data-group="alibaba"] .ghead::before,
+.mb-group[data-group="alibaba"] .ghead::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mb-group[data-group="alibaba"] .ghead::before {
+  background: repeating-linear-gradient(135deg, transparent, transparent 18px, rgba(255,215,0,0.35) 18px, rgba(255,215,0,0.35) 20px);
+}
+.mb-group[data-group="alibaba"] .ghead::after {
+  background: repeating-linear-gradient(-135deg, transparent, transparent 18px, rgba(0,0,0,0.35) 18px, rgba(0,0,0,0.35) 20px);
+}
 .mb-group.pro .ghead {
-  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 10px, #000 10px, #000 20px);
+  position: relative;
+  overflow: hidden;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+.mb-group.pro .ghead::before,
+.mb-group.pro .ghead::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mb-group.pro .ghead::before {
+  background: repeating-linear-gradient(135deg, transparent, transparent 18px, rgba(255,215,0,0.35) 18px, rgba(255,215,0,0.35) 20px);
+}
+.mb-group.pro .ghead::after {
+  background: repeating-linear-gradient(-135deg, transparent, transparent 18px, rgba(0,0,0,0.35) 18px, rgba(0,0,0,0.35) 20px);
 }
 
