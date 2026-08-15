@@ -1342,7 +1342,6 @@ function buildKeyRows(mode) {
       inp.disabled = true;
       inp.value = "";
       inp.placeholder = "В полной версии";
-      inp.style.cssText = "background: repeating-linear-gradient(135deg, #ffd700, #ffd700 10px, #000 10px, #000 20px); color: #fff; text-align: center; font-weight: 700;";
     } else {
       inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
     }
@@ -2055,6 +2054,9 @@ function mbRenderDetail() {
   const raw = mbFind(id);
   const v = mbView(raw || { id, provider: mbDetectProvider(id) });
   const fav = mbIsFav(id);
+  const provider = v.provider || mbDetectProvider(id);
+  const needsKey = !hasProviderKey(provider);
+  const providerLabel = PROVIDER_LABELS[provider] || provider;
   const badges = [
     `<span class="badge prov">${esc(PROVIDER_LABELS[v.provider] || v.provider)}</span>`,
   ];
@@ -2124,7 +2126,7 @@ function mbRenderDetail() {
       : "Выбрать";
   el.innerHTML = `
         <div class="dhead">
-          <div class="dname">${esc(v.name)}</div>
+          <div class="dname">${esc(v.name)}${needsKey ? '<span class="ikey-lock" style="margin-left:8px"><i data-lucide="lock" class="lucide"></i> ' + esc(providerLabel) + '</span>' : ''}</div>
           <button class="mb-star ${fav ? "on" : ""}" data-star="${esc(id)}" title="В избранное"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></button>
         </div>
         <div class="mb-badges">${badges.join("")}${caps}</div>

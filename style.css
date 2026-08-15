@@ -1283,18 +1283,18 @@ textarea {
   position: relative;
   z-index: 1;
 }
-.fbtn.pro::before,
+.fbtn.pro {
+  filter: blur(2px);
+  opacity: 0.6;
+  pointer-events: none;
+}
 .fbtn.pro::after {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
-}
-.fbtn.pro::before {
-  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 4px, #000 4px, #000 8px);
-}
-.fbtn.pro::after {
-  background: repeating-linear-gradient(-135deg, #ffd700, #ffd700 4px, #000 4px, #000 8px);
+  background: rgba(0,0,0,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center no-repeat;
+  border-radius: inherit;
+  z-index: 2;
 }
 .mb-detail {
   margin: 4px 16px 0;
@@ -2787,10 +2787,15 @@ textarea {
   font-weight: 700;
   letter-spacing: 0.05em;
   position: relative;
-  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 4px, #000 4px, #000 8px);
+  filter: blur(2px);
+  opacity: 0.6;
+  pointer-events: none;
+  background: rgba(0,0,0,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center no-repeat;
 }
 .mb-group[data-group="alibaba"] .ghead,
 .mb-group.pro .ghead {
+  filter: blur(2px);
+  opacity: 0.6;
   position: relative;
   overflow: hidden;
   color: #fff;
@@ -2802,7 +2807,7 @@ textarea {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 4px, #000 4px, #000 8px);
+  background: rgba(0,0,0,0.5);
 }
 .mb-group[data-group="alibaba"] .ghead::after,
 .mb-group.pro .ghead::after {
@@ -2810,6 +2815,6 @@ textarea {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(-135deg, #ffd700, #ffd700 4px, #000 4px, #000 8px);
+  background: rgba(0,0,0,0.5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center no-repeat;
 }
 
