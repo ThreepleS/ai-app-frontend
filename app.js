@@ -1793,11 +1793,13 @@ function addToRecommended(id) {
   if (!id || RECOMMENDED_MODELS.includes(id)) return;
   RECOMMENDED_MODELS = [id, ...RECOMMENDED_MODELS];
   mbRenderList();
+  saveRecommendedToBackend();
 }
 function removeFromRecommended(id) {
   if (!id) return;
   RECOMMENDED_MODELS = RECOMMENDED_MODELS.filter((x) => x !== id);
   mbRenderList();
+  saveRecommendedToBackend();
 }
 async function saveRecommendedToBackend() {
   try {
@@ -2201,6 +2203,7 @@ async function mbRenderList() {
         const typeBadge = mtype
           ? `<span class="ibadges"><span class="mb-mini" style="background:#5b3a5a">${esc(mtype)}</span></span>`
           : "";
+        const provider = m.provider || mbDetectProvider(id);
         const needsKey = !hasProviderKey(provider);
         const providerLabel = PROVIDER_LABELS[provider] || provider;
         html += `<div class="mb-item ${sel} ${act} ${needsKey ? "locked" : ""}" data-id="${esc(id)}">
