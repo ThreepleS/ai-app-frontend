@@ -2144,11 +2144,7 @@ function mbModelsForGroup(gkey) {
   const isFreeGroup = !!(grp && grp.free);
   const workingSet =
     gkey === "openrouter" || gkey === "gemini" ? mbState.working[gkey] : null;
-  return arr.map((m) => {
-    const provider = m.provider || mbDetectProvider(m.model_id || m.id);
-    const needsKey = !hasProviderKey(provider);
-    return { ...m, _needsKey: needsKey, _provider: provider };
-  }).filter((m) => {
+  return arr.filter((m) => {
     if (gkey === "paid" && m.is_free) return false;
     if (workingSet && workingSet.size && !workingSet.has(m.model_id || m.id))
       return false;
@@ -2205,8 +2201,8 @@ async function mbRenderList() {
         const typeBadge = mtype
           ? `<span class="ibadges"><span class="mb-mini" style="background:#5b3a5a">${esc(mtype)}</span></span>`
           : "";
-        const needsKey = !!m._needsKey;
-        const providerLabel = needsKey ? PROVIDER_LABELS[m._provider] || m._provider : "";
+        const needsKey = !hasProviderKey(provider);
+        const providerLabel = PROVIDER_LABELS[provider] || provider;
         html += `<div class="mb-item ${sel} ${act} ${needsKey ? "locked" : ""}" data-id="${esc(id)}">
               <span class="iname">${esc(name)}</span>
               ${isFreeModel ? '<span class="ibadges"><span class="mb-mini">FREE</span></span>' : ""}

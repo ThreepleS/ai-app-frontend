@@ -2780,48 +2780,30 @@ textarea {
   white-space: nowrap;
 }
 .pkrow.alibaba input {
-  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 10px, #000 10px, #000 20px);
+  border: 2px solid #000;
+  outline: none;
   color: #fff;
   text-align: center;
   font-weight: 700;
   letter-spacing: 0.05em;
-}
-.mb-group[data-group="alibaba"] .ghead {
   position: relative;
-  overflow: hidden;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  background: repeating-linear-gradient(135deg, #ffd700, #ffd700 10px, #000 10px, #000 20px);
 }
-.mb-group[data-group="alibaba"] .ghead::before,
-.mb-group[data-group="alibaba"] .ghead::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.mb-group[data-group="alibaba"] .ghead::before {
-  background: repeating-linear-gradient(135deg, transparent, transparent 18px, rgba(255,215,0,0.35) 18px, rgba(255,215,0,0.35) 20px);
-}
-.mb-group[data-group="alibaba"] .ghead::after {
-  background: repeating-linear-gradient(-135deg, transparent, transparent 18px, rgba(0,0,0,0.35) 18px, rgba(0,0,0,0.35) 20px);
-}
+.mb-group[data-group="alibaba"] .ghead,
 .mb-group.pro .ghead {
   position: relative;
   overflow: hidden;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  background:
+    repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(255,215,0,0.9) 8px, rgba(255,215,0,0.9) 10px, transparent 10px, transparent 18px, rgba(0,0,0,0.9) 18px, rgba(0,0,0,0.9) 20px);
 }
-.mb-group.pro .ghead::before,
-.mb-group.pro .ghead::after {
+.mb-group[data-group="alibaba"] .ghead::before,
+.mb-group.pro .ghead::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-}
-.mb-group.pro .ghead::before {
-  background: repeating-linear-gradient(135deg, transparent, transparent 18px, rgba(255,215,0,0.35) 18px, rgba(255,215,0,0.35) 20px);
-}
-.mb-group.pro .ghead::after {
-  background: repeating-linear-gradient(-135deg, transparent, transparent 18px, rgba(0,0,0,0.35) 18px, rgba(0,0,0,0.35) 20px);
+  background: repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(255,215,0,0.9) 8px, rgba(255,215,0,0.9) 10px, transparent 10px, transparent 18px, rgba(0,0,0,0.9) 18px, rgba(0,0,0,0.9) 20px);
 }
 
