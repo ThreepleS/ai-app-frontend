@@ -705,6 +705,23 @@
       </div>
     </div>
 
+    <div id="betaWelcome" class="modal" style="z-index: 400;">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-head">
+          <b>Добро пожаловать в AI Hub v0.9</b>
+          <button class="modal-close" data-close="betaWelcome">✕</button>
+        </div>
+        <div class="modal-body">
+          <p>Это <b>бета-тест</b>. Функционал может меняться, а перед релизом возможен полный сброс данных.</p>
+          <p style="margin-top:8px;">Использование API-ключей с балансом — <b>на ваш страх и риск</b>. Пока что не доверяйте конфиденциальные данные этому приложению, автор за него не отвечает.</p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn primary" id="betaWelcomeClose">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
     <div id="tourWelcome" class="modal" style="z-index: 300;">
       <div class="modal-backdrop"></div>
       <div class="modal-dialog">
@@ -729,7 +746,7 @@
           <button class="modal-close" data-close="tourCongrats">✕</button>
         </div>
         <div class="modal-body">
-          Ты уже разобрался, как получить и сохранить API-ключ. Теперь закрой настройки и переходи в браузер моделей — я буду ждать тебя там и продолжу обучение.
+          Отлично, ключ сохранён. Теперь закрой настройки — я покажу тебе браузер моделей, где можно выбрать модель и добавить её в избранное.
         </div>
         <div class="modal-foot">
           <button class="btn primary" id="tourCongratsOk">Понял, иду в модели</button>

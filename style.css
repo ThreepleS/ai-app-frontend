@@ -2684,6 +2684,7 @@ textarea {
 .btn.primary { background: var(--accent); color: #fff; }
 .btn.primary:hover { filter: brightness(1.1); }
 .btn.danger { background: var(--red); color: #fff; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.3); }
 
 /* ---------- Onboarding Tour ---------- */
 .tour-backdrop {

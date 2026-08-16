@@ -1278,6 +1278,7 @@ async function auth(devId) {
       if (historyEmpty || !seen) {
         localStorage.removeItem(TOUR_KEY);
         console.debug("[auth] triggering tour for fresh or first-time user");
+        await showBetaWelcome();
         await initTour(true);
       }
     } else {
@@ -1811,6 +1812,27 @@ const MB_GROUPS = [
   { key: "venice", label: "Venice AI" },
   { key: "alibaba", label: "Alibaba PRO", pro: true },
 ];
+
+const TOUR_FAKE_FAVORITES = [
+  { model_id: "openrouter/auto", display_name: "Auto (рекомендуемый)", provider: "openrouter" },
+  { model_id: "openrouter/llama-4-maverick:free", display_name: "Llama 4 Maverick", provider: "openrouter" },
+  { model_id: "gemini/gemini-2.0-flash-exp:free", display_name: "Gemini 2.0 Flash", provider: "gemini" },
+];
+
+const TOUR_FAKE_CACHE = {
+  openrouter: [
+    { id: "openrouter/auto", model_id: "openrouter/auto", name: "Auto (рекомендуемый)", display_name: "Auto (рекомендуемый)", is_free: false, context: 128000, mod_in: "text", mod_out: "text", price_prompt: "0", price_completion: "0", description: "Автоматический выбор оптимальной модели" },
+    { id: "openrouter/llama-4-maverick:free", model_id: "openrouter/llama-4-maverick:free", name: "Llama 4 Maverick", display_name: "Llama 4 Maverick", is_free: true, context: 128000, mod_in: "text", mod_out: "text", price_prompt: "0", price_completion: "0", description: "Бесплатная модель Meta" },
+    { id: "openrouter/gpt-4o", model_id: "openrouter/gpt-4o", name: "GPT-4o", display_name: "GPT-4o", is_free: false, context: 128000, mod_in: "text,image", mod_out: "text", price_prompt: "0.0025", price_completion: "0.01", description: "Флагманская модель OpenAI" },
+  ],
+  gemini: [
+    { id: "gemini/gemini-2.0-flash-exp:free", model_id: "gemini/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash", display_name: "Gemini 2.0 Flash", is_free: true, context: 1048576, mod_in: "text,image", mod_out: "text", price_prompt: "0", price_completion: "0", description: "Бесплатная модель Google" },
+  ],
+  venice: [
+    { id: "venice/llama-3.3-70b", model_id: "venice/llama-3.3-70b", name: "Llama 3.3 70B", display_name: "Llama 3.3 70B", is_free: false, context: 8192, mod_in: "text", mod_out: "text", price_prompt: "0.001", price_completion: "0.002", description: "Модель Venice AI" },
+  ],
+};
+
 const mbState = {
   favorites: [],
   cache: {
@@ -2134,11 +2156,13 @@ function mbRenderDetail() {
   `;
 }
 function mbModelsForGroup(gkey) {
+  if (tourActive && gkey === "favorite") return TOUR_FAKE_FAVORITES;
   if (gkey === "recommended") {
     const recSet = new Set(RECOMMENDED_MODELS.map((id) => id.toLowerCase()));
     const all = Object.values(mbState.cache).flat().filter(Boolean);
     const cached = all.filter((m) => recSet.has((m.model_id || m.id || "").toLowerCase()));
     if (cached.length > 0) return cached;
+    if (tourActive) return [];
     return RECOMMENDED_MODELS.map((id) => ({
       id,
       model_id: id,
@@ -2146,6 +2170,7 @@ function mbModelsForGroup(gkey) {
       provider: mbDetectProvider(id),
     }));
   }
+  if (tourActive && TOUR_FAKE_CACHE[gkey]) return TOUR_FAKE_CACHE[gkey];
   const arr = gkey === "favorite" ? mbState.favorites : gkey === "paid" ? mbState.cache.openrouter : mbState.cache[gkey];
   if (!Array.isArray(arr)) return arr;
   const q = mbState.search.trim().toLowerCase();
@@ -2235,6 +2260,7 @@ async function mbRenderList() {
 // Последовательно догружаем провайдеров (по одному, а не 4 параллельно),
 // чтобы медленный туннель не задыхался от одновременных 179КБ-запросов.
 async function mbLoadAll() {
+  if (tourActive) return;
   for (const g of MB_GROUPS) {
     if (g.key === "favorite" || g.key === "recommended" || g.key === "paid" || g.key === "alibaba") continue;
     if (mbState.cache[g.key] === null) {
@@ -2254,8 +2280,14 @@ async function mbOpen() {
   mbState.selectedId = currentModelId || mbState.selectedId;
   mbLoadPingStore();
   await mbLoadFavorites();
+  if (tourActive) {
+    mbState.favorites = TOUR_FAKE_FAVORITES;
+    mbState.cache.openrouter = TOUR_FAKE_CACHE.openrouter;
+    mbState.cache.gemini = TOUR_FAKE_CACHE.gemini;
+    mbState.cache.venice = TOUR_FAKE_CACHE.venice;
+  }
   await mbRenderList();
-  mbLoadAll();
+  if (!tourActive) mbLoadAll();
   if (window.lucide) lucide.createIcons();
   if (!mbState.selectedId) {
     const tryPick = () => {
@@ -3080,7 +3112,7 @@ function exportDialog(dialog, format) {
 $("#s_replay_tour").addEventListener("click", () => {
   localStorage.removeItem(TOUR_KEY);
   closeSettings();
-  setTimeout(() => initTour(true), 120);
+  setTimeout(() => showBetaWelcome().then(() => initTour(true)), 120);
 });
 $("#s_keys_help").addEventListener("click", (e) => {
   e.preventDefault();
@@ -3338,6 +3370,7 @@ const TOUR_KEY = "has_seen_tutorial";
 let tourActive = false;
 let queuedAuthError = null;
 let deferredOpenSettings = false;
+let nextBtnTimer = null;
 
 function showQueuedAuthErrorIfAny() {
   if (queuedAuthError) {
@@ -3354,6 +3387,28 @@ function openDeferredSettingsIfAny() {
   }
 }
 
+function showBetaWelcome(): Promise<void> {
+  return new Promise((resolve) => {
+    const modal = $("#betaWelcome");
+    if (!modal) { resolve(); return; }
+    const btn = $("#betaWelcomeClose");
+    const cleanup = () => {
+      modal.classList.remove("open");
+      if (btn) btn.removeEventListener("click", onClose);
+      const bd = modal.querySelector(".modal-backdrop");
+      if (bd) bd.removeEventListener("click", onClose);
+      modal.querySelectorAll("[data-close]").forEach((b) => b.removeEventListener("click", onClose));
+      resolve();
+    };
+    const onClose = () => cleanup();
+    if (btn) btn.addEventListener("click", onClose);
+    const bd = modal.querySelector(".modal-backdrop");
+    if (bd) bd.addEventListener("click", onClose);
+    modal.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", onClose));
+    modal.classList.add("open");
+  });
+}
+
 async function initTour(force = false) {
   if (!force && new URLSearchParams(location.search).get("tour") !== "1") return;
   const welcome = $("#tourWelcome");
@@ -3367,6 +3422,7 @@ async function initTour(force = false) {
     welcome.classList.remove("open");
     yes.removeEventListener("click", onYes);
     no.removeEventListener("click", onNo);
+    if (noTimer) { clearInterval(noTimer); noTimer = null; }
     const bd = welcome.querySelector(".modal-backdrop");
     if (bd) bd.removeEventListener("click", onNo);
     welcome.querySelectorAll("[data-close]").forEach((b) => b.removeEventListener("click", onNo));
@@ -3381,11 +3437,27 @@ async function initTour(force = false) {
     cleanup(true);
     await runTour();
   };
+  let noTimer = null;
   const onNo = () => {
+    if (noTimer) { clearInterval(noTimer); noTimer = null; }
     cleanup(false);
   };
   yes.addEventListener("click", onYes);
   no.addEventListener("click", onNo);
+  no.disabled = true;
+  let countdown = 5;
+  no.textContent = "Нет (" + countdown + ")";
+  noTimer = setInterval(() => {
+    countdown--;
+    if (countdown > 0) {
+      no.textContent = "Нет (" + countdown + ")";
+    } else {
+      clearInterval(noTimer);
+      noTimer = null;
+      no.disabled = false;
+      no.textContent = "Нет";
+    }
+  }, 1000);
   const bd = welcome.querySelector(".modal-backdrop");
   if (bd) bd.addEventListener("click", onNo);
   welcome.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", onNo));
@@ -3404,13 +3476,13 @@ async function runTour(startStep = 0) {
   const steps = [
     {
       target: "header",
-      title: "Добро пожаловать в приложение",
+      title: "Добро пожаловать в AI Hub",
       body: "Это верхняя панель. Здесь можно открыть браузер моделей, перейти к диалогам, начать новый чат, найти что-то в истории или зайти в настройки. Нажми «Далее», чтобы продолжить.",
     },
     {
       target: "#models",
       title: "Браузер моделей",
-      body: "Здесь выбирается модель ИИ. Вверху можно фильтровать по провайдеру: OpenRouter, OpenAI, Gemini, Groq, HuggingFace, Venice AI. Провайдер «Рекомендуемые модели» появится позже. Список моделей автоматически обновляется при каждом открытии.",
+      body: "Здесь выбирается модель ИИ. Вверху можно фильтровать по провайдеру: OpenRouter, OpenAI, Gemini, Venice AI. Groq и HuggingFace пока не активны. Список моделей автоматически обновляется при каждом открытии.",
     },
     {
       target: "#dialogsBtn",
@@ -3451,7 +3523,7 @@ async function runTour(startStep = 0) {
     {
       target: "#mb_filter",
       title: "Фильтр провайдеров",
-      body: "Используй этот фильтр, чтобы быстро сузить список моделей по провайдеру: OpenRouter, OpenAI, Gemini, Groq, HuggingFace, Venice AI или Favorites. Провайдер «Рекомендуемые модели» появится позже.",
+      body: "Используй этот фильтр, чтобы быстро сузить список моделей по провайдеру: OpenRouter, OpenAI, Gemini, Venice AI или Favorites. Groq и HuggingFace пока не активны.",
     },
     {
       target: "#mb_list",
@@ -3543,6 +3615,21 @@ async function runTour(startStep = 0) {
     titleEl.textContent = step.title;
     bodyEl.textContent = step.body;
     nextBtn.textContent = index === steps.length - 1 ? "Завершить" : "Далее";
+    nextBtn.disabled = true;
+    let countdown = 5;
+    nextBtn.textContent = (index === steps.length - 1 ? "Завершить" : "Далее") + " (" + countdown + ")";
+    if (nextBtnTimer) { clearInterval(nextBtnTimer); nextBtnTimer = null; }
+    nextBtnTimer = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        nextBtn.textContent = (index === steps.length - 1 ? "Завершить" : "Далее") + " (" + countdown + ")";
+      } else {
+        clearInterval(nextBtnTimer);
+        nextBtnTimer = null;
+        nextBtn.disabled = false;
+        nextBtn.textContent = index === steps.length - 1 ? "Завершить" : "Далее";
+      }
+    }, 1000);
 
     const rect = target.getBoundingClientRect();
     console.debug("[tour] step " + index + " target=" + step.target + " title=" + step.title + " rect=" + JSON.stringify({x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height)}));
@@ -3562,6 +3649,7 @@ async function runTour(startStep = 0) {
 
   function closeTour() {
     tourActive = false;
+    if (nextBtnTimer) { clearInterval(nextBtnTimer); nextBtnTimer = null; }
     backdrop.classList.remove("active", "tour-settings-mode");
     tooltip.style.display = "none";
     overlay.style.clipPath = "";
