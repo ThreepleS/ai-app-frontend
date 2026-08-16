@@ -1265,13 +1265,12 @@ textarea {
   width: 46px;
   height: 46px;
   flex: 0 0 auto;
-  border: 0;
+  border: 1px solid var(--stroke);
   border-radius: 14px;
   background: var(--glass);
   color: var(--text);
   cursor: pointer;
-  border: 1px solid var(--stroke);
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
@@ -2763,9 +2762,6 @@ textarea {
 }
 .tour-backdrop.tour-settings-mode .tour-tooltip {
   z-index: 15005 !important;
-}
-.tour-backdrop.tour-settings-mode .tour-overlay {
-  background: transparent;
 }
 .tour-backdrop.tour-settings-mode .tour-overlay {
   background: transparent;
