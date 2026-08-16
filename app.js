@@ -255,6 +255,8 @@ function renderDialogsPanel() {
             <div class="dialog-item-name" title="Нажми, чтобы переименовать">
               <span class="dialog-name-text">${esc(d.name || "")}</span>
               <button class="dialog-item-edit" data-edit="${d.id}" title="Переименовать"><i data-lucide='pencil' class="icon"></i></button>
+              <button class="dialog-item-export" data-export-md="${d.id}" title="Экспорт Markdown"><i data-lucide='file-text' class="icon"></i></button>
+              <button class="dialog-item-export" data-export-txt="${d.id}" title="Экспорт TXT"><i data-lucide='clipboard-list' class="icon"></i></button>
             </div>
             <div class="dialog-item-meta">${date} · ${(d.messages || []).length} сообщ.</div>
           </div>
@@ -307,6 +309,16 @@ function renderDialogsPanel() {
             activeDialogId = null;
             await ensureCurrentDialog();
           } else renderDialogsPanel();
+        });
+      });
+      document.querySelectorAll(".dialog-item-export").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const id = btn.dataset["exportMd"] ? btn.dataset.exportMd : btn.dataset.exportTxt;
+          const format = btn.dataset["exportMd"] ? "md" : "txt";
+          const dialog = dialogs.find((d) => d.id === id);
+          if (!dialog) return;
+          exportDialog(dialog, format);
         });
       });
     })
@@ -1082,36 +1094,6 @@ function addHistoryMessage(role, content, image) {
   if (window.lucide) lucide.createIcons();
 }
 
-// --- Открыть веб/PWA-версию в браузере с передачей init_data ---
-$("#s_web").addEventListener("click", async () => {
-  try {
-    const initData = currentInitData();
-    if (!initData) {
-      await showAlert(
-        "Нет авторизации",
-        "Откройте приложение через Telegram, чтобы передать авторизацию в браузер.",
-      );
-      return;
-    }
-    // Базовый URL веб-версии (тот же хост, что и сейчас открыт).
-    const base = location.origin + location.pathname;
-    const url = base + "?init_data=" + encodeURIComponent(initData);
-    if (
-      inTelegram &&
-      window.Telegram &&
-      window.Telegram.WebApp &&
-      window.Telegram.WebApp.openLink
-    ) {
-      // Выходим из WebView в системный браузер (передаём init_data в ссылке).
-      window.Telegram.WebApp.openLink(url);
-    } else {
-      window.open(url, "_blank");
-    }
-  } catch (err) {
-    await showAlert("Ошибка", "<i data-lucide='alert-triangle' class='lucide'></i> " + String(err));
-  }
-});
-
 const inTelegram = !!(
   window.Telegram &&
   window.Telegram.WebApp &&
@@ -1341,11 +1323,8 @@ function buildKeyRows(mode) {
     if (p === "alibaba") {
       inp.disabled = true;
       inp.value = "";
-      const wrap = document.createElement("div");
-      wrap.className = "alibaba-wrap";
       row.appendChild(name);
-      row.appendChild(wrap);
-      wrap.appendChild(inp);
+      row.appendChild(inp);
     } else {
       inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
       row.appendChild(name);
@@ -1807,7 +1786,10 @@ function removeFromRecommended(id) {
 async function saveRecommendedToBackend() {
   try {
     await ef("settings", { recommended_models: RECOMMENDED_MODELS }, 15000);
-  } catch {}
+  } catch (e) {
+    console.error("[recommended] save failed", e);
+    toast("Ошибка сохранения рекомендуемых моделей", "err");
+  }
 }
 
 const MB_GROUPS = [
@@ -2189,7 +2171,7 @@ async function mbRenderList() {
     html += `<div class="mb-group ${collapsed ? "collapsed" : ""} ${g.pro ? "pro" : ""}" data-group="${g.key}">
           <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span><span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
           <div class="gbody">`;
-    if (!body || body === null) html += `<div class="mb-loading">Загрузка…</div>`;
+    if (!body || body === null) html += g.key === "alibaba" ? `<div class="mb-empty">В полной версии</div>` : `<div class="mb-loading">Загрузка…</div>`;
     else if (body.error)
       html += `<div class="mb-empty"><i data-lucide='alert-triangle' class='lucide'></i> ${esc(body.error)}</div>`;
     else if (!Array.isArray(body) || !body.length)
@@ -3061,8 +3043,32 @@ function exportChat(format) {
   URL.revokeObjectURL(url);
   toast("Экспортировано <i data-lucide='check' class='lucide'></i>", "ok");
 }
-$("#s_export_md").addEventListener("click", () => exportChat("md"));
-$("#s_export_txt").addEventListener("click", () => exportChat("txt"));
+function exportDialog(dialog, format) {
+  const msgs = dialog.messages || [];
+  if (!msgs.length) {
+    toast("Пустой диалог", "err");
+    return;
+  }
+  const lines = msgs.map((m) => {
+    const role = m.role === "user" ? "Вы" : "Бот";
+    const text = (m.content || "").trim();
+    return `## ${role}\n\n${text}`;
+  });
+  const content = lines.join("\n\n---\n\n");
+  const mime = format === "txt" ? "text/plain" : "text/markdown";
+  const ext = format === "txt" ? "txt" : "md";
+  const name = (dialog.name || "dialog").replace(/[^a-z0-9а-яё _-]/gi, "").slice(0, 40) || "dialog";
+  const blob = new Blob([content], { type: mime + ";charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${name}_${new Date().toISOString().slice(0, 10)}.${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast("Экспортировано <i data-lucide='check' class='lucide'></i>", "ok");
+}
 $("#s_replay_tour").addEventListener("click", () => {
   localStorage.removeItem(TOUR_KEY);
   closeSettings();
@@ -3071,81 +3077,6 @@ $("#s_replay_tour").addEventListener("click", () => {
 $("#s_keys_help").addEventListener("click", (e) => {
   e.preventDefault();
   window.open("https://cat-penguin-ac7.notion.site/API-3a753a5bca1a808bb9b6e2f4be78d865?source=copy_link", "_blank", "noopener,noreferrer");
-});
-
-$("#s_pwa").addEventListener("click", async () => {
-  const status = $("#s_status");
-  const say = (txt, color) => {
-    status.style.color = color;
-    status.innerHTML = txt;
-  };
-  try {
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      say("уже запущено как приложение <i data-lucide='check' class='lucide'></i>", "#6fcf7f");
-      return;
-    }
-    if (inTelegram) {
-      // PWA не ставится из WebView — выходим в системный браузер,
-      // передавая init_data, чтобы веб-версия сразу авторизовалась.
-      const initData = currentInitData();
-      const base = location.origin + location.pathname;
-      const url = initData
-        ? base + "?init_data=" + encodeURIComponent(initData)
-        : base;
-      if (
-        window.Telegram &&
-        window.Telegram.WebApp &&
-        window.Telegram.WebApp.openLink
-      ) {
-        window.Telegram.WebApp.openLink(url);
-        say("открываю браузер для установки PWA…", "#6fcf7f");
-      } else {
-        window.open(url, "_blank");
-      }
-      return;
-    }
-    if (window.deferredPrompt) {
-      window.deferredPrompt.prompt();
-      const { outcome } = await window.deferredPrompt.userChoice;
-      say(
-        outcome === "accepted" ? "установка начата <i data-lucide='check' class='lucide'></i>" : "отменено",
-        outcome === "accepted" ? "#6fcf7f" : "#e0a96b",
-      );
-      window.deferredPrompt = null;
-      return;
-    }
-    const problems = [];
-    if (!window.isSecureContext)
-      problems.push("не защищённый контекст (нужен HTTPS или localhost)");
-    if (!("serviceWorker" in navigator))
-      problems.push(
-        "браузер не поддерживает Service Worker (PWA временно отключена для отладки туннеля)",
-      );
-    try {
-      const mt = await fetch("/manifest.webmanifest").then((r) => r.text());
-      let m = null;
-      try {
-        m = JSON.parse(mt);
-      } catch (_) {
-        m = null;
-      }
-      if (!m || !m.icons || !m.icons.length)
-        problems.push(
-          "manifest недоступен (возможно туннель блокирует запрос)",
-        );
-    } catch (e) {
-      problems.push("не удалось загрузить manifest.webmanifest");
-    }
-    if (problems.length)
-      say("PWA недоступна: " + problems.join("; "), "#e0a96b");
-    else
-      say(
-        "Браузер пока не предложил установку — перезагрузите страницу (Ctrl+Shift+R) и нажмите PWA снова.",
-        "#e0a96b",
-      );
-  } catch (err) {
-    say("<i data-lucide='alert-triangle' class='lucide'></i> " + String(err), "#e06b6b");
-  }
 });
 
 // --- Gear / dev login ------------------------------------------------
@@ -3510,7 +3441,7 @@ async function runTour(startStep = 0) {
 
   let currentStep = startStep;
   let settingsOpenedForTour = false;
-  const SETTINGS_TARGETS = new Set(["#settings", "#s_keys", "#s_models", "#s_prompt", "#s_limit", "#s_stats", "#s_theme", "#s_sound", "#s_vibrate", "#s_pwa", "#s_web", "#s_admin", "#s_replay_tour", "#s_export_md", "#s_export_txt"]);
+  const SETTINGS_TARGETS = new Set(["#settings", "#s_keys", "#s_models", "#s_prompt", "#s_limit", "#s_stats", "#s_theme", "#s_sound", "#s_vibrate", "#s_admin", "#s_replay_tour"]);
 
   function positionTooltip(rect) {
     const tooltipRect = tooltip.getBoundingClientRect();
