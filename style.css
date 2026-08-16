@@ -2828,6 +2828,20 @@ textarea {
   margin-left: 6px;
   white-space: nowrap;
 }
+.ikey-lock-white {
+  font-size: 10px;
+  color: #fff;
+  background: rgba(0,0,0,0.75);
+  padding: 2px 8px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 3;
+}
 .pkrow.alibaba {
   position: relative;
   display: flex;

@@ -2180,9 +2180,9 @@ async function mbRenderList() {
         ? `<span class="ping-time">последний пинг: ${esc(mbFmtPing(mbState.lastPing[g.key]))}</span>`
         : "";
     html += `<div class="mb-group ${collapsed ? "collapsed" : ""} ${g.pro ? "pro" : ""}" data-group="${g.key}">
-          <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span><span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
+          <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span>${g.key === "alibaba" ? '<span class="ikey-lock-white" style="margin-left:6px"><i data-lucide="lock" class="lucide"></i> Скоро...</span>' : ''}<span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
           <div class="gbody">`;
-    if (!body || body === null) html += `<div class="mb-empty">В полной версии</div>`;
+    if (!body || body === null) html += ``;
     else if (body.error)
       html += `<div class="mb-empty"><i data-lucide='alert-triangle' class='lucide'></i> ${esc(body.error)}</div>`;
     else if (!Array.isArray(body) || !body.length)
