@@ -1294,6 +1294,8 @@ async function auth(devId) {
     setStatus("ok");
     updateInputState();
 
+    await showBetaWelcome();
+
     if (data.needs_key && !tourActive) {
       const historyEmpty = !Array.isArray(data.history) || data.history.length === 0;
       const seen = localStorage.getItem(TOUR_KEY) === "true";
@@ -1301,7 +1303,6 @@ async function auth(devId) {
       if (historyEmpty || !seen) {
         localStorage.removeItem(TOUR_KEY);
         console.debug("[auth] triggering tour for fresh or first-time user");
-        await showBetaWelcome();
         await initTour(true);
       }
     } else {
@@ -3393,7 +3394,6 @@ const TOUR_KEY = "has_seen_tutorial";
 let tourActive = false;
 let queuedAuthError = null;
 let deferredOpenSettings = false;
-let nextBtnTimer = null;
 
 function showQueuedAuthErrorIfAny() {
   if (queuedAuthError) {
@@ -3638,21 +3638,6 @@ async function runTour(startStep = 0) {
     titleEl.textContent = step.title;
     bodyEl.textContent = step.body;
     nextBtn.textContent = index === steps.length - 1 ? "Завершить" : "Далее";
-    nextBtn.disabled = true;
-    let countdown = 5;
-    nextBtn.textContent = (index === steps.length - 1 ? "Завершить" : "Далее") + " (" + countdown + ")";
-    if (nextBtnTimer) { clearInterval(nextBtnTimer); nextBtnTimer = null; }
-    nextBtnTimer = setInterval(() => {
-      countdown--;
-      if (countdown > 0) {
-        nextBtn.textContent = (index === steps.length - 1 ? "Завершить" : "Далее") + " (" + countdown + ")";
-      } else {
-        clearInterval(nextBtnTimer);
-        nextBtnTimer = null;
-        nextBtn.disabled = false;
-        nextBtn.textContent = index === steps.length - 1 ? "Завершить" : "Далее";
-      }
-    }, 1000);
 
     const rect = target.getBoundingClientRect();
     console.debug("[tour] step " + index + " target=" + step.target + " title=" + step.title + " rect=" + JSON.stringify({x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height)}));
@@ -3672,7 +3657,6 @@ async function runTour(startStep = 0) {
 
   function closeTour() {
     tourActive = false;
-    if (nextBtnTimer) { clearInterval(nextBtnTimer); nextBtnTimer = null; }
     backdrop.classList.remove("active", "tour-settings-mode");
     tooltip.style.display = "none";
     overlay.style.clipPath = "";
