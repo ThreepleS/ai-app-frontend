@@ -3387,7 +3387,7 @@ function openDeferredSettingsIfAny() {
   }
 }
 
-function showBetaWelcome(): Promise<void> {
+function showBetaWelcome() {
   return new Promise((resolve) => {
     const modal = $("#betaWelcome");
     if (!modal) { resolve(); return; }
