@@ -2137,7 +2137,14 @@ function mbModelsForGroup(gkey) {
   if (gkey === "recommended") {
     const recSet = new Set(RECOMMENDED_MODELS.map((id) => id.toLowerCase()));
     const all = Object.values(mbState.cache).flat().filter(Boolean);
-    return all.filter((m) => recSet.has((m.model_id || m.id || "").toLowerCase()));
+    const cached = all.filter((m) => recSet.has((m.model_id || m.id || "").toLowerCase()));
+    if (cached.length > 0) return cached;
+    return RECOMMENDED_MODELS.map((id) => ({
+      id,
+      model_id: id,
+      name: id,
+      provider: mbDetectProvider(id),
+    }));
   }
   const arr = gkey === "favorite" ? mbState.favorites : gkey === "paid" ? mbState.cache.openrouter : mbState.cache[gkey];
   if (!Array.isArray(arr)) return arr;
