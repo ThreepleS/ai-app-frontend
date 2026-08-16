@@ -25,6 +25,29 @@ if (document.body) {
 }
 log("загрузка…");
 
+// --- Cache version check -------------------------------------------------
+const VERSION_FILE = "./version.json";
+const VERSION_KEY = "app_version";
+
+async function checkAppVersion() {
+  try {
+    const res = await fetch(VERSION_FILE, { method: "GET", cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    const remoteVersion = String(data.version || "");
+    const localVersion = sessionStorage.getItem(VERSION_KEY) || "";
+    if (remoteVersion && remoteVersion !== localVersion) {
+      sessionStorage.setItem(VERSION_KEY, remoteVersion);
+      location.reload(true);
+    } else if (!localVersion && remoteVersion) {
+      sessionStorage.setItem(VERSION_KEY, remoteVersion);
+    }
+  } catch (_) {
+    // offline or blocked — skip version check
+  }
+}
+checkAppVersion();
+
 // Базовый URL Edge Functions Supabase. Формат:
 //   https://<PROJECT_REF>.supabase.co/functions/v1
 // Можно переопределить через ?api= или localStorage("api_base").
