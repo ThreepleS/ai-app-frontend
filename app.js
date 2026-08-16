@@ -1791,10 +1791,14 @@ function removeFromRecommended(id) {
 }
 async function saveRecommendedToBackend() {
   try {
-    await ef("settings", { recommended_models: RECOMMENDED_MODELS }, 15000);
+    const res = await ef("settings", { recommended_models: RECOMMENDED_MODELS }, 15000);
+    if (!res.ok) {
+      const txt = await res.clone().text().catch(() => "");
+      throw new Error("bad status " + res.status + ": " + txt.slice(0, 200));
+    }
   } catch (e) {
     console.error("[recommended] save failed", e);
-    toast("Ошибка сохранения рекомендуемых моделей", "err");
+    toast("Ошибка сохранения рекомендуемых моделей: " + (e && e.message ? e.message : String(e)), "err");
   }
 }
 
@@ -2175,9 +2179,9 @@ async function mbRenderList() {
         ? `<span class="ping-time">последний пинг: ${esc(mbFmtPing(mbState.lastPing[g.key]))}</span>`
         : "";
     html += `<div class="mb-group ${collapsed ? "collapsed" : ""} ${g.pro ? "pro" : ""}" data-group="${g.key}">
-          <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span><span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
+          <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span>${g.key === "alibaba" ? '<span class="ikey-lock" style="margin-left:6px"><i data-lucide="lock" class="lucide"></i> Скоро...</span>' : ''}<span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
           <div class="gbody">`;
-    if (!body || body === null) html += g.key === "alibaba" ? `<div class="mb-empty">Скоро...</div>` : `<div class="mb-loading">Загрузка…</div>`;
+    if (!body || body === null) html += `<div class="mb-empty">В полной версии</div>`;
     else if (body.error)
       html += `<div class="mb-empty"><i data-lucide='alert-triangle' class='lucide'></i> ${esc(body.error)}</div>`;
     else if (!Array.isArray(body) || !body.length)
@@ -2503,6 +2507,7 @@ $("#mb_detail").addEventListener("click", async (e) => {
   if (rec) {
     e.stopPropagation();
     const id = rec.dataset.recommend;
+    console.log("[recommended] click", id, "isAdmin=", isAdmin, "currentList=", RECOMMENDED_MODELS);
     if (RECOMMENDED_MODELS.includes(id)) {
       removeFromRecommended(id);
     } else {
@@ -3315,8 +3320,17 @@ document.querySelectorAll("[data-close]").forEach((btn) => {
     else if (id === "settings") closeSettings();
     else if (id === "chatSearch") closeChatSearch();
     else if (id === "dialogsPanel") closeDialogs();
+    else if (id === "exportModal") { const m = $("#exportModal"); if (m) m.classList.remove("open"); }
+    else { const el = $("#" + id); if (el) el.classList.remove("open"); }
   });
 });
+const exportBackdrop = document.querySelector("#exportModal .modal-backdrop");
+if (exportBackdrop) {
+  exportBackdrop.addEventListener("click", () => {
+    const modal = $("#exportModal");
+    if (modal) modal.classList.remove("open");
+  });
+}
 
 async function saveLocalHistory() {
   await autoSaveCurrentDialog();

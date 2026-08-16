@@ -396,12 +396,33 @@
                 </div>
               </div>
               <div class="export-btns" style="margin-bottom: 8px">
-                <span style="color: var(--muted); font-size: 13px;">Моя статистика</span>
-                <span class="blur-btn-wrap">
-                  <button class="btn ghost sm" type="button" disabled>
-                    <i data-lucide="lock" class="icon"></i> Скоро
-                  </button>
-                </span>
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                  <div>
+                    <span style="color: var(--muted); font-size: 13px;">Моя статистика</span>
+                    <div style="margin-top: 4px;">
+                      <span class="blur-btn-wrap">
+                        <button class="btn ghost sm" type="button" disabled>
+                          <i data-lucide="lock" class="icon"></i> Скоро
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <button id="s_web" class="btn ghost sm" type="button">
+                      <i data-lucide="globe" class="icon"></i> В браузере
+                    </button>
+                    <div style="margin-top: 4px;">
+                      <span style="color: var(--muted); font-size: 13px;">В приложении</span>
+                      <div style="margin-top: 4px;">
+                        <span class="blur-btn-wrap">
+                          <button class="btn ghost sm" type="button" disabled>
+                            <i data-lucide="lock" class="icon"></i> Скоро
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <a
                 id="s_admin"
