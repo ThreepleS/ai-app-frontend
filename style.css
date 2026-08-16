@@ -2830,6 +2830,13 @@ textarea {
 }
 .pkrow.alibaba {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #000;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 10px;
 }
 .pkrow.alibaba .alibaba-badge {
   display: inline-flex;
@@ -2840,19 +2847,20 @@ textarea {
   background: rgba(0,0,0,0.75);
   padding: 2px 8px;
   border-radius: 99px;
-  margin-left: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .pkrow.alibaba input {
-  border: 2px solid #000;
+  border: 0;
   outline: none;
   color: #fff;
   text-align: center;
   font-weight: 700;
   letter-spacing: 0.05em;
-  position: relative;
-  background: rgba(0,0,0,0.5);
-  z-index: 1;
+  background: transparent;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
 }
 .mb-group[data-group="alibaba"] .ghead,
 .mb-group.pro .ghead {
