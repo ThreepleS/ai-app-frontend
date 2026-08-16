@@ -2041,12 +2041,9 @@ function mbFmtPing(ts) {
   return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]}`;
 }
 function mbRenderDetail() {
-  const el = $("#mb_detail");
   const id = mbState.selectedId;
   if (!id) {
-    el.innerHTML =
-      '<div class="mb-empty">Выбери модель из списка, чтобы увидеть подробности.</div>';
-    return;
+    return '<div class="mb-empty">Выбери модель из списка, чтобы увидеть подробности.</div>';
   }
   const raw = mbFind(id);
   const v = mbView(raw || { id, provider: mbDetectProvider(id) });
@@ -2121,23 +2118,25 @@ function mbRenderDetail() {
     : !isText
       ? "Генерация (скоро)"
       : "Выбрать";
-  el.innerHTML = `
-        <div class="dhead">
-          <div class="dname">${esc(v.name)}${needsKey ? '<span class="ikey-lock" style="margin-left:8px"><i data-lucide="lock" class="lucide"></i> ' + esc(providerLabel) + '</span>' : ''}</div>
-          ${isAdmin ? '<button class="mb-recommend" data-recommend="' + esc(id) + '" title="Добавить в рекомендуемые"><i data-lucide="star" class="lucide"></i></button>' : ''}
-          <button class="mb-star ${fav ? "on" : ""}" data-star="${esc(id)}" title="В избранное"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></button>
-        </div>
-        <div class="mb-badges">${badges.join("")}${caps}</div>
-        <div class="mb-grid">${grid}</div>
-        ${v.description ? `<div class="mb-desc mb-desc-hidden" data-desc>${esc(v.description)}</div><button class="mb-desc-toggle" data-desctoggle>Показать описание ▾</button>` : ""}
-        <button class="mb-pick" data-pick="${esc(id)}" ${pickDisabled ? "disabled" : ""}>${pickLabel}</button>
-      `;
-  if (window.lucide) lucide.createIcons();
+  const isRecommended = RECOMMENDED_MODELS.includes(id);
+  return `
+    <div class="mb-detail-inner">
+      <div class="dhead">
+        <div class="dname">${esc(v.name)}${needsKey ? '<span class="ikey-lock" style="margin-left:8px"><i data-lucide="lock" class="lucide"></i> ' + esc(providerLabel) + '</span>' : ''}</div>
+        ${isAdmin ? '<button class="mb-recommend ' + (isRecommended ? 'on' : '') + '" data-recommend="' + esc(id) + '" title="' + (isRecommended ? 'Убрать из рекомендуемых' : 'Добавить в рекомендуемые') + '"><i data-lucide="' + (isRecommended ? 'star' : 'star-off') + '" class="icon"></i></button>' : ''}
+        <button class="mb-star ${fav ? "on" : ""}" data-star="${esc(id)}" title="В избранное"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></button>
+      </div>
+      <div class="mb-badges">${badges.join("")}${caps}</div>
+      <div class="mb-grid">${grid}</div>
+      ${v.description ? `<div class="mb-desc mb-desc-hidden" data-desc>${esc(v.description)}</div><button class="mb-desc-toggle" data-desctoggle>Показать описание ▾</button>` : ""}
+      <button class="mb-pick" data-pick="${esc(id)}" ${pickDisabled ? "disabled" : ""}>${pickLabel}</button>
+    </div>
+  `;
 }
 function mbModelsForGroup(gkey) {
   if (gkey === "recommended") {
-    const all = Array.isArray(mbState.cache.openrouter) ? mbState.cache.openrouter : [];
     const recSet = new Set(RECOMMENDED_MODELS.map((id) => id.toLowerCase()));
+    const all = Object.values(mbState.cache).flat().filter(Boolean);
     return all.filter((m) => recSet.has((m.model_id || m.id || "").toLowerCase()));
   }
   const arr = gkey === "favorite" ? mbState.favorites : gkey === "paid" ? mbState.cache.openrouter : mbState.cache[gkey];
@@ -2207,14 +2206,18 @@ async function mbRenderList() {
         const provider = m.provider || mbDetectProvider(id);
         const needsKey = !hasProviderKey(provider);
         const providerLabel = PROVIDER_LABELS[provider] || provider;
+        const isRecommended = RECOMMENDED_MODELS.includes(id);
         html += `<div class="mb-item ${sel} ${act} ${needsKey ? "locked" : ""}" data-id="${esc(id)}">
               <span class="iname">${esc(name)}</span>
               ${isFreeModel ? '<span class="ibadges"><span class="mb-mini">FREE</span></span>' : ""}
               ${typeBadge}
-              ${isAdmin ? '<span class="iadmin"><button class="mb-recommend" data-recommend="' + esc(id) + '" title="Добавить в рекомендуемые"><i data-lucide="star" class="lucide"></i></button></span>' : ""}
-              <span class="istar ${fav ? "on" : ""}"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></span>
+              ${isAdmin ? '<span class="iadmin"><button class="mb-recommend ' + (isRecommended ? 'on' : '') + '" data-recommend="' + esc(id) + '" title="' + (isRecommended ? 'Убрать из рекомендуемых' : 'Добавить в рекомендуемые') + '"><i data-lucide="' + (isRecommended ? 'star' : 'star-off') + '" class="icon"></i></button></span>' : ""}
+              <span class="istar ${fav ? "on" : ""}" data-star="${esc(id)}" title="В избранное"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></span>
               ${needsKey ? '<span class="ikey-lock"><i data-lucide="lock" class="lucide"></i> Добавьте ключ ' + esc(providerLabel) + '</span>' : ""}
             </div>`;
+        if (id === mbState.selectedId) {
+          html += `<div class="mb-item-detail" data-detail-id="${esc(id)}">${mbRenderDetail()}</div>`;
+        }
       });
     }
     html += `</div></div>`;
@@ -2245,7 +2248,6 @@ async function mbOpen() {
   mbLoadPingStore();
   await mbLoadFavorites();
   await mbRenderList();
-  mbRenderDetail();
   mbLoadAll();
   if (window.lucide) lucide.createIcons();
   if (!mbState.selectedId) {
@@ -2261,6 +2263,7 @@ async function mbOpen() {
   }
 }
 function mbClose() {
+  mbState.selectedId = null;
   $("#modelBrowser").classList.remove("open");
   $("#messages").style.display = "";
   $("#vision").style.display = "";
@@ -2272,7 +2275,8 @@ async function mbSelect(id) {
   mbState.selectedId = id;
   try {
     await mbRenderList();
-    mbRenderDetail();
+    const detailEl = document.querySelector('.mb-item-detail[data-detail-id="' + esc(id) + '"]');
+    if (detailEl) detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) {
     toast("<i data-lucide='alert-triangle' class='lucide'></i> " + e, "err");
   }
@@ -2336,7 +2340,8 @@ async function mbToggleFav(id) {
     }
     await mbLoadFavorites();
     await mbRenderList();
-    mbRenderDetail();
+    const detailEl = document.querySelector('.mb-item-detail[data-detail-id="' + esc(id) + '"]');
+    if (detailEl) detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) {
     toast("<i data-lucide='alert-triangle' class='lucide'></i> " + e, "err");
   }
@@ -2453,36 +2458,6 @@ $("#mb_search").addEventListener("input", (e) => {
   mbRenderList();
 });
 $("#mb_list").addEventListener("click", async (e) => {
-  const pingBtn = e.target.closest("[data-ping]");
-  if (pingBtn) {
-    await mbPingGroup(pingBtn.dataset.ping);
-    return;
-  }
-  const toggle = e.target.closest("[data-desctoggle]");
-  if (toggle) {
-    e.stopPropagation();
-    const desc = toggle.previousElementSibling;
-    if (desc && desc.hasAttribute("data-desc")) {
-      const expanded = desc.classList.toggle("clamped") === false;
-      toggle.textContent = expanded
-        ? "Свернуть описание ▴"
-        : "Развернуть описание ▾";
-    }
-    return;
-  }
-  const head = e.target.closest(".ghead");
-  if (head) {
-    const g = head.parentElement;
-    mbState.collapsed[g.dataset.group] = !mbState.collapsed[g.dataset.group];
-    await mbRenderList();
-    return;
-  }
-  const item = e.target.closest(".mb-item");
-  if (item) {
-    await mbSelect(item.dataset.id);
-  }
-});
-$("#mb_detail").addEventListener("click", async (e) => {
   const toggle = e.target.closest("[data-desctoggle]");
   if (toggle) {
     e.stopPropagation();
@@ -2503,6 +2478,7 @@ $("#mb_detail").addEventListener("click", async (e) => {
   if (pick) {
     e.stopPropagation();
     await mbPick(pick.dataset.pick);
+    return;
   }
   const rec = e.target.closest("[data-recommend]");
   if (rec) {
@@ -2514,8 +2490,21 @@ $("#mb_detail").addEventListener("click", async (e) => {
     } else {
       addToRecommended(id);
     }
+    return;
+  }
+  const head = e.target.closest(".ghead");
+  if (head) {
+    const g = head.parentElement;
+    mbState.collapsed[g.dataset.group] = !mbState.collapsed[g.dataset.group];
+    await mbRenderList();
+    return;
+  }
+  const item = e.target.closest(".mb-item");
+  if (item) {
+    await mbSelect(item.dataset.id);
   }
 });
+
 
 // --- Settings save / clear -------------------------------------------
 $("#s_save").addEventListener("click", async () => { vibClick();
@@ -3463,7 +3452,7 @@ async function runTour(startStep = 0) {
       body: "Здесь отображаются все модели выбранного провайдера. Жми на модель, чтобы выбрать её для текущего диалога. Рядом можно добавить звезду — тогда модель попадёт в быстрый доступ во вкладке «Избранное».",
     },
     {
-      target: "#mb_detail",
+      target: "#mb_list",
       title: "Карточка модели",
       body: "При выборе модели открывается её описание: контекст, скорость, версия, pricing и badge-метки. Здесь можно посмотреть характеристики перед запуском и вернуться назад.",
     },
