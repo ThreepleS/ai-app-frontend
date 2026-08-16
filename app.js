@@ -235,6 +235,7 @@ function renderDialogsPanel() {
   loadDialogsFromDb()
     .then((dialogs) => {
       dialogs.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+      window.__dialogsCache = dialogs;
       if (!dialogs.length) {
         panel.innerHTML = `<div style="color:var(--muted);text-align:center;padding:20px;">Нет диалогов</div>`;
         return;
@@ -255,8 +256,7 @@ function renderDialogsPanel() {
             <div class="dialog-item-name" title="Нажми, чтобы переименовать">
               <span class="dialog-name-text">${esc(d.name || "")}</span>
               <button class="dialog-item-edit" data-edit="${d.id}" title="Переименовать"><i data-lucide='pencil' class="icon"></i></button>
-              <button class="dialog-item-export" data-export-md="${d.id}" title="Экспорт Markdown"><i data-lucide='file-text' class="icon"></i></button>
-              <button class="dialog-item-export" data-export-txt="${d.id}" title="Экспорт TXT"><i data-lucide='clipboard-list' class="icon"></i></button>
+              <button class="dialog-item-export" data-export="${d.id}" title="Экспорт"><i data-lucide='download' class="icon"></i></button>
             </div>
             <div class="dialog-item-meta">${date} · ${(d.messages || []).length} сообщ.</div>
           </div>
@@ -314,11 +314,12 @@ function renderDialogsPanel() {
       document.querySelectorAll(".dialog-item-export").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          const id = btn.dataset["exportMd"] ? btn.dataset.exportMd : btn.dataset.exportTxt;
-          const format = btn.dataset["exportMd"] ? "md" : "txt";
+          const id = btn.dataset.export;
           const dialog = dialogs.find((d) => d.id === id);
           if (!dialog) return;
-          exportDialog(dialog, format);
+          window.__exportDialogId = id;
+          const modal = $("#exportModal");
+          if (modal) modal.classList.add("open");
         });
       });
     })
@@ -1306,6 +1307,7 @@ function updateModeLabel() {
 function renderKeySection(mode) {
   buildKeyRows(mode);
   loadKeyInfo();
+  if (window.lucide) lucide.createIcons();
 }
 function buildKeyRows(mode) {
   const box = $("#s_keys");
@@ -1324,6 +1326,10 @@ function buildKeyRows(mode) {
       inp.disabled = true;
       inp.value = "";
       row.appendChild(name);
+      const badge = document.createElement("span");
+      badge.className = "alibaba-badge";
+      badge.innerHTML = '<i data-lucide="lock" class="icon"></i> Скоро';
+      row.appendChild(badge);
       row.appendChild(inp);
     } else {
       inp.placeholder = "ключ " + (PROVIDER_LABELS[p] || p);
@@ -2171,7 +2177,7 @@ async function mbRenderList() {
     html += `<div class="mb-group ${collapsed ? "collapsed" : ""} ${g.pro ? "pro" : ""}" data-group="${g.key}">
           <div class="ghead"><span class="tri">▾</span><span>${esc(g.label)}</span><span class="cnt">${count}</span>${pingBtn}${pingTime}</div>
           <div class="gbody">`;
-    if (!body || body === null) html += g.key === "alibaba" ? `<div class="mb-empty">В полной версии</div>` : `<div class="mb-loading">Загрузка…</div>`;
+    if (!body || body === null) html += g.key === "alibaba" ? `<div class="mb-empty">Скоро...</div>` : `<div class="mb-loading">Загрузка…</div>`;
     else if (body.error)
       html += `<div class="mb-empty"><i data-lucide='alert-triangle' class='lucide'></i> ${esc(body.error)}</div>`;
     else if (!Array.isArray(body) || !body.length)
@@ -3167,6 +3173,7 @@ async function tryAutoAdmin() {
   try {
     console.log("[app] buildKeyRows");
     buildKeyRows(keyMode);
+    if (window.lucide) lucide.createIcons();
     console.log("[app] inTelegram=", inTelegram);
     $("#messages").style.display = "";
     $("#bar").style.display = "";
@@ -3257,6 +3264,19 @@ function showAlert(title, message) {
     modal.querySelector(".modal-backdrop").addEventListener("click", onClose);
   });
 }
+
+function exportDialogFromModal(format) {
+  const id = window.__exportDialogId;
+  if (!id) return;
+  const dialog = (window.__dialogsCache || []).find((d) => d.id === id);
+  if (!dialog) return;
+  exportDialog(dialog, format);
+  const modal = $("#exportModal");
+  if (modal) modal.classList.remove("open");
+  window.__exportDialogId = null;
+}
+$("#exportMdBtn").addEventListener("click", () => exportDialogFromModal("md"));
+$("#exportTxtBtn").addEventListener("click", () => exportDialogFromModal("txt"));
 
 // --- Toast-уведомления (вместо скучных alert там, где уместно) ---
 function toast(msg, type) {

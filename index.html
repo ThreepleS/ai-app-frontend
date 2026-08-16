@@ -397,9 +397,11 @@
               </div>
               <div class="export-btns" style="margin-bottom: 8px">
                 <span style="color: var(--muted); font-size: 13px;">Моя статистика</span>
-                <button class="btn ghost sm" type="button" disabled style="filter: blur(2px); opacity: 0.6; pointer-events: none;">
-                  <i data-lucide="lock" class="icon"></i> Скоро
-                </button>
+                <span class="blur-btn-wrap">
+                  <button class="btn ghost sm" type="button" disabled>
+                    <i data-lucide="lock" class="icon"></i> Скоро
+                  </button>
+                </span>
               </div>
               <a
                 id="s_admin"
@@ -594,6 +596,23 @@
         <div class="modal-body" id="alertBody"></div>
         <div class="modal-foot">
           <button class="btn primary" data-close="alertModal">ОК</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="exportModal" class="modal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-head">
+          <b id="exportTitle">Экспорт диалога</b>
+          <button class="modal-close" data-close="exportModal"><i data-lucide="x" class="icon"></i></button>
+        </div>
+        <div class="modal-body" id="exportBody">
+          <p style="margin: 0 0 12px; color: var(--muted);">Выбери формат экспорта:</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn primary sm" id="exportMdBtn" type="button"><i data-lucide="file-text" class="icon"></i> Markdown</button>
+            <button class="btn ghost sm" id="exportTxtBtn" type="button"><i data-lucide="clipboard-list" class="icon"></i> TXT</button>
+          </div>
         </div>
       </div>
     </div>
