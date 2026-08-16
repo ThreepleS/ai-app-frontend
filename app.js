@@ -1841,9 +1841,13 @@ const TOUR_FAKE_FAVORITES = [
   { model_id: "openrouter/auto", display_name: "Auto (рекомендуемый)", provider: "openrouter" },
   { model_id: "openrouter/llama-4-maverick:free", display_name: "Llama 4 Maverick", provider: "openrouter" },
   { model_id: "gemini/gemini-2.0-flash-exp:free", display_name: "Gemini 2.0 Flash", provider: "gemini" },
+  { model_id: "autofree", display_name: "AutoFree", provider: "openrouter" },
 ];
 
 const TOUR_FAKE_CACHE = {
+  recommended: [
+    { id: "autofree", model_id: "autofree", name: "AutoFree", display_name: "AutoFree", provider: "openrouter", is_free: true, context: null, mod_in: null, mod_out: null, price_prompt: null, price_completion: null, description: "в разработке...", _placeholder: true },
+  ],
   openrouter: [
     { id: "openrouter/auto", model_id: "openrouter/auto", name: "Auto (рекомендуемый)", display_name: "Auto (рекомендуемый)", is_free: false, context: 128000, mod_in: "text", mod_out: "text", price_prompt: "0", price_completion: "0", description: "Автоматический выбор оптимальной модели" },
     { id: "openrouter/llama-4-maverick:free", model_id: "openrouter/llama-4-maverick:free", name: "Llama 4 Maverick", display_name: "Llama 4 Maverick", is_free: true, context: 128000, mod_in: "text", mod_out: "text", price_prompt: "0", price_completion: "0", description: "Бесплатная модель Meta" },
@@ -2163,7 +2167,9 @@ function mbRenderDetail() {
     ? "<i data-lucide='check' class='lucide'></i> Активна"
     : !isText
       ? "Генерация (скоро)"
-      : "Выбрать";
+      : needsKey
+        ? "Добавьте ключ " + esc(providerLabel)
+        : "Выбрать";
   const isRecommended = RECOMMENDED_MODELS.includes(id);
   return `
     <div class="mb-detail-inner">
@@ -2187,12 +2193,36 @@ function mbModelsForGroup(gkey) {
     const cached = all.filter((m) => recSet.has((m.model_id || m.id || "").toLowerCase()));
     if (cached.length > 0) return cached;
     if (tourActive) return [];
-    return RECOMMENDED_MODELS.map((id) => ({
+    const items = RECOMMENDED_MODELS.map((id) => ({
       id,
       model_id: id,
       name: id,
+      display_name: id,
       provider: mbDetectProvider(id),
+      is_free: id.toLowerCase().endsWith(":free"),
+      context: null,
+      mod_in: "text",
+      mod_out: "text",
+      price_prompt: null,
+      price_completion: null,
+      description: "",
     }));
+    items.push({
+      id: "autofree",
+      model_id: "autofree",
+      name: "AutoFree",
+      display_name: "AutoFree",
+      provider: "openrouter",
+      is_free: true,
+      context: null,
+      mod_in: null,
+      mod_out: null,
+      price_prompt: null,
+      price_completion: null,
+      description: "в разработке...",
+      _placeholder: true,
+    });
+    return items;
   }
   if (tourActive && TOUR_FAKE_CACHE[gkey]) return TOUR_FAKE_CACHE[gkey];
   const arr = gkey === "favorite" ? mbState.favorites : gkey === "paid" ? mbState.cache.openrouter : mbState.cache[gkey];
@@ -2269,7 +2299,7 @@ async function mbRenderList() {
               ${typeBadge}
               ${isAdmin ? '<span class="iadmin"><button class="mb-recommend ' + (isRecommended ? 'on' : '') + '" data-recommend="' + esc(id) + '" title="' + (isRecommended ? 'Убрать из рекомендуемых' : 'Добавить в рекомендуемые') + '"><i data-lucide="' + (isRecommended ? 'star' : 'star-off') + '" class="icon"></i></button></span>' : ""}
               <span class="istar ${fav ? "on" : ""}" data-star="${esc(id)}" title="В избранное"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></span>
-              ${needsKey ? '<span class="ikey-lock"><i data-lucide="lock" class="lucide"></i> Добавьте ключ ' + esc(providerLabel) + '</span>' : ""}
+              ${needsKey ? '<span class="ikey-lock"><i data-lucide="lock" class="lucide"></i></span>' : ""}
             </div>`;
         if (id === mbState.selectedId) {
           html += `<div class="mb-item-detail" data-detail-id="${esc(id)}">${mbRenderDetail()}</div>`;
@@ -3557,6 +3587,7 @@ async function runTour(startStep = 0) {
       target: "#mb_list",
       title: "Карточка модели",
       body: "При выборе модели открывается её описание: контекст, скорость, версия, pricing и badge-метки. Здесь можно посмотреть характеристики перед запуском и вернуться назад.",
+      openCard: true,
     },
     {
       target: "#mb_close",
@@ -3639,6 +3670,13 @@ async function runTour(startStep = 0) {
     bodyEl.textContent = step.body;
     nextBtn.textContent = index === steps.length - 1 ? "Завершить" : "Далее";
 
+    if (step.openCard) {
+      const firstModel = document.querySelector(".mb-item");
+      if (firstModel && firstModel.dataset.id) {
+        mbSelect(firstModel.dataset.id);
+      }
+    }
+
     const rect = target.getBoundingClientRect();
     console.debug("[tour] step " + index + " target=" + step.target + " title=" + step.title + " rect=" + JSON.stringify({x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height)}));
     applySpotlight(rect, settingsMode);
@@ -3657,6 +3695,16 @@ async function runTour(startStep = 0) {
 
   function closeTour() {
     tourActive = false;
+    mbState.favorites = [];
+    mbState.cache = {
+      recommended: [],
+      openrouter: null,
+      paid: null,
+      gemini: null,
+      venice: null,
+      favorite: null,
+    };
+    mbClose();
     backdrop.classList.remove("active", "tour-settings-mode");
     tooltip.style.display = "none";
     overlay.style.clipPath = "";
