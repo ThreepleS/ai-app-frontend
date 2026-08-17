@@ -2339,6 +2339,19 @@ async function mbLoadAll() {
   }
 }
 async function mbOpen() {
+  if (tourActive) {
+    mbState.favorites = TOUR_FAKE_FAVORITES;
+    mbState.cache.openrouter = TOUR_FAKE_CACHE.openrouter;
+    mbState.cache.gemini = TOUR_FAKE_CACHE.gemini;
+    mbState.cache.venice = TOUR_FAKE_CACHE.venice;
+  } else {
+    try {
+      localStorage.removeItem(mbPingStoreKey());
+      mbState.working = {};
+      mbState.lastPing = {};
+      mbState.cache = { recommended: [], openrouter: null, paid: null, gemini: null, venice: null, favorite: null };
+    } catch {}
+  }
   $("#settings").classList.remove("open");
   $("#modelBrowser").classList.add("open");
   $("#messages").style.display = "none";
@@ -2349,12 +2362,6 @@ async function mbOpen() {
   mbState.selectedId = currentModelId || mbState.selectedId;
   mbLoadPingStore();
   await mbLoadFavorites();
-  if (tourActive) {
-    mbState.favorites = TOUR_FAKE_FAVORITES;
-    mbState.cache.openrouter = TOUR_FAKE_CACHE.openrouter;
-    mbState.cache.gemini = TOUR_FAKE_CACHE.gemini;
-    mbState.cache.venice = TOUR_FAKE_CACHE.venice;
-  }
   await mbRenderList();
   if (!tourActive) mbLoadAll();
   if (window.lucide) lucide.createIcons();
