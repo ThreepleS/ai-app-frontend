@@ -3168,6 +3168,9 @@ $("#s_replay_tour").addEventListener("click", () => {
   closeSettings();
   setTimeout(() => showBetaWelcome().then(() => initTour(true)), 120);
 });
+$("#s_bug_report").addEventListener("click", () => {
+  window.open("https://t.me/mqzxcsss", "_blank");
+});
 $("#s_keys_help").addEventListener("click", (e) => {
   e.preventDefault();
   window.open("https://cat-penguin-ac7.notion.site/API-3a753a5bca1a808bb9b6e2f4be78d865?source=copy_link", "_blank", "noopener,noreferrer");
@@ -3598,7 +3601,7 @@ async function runTour(startStep = 0) {
 
   let currentStep = startStep;
   let settingsOpenedForTour = false;
-  const SETTINGS_TARGETS = new Set(["#settings", "#s_keys", "#s_models", "#s_prompt", "#s_limit", "#s_stats", "#s_theme", "#s_sound", "#s_vibrate", "#s_admin", "#s_replay_tour"]);
+  const SETTINGS_TARGETS = new Set(["#settings", "#s_keys", "#s_models", "#s_prompt", "#s_limit", "#s_stats", "#s_theme", "#s_sound", "#s_vibrate", "#s_admin", "#s_replay_tour", "#s_bug_report"]);
 
   function positionTooltip(rect) {
     const tooltipRect = tooltip.getBoundingClientRect();
