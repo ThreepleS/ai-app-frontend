@@ -186,20 +186,20 @@
       </div>
 
       <div class="section">
-        <div class="section-head"><div class="section-title">Белый список</div></div>
+        <div class="section-head"><div class="section-title">Черный список</div></div>
         <div class="row">
-          <input id="wl_id" type="text" placeholder="Telegram ID" />
-          <select id="wl_type">
+          <input id="bl_id" type="text" placeholder="Telegram ID" />
+          <select id="bl_type">
             <option value="permanent">♾️ вечный</option>
             <option value="temporary">⏳ временный</option>
           </select>
-          <input id="wl_days" type="number" placeholder="дней" style="display:none" />
-          <input id="wl_note" type="text" placeholder="пометка" />
-          <button class="btn primary sm" onclick="wlAdd()">➕ Добавить</button>
+          <input id="bl_days" type="number" placeholder="дней" style="display:none" />
+          <input id="bl_reason" type="text" placeholder="причина" />
+          <button class="btn primary sm" onclick="blAdd()">➕ Добавить</button>
         </div>
         <div style="overflow-x:auto">
-          <table class="data-table" id="whitelist">
-            <thead><tr><th>ID</th><th>Тип</th><th>Пометка</th><th>Действия</th></tr></thead>
+          <table class="data-table" id="blacklist">
+            <thead><tr><th>ID</th><th>Тип</th><th>Причина</th><th>Действия</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -292,17 +292,17 @@
       const [s, u, w] = await Promise.all([
         pjson("summary"),
         pjson("users"),
-        pjson("whitelist", { sub_action: "list" }).catch(() => ({ ok: false })),
+        pjson("blacklist", { sub_action: "list" }).catch(() => ({ ok: false })),
       ]);
       if (s.ok) renderSummary(s);
       if (u.ok) renderUsers(u.users);
-      if (w.ok) renderWhitelist(w.whitelist);
+      if (w.ok) renderBlacklist(w.blacklist);
     }
 
     function renderSummary(s) {
       const cards = [
         ["Пользователей", s.users_total],
-        ["В белом списке", s.whitelisted],
+        ["В черном списке", s.blacklisted],
         ["Всего сообщений", s.messages_total],
         ["Всего токенов", s.tokens_total],
       ];
@@ -344,15 +344,15 @@
       if (d.ok) loadAll();
     }
 
-    function renderWhitelist(list) {
-      const tb = $("#whitelist tbody");
+    function renderBlacklist(list) {
+      const tb = $("#blacklist tbody");
       if (!list || !list.length) { tb.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;padding:16px">список пуст</td></tr>`; return; }
       tb.innerHTML = list.map((e) => {
         const isAdmin = e.user_id == ADMIN();
-        const type = e.access_type === "temporary" ? `<span class="pill temp">⏳ временный</span>` : `<span class="pill perm">♾️ вечный</span>`;
+        const type = e.block_type === "temporary" ? `<span class="pill temp">⏳ временный</span>` : `<span class="pill perm">♾️ вечный</span>`;
         let expInfo = "";
-        if (e.access_type === "temporary") {
-          const ms = expToMs(e.access_expires_at);
+        if (e.block_type === "temporary") {
+          const ms = expToMs(e.block_expires_at);
           if (ms) {
             const daysLeft = Math.max(0, Math.ceil((ms - Date.now()) / 86400000));
             const d = new Date(ms);
@@ -362,11 +362,10 @@
         return `<tr>
           <td>${isAdmin ? '<span class="pill adm">админ</span>' : ""}<span class="mono">${esc(e.user_id)}</span></td>
           <td>${type}${expInfo}</td>
-          <td>${esc(e.note) || "—"}</td>
+          <td>${esc(e.block_reason) || "—"}</td>
           <td><div class="btns">
-            <button class="btn ghost sm" onclick="wlNote(${e.user_id})">✏️ пометка</button>
-            ${e.access_type === "temporary" && !isAdmin ? `<button class="btn ghost sm" onclick="wlAddDays(${e.user_id})">➕ дни</button>` : ""}
-            ${isAdmin ? "" : `<button class="btn danger sm" onclick="wlRemove(${e.user_id})">✕ удалить</button>`}
+            ${e.block_type === "temporary" && !isAdmin ? `<button class="btn ghost sm" onclick="blAddDays(${e.user_id})">➕ дни</button>` : ""}
+            ${isAdmin ? "" : `<button class="btn danger sm" onclick="blRemove(${e.user_id})">✕ удалить</button>`}
           </div></td>
         </tr>`;
       }).join("");
@@ -374,46 +373,46 @@
     function ADMIN() { return Number(currentAdminId); }
     function expToMs(v) { if (v == null) return null; if (typeof v === "number") return v * 1000; const t = Date.parse(v); return isNaN(t) ? null : t; }
 
-    async function wlAdd() {
-      const user_id = $("#wl_id").value.trim();
-      const access_type = $("#wl_type").value;
-      const days = access_type === "temporary" ? $("#wl_days").value : null;
-      const note = $("#wl_note").value.trim();
+    async function blAdd() {
+      const user_id = $("#bl_id").value.trim();
+      const block_type = $("#bl_type").value;
+      const days = block_type === "temporary" ? $("#bl_days").value : null;
+      const block_reason = $("#bl_reason").value.trim();
       if (!user_id) { flash("введи ID", true); return; }
-      const d = await pjson("whitelist", { sub_action: "add", user_id, access_type, days, note });
+      const d = await pjson("blacklist", { sub_action: "add", user_id, block_type, days, block_reason });
       flash(d.ok ? "добавлено" : (d.error || "ошибка"));
-      if (d.ok) { $("#wl_id").value = ""; $("#wl_note").value = ""; loadAll(); }
+      if (d.ok) { $("#bl_id").value = ""; $("#bl_reason").value = ""; loadAll(); }
     }
-    async function wlAddDays(uid) {
+    async function blAddDays(uid) {
       const days = prompt("Сколько дней добавить?");
       if (days === null) return;
       const d = Number(days);
       if (isNaN(d) || d <= 0) { flash("введи положительное число дней", true); return; }
-      const r = await pjson("whitelist", { sub_action: "add_days", user_id: uid, days: d });
+      const r = await pjson("blacklist", { sub_action: "add_days", user_id: uid, days: d });
       flash(r.ok ? `добавлено ${d} дн.` : (r.error || "ошибка"));
       if (r.ok) loadAll();
     }
-    async function wlRemove(uid) {
-      if (!confirm(`Удалить ${uid} из белого списка?`)) return;
-      const d = await pjson("whitelist", { sub_action: "remove", user_id: uid });
+    async function blRemove(uid) {
+      if (!confirm(`Удалить ${uid} из черного списка?`)) return;
+      const d = await pjson("blacklist", { sub_action: "remove", user_id: uid });
       flash(d.ok ? d.message : (d.error || "ошибка"));
       if (d.ok) loadAll();
     }
-    async function wlNote(uid) {
-      const note = prompt("Новая пометка:");
-      if (note === null) return;
-      const d = await pjson("whitelist", { sub_action: "note", user_id: uid, note });
+    async function blNote(uid) {
+      const block_reason = prompt("Новая причина:");
+      if (block_reason === null) return;
+      const d = await pjson("blacklist", { sub_action: "note", user_id: uid, block_reason });
       flash(d.ok ? "сохранено" : (d.error || "ошибка"));
       if (d.ok) loadAll();
     }
     async function resetAll() {
-      if (!confirm("Сбросить ВСЕХ пользователей? Белый список сохранится.")) return;
+      if (!confirm("Сбросить ВСЕХ пользователей? Черный список сохранится.")) return;
       const d = await pjson("reset_all", {});
       flash(d.ok ? d.message : (d.error || "ошибка"));
       if (d.ok) loadAll();
     }
 
-    $("#wl_type").addEventListener("change", (e) => { $("#wl_days").style.display = e.target.value === "temporary" ? "inline" : "none"; });
+    $("#bl_type").addEventListener("change", (e) => { $("#bl_days").style.display = e.target.value === "temporary" ? "inline" : "none"; });
 
     function flash(t, isErr) {
       const m = $("#msg"); m.textContent = t; m.className = isErr ? "err flash" : "ok flash";
