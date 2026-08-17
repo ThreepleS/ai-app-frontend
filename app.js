@@ -1204,7 +1204,13 @@ function fillSettings(s) {
     $("#s_limit_slider").value = String(s.context_limit || 10);
     if ($("#limitVal")) $("#limitVal").textContent = $("#s_limit_slider").value;
   }
-  $("#s_stats").value = s.stats_display || "full";
+  const statsVal = s.stats_display || "full";
+  $("#s_stats").value = statsVal;
+  const statsPicker = document.querySelector('.seg-picker[data-name="stats_display"]');
+  if (statsPicker) {
+    statsPicker.dataset.value = statsVal;
+    syncSegPickers();
+  }
   if (s.theme) {
     theme = s.theme;
     try {
@@ -1293,6 +1299,7 @@ async function auth(devId) {
     }
     setStatus("ok");
     updateInputState();
+    await loadKeyInfo();
 
     await showBetaWelcome();
 
@@ -2258,7 +2265,7 @@ async function mbRenderList() {
     const isFree = g.free === true;
     const pingBtn =
       (g.key === "openrouter" || g.key === "gemini") && count > 0
-        ? `<button class="ping-btn" data-ping="${g.key}" ${mbState.pinging[g.key] ? "disabled" : ""}><i data-lucide='refresh-cw' class="icon"></i> Обновить</button>`
+        ? `<button class="ping-btn" data-ping="${g.key}" ${mbState.pinging[g.key] || tourActive ? "disabled" : ""}><i data-lucide='refresh-cw' class='icon'></i> Обновить</button>`
         : "";
     const pingTime =
       isFree && mbState.lastPing[g.key]
@@ -2641,18 +2648,10 @@ $("#s_save").addEventListener("click", async () => { vibClick();
     status.style.color = "#6fcf7f";
     status.innerHTML = "сохранено <i data-lucide='check' class='lucide'></i>";
     if (window.lucide) lucide.createIcons();
-    PROVIDERS.forEach((p) => {
-      const inp = $("#s_key_" + p);
-      if (inp && !inp.disabled) inp.value = "";
-    });
     await loadKeyInfo();
     needsKey = false;
     updateEmptyState();
     updateInputState();
-    setTimeout(() => {
-      closeSettings();
-      mbOpen();
-    }, 800);
     log("модель: " + data.settings.selected_model);
     if (tourActive && localStorage.getItem(TOUR_KEY) === "true") {
       const congrats = $("#tourCongrats");
