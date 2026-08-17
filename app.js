@@ -16,7 +16,7 @@ console.log("[app] script start");
 const $ = (s) => document.querySelector(s);
 const log = (t) => {
   const el = $("#log");
-  if (el) el.innerHTML = t;
+  if (el) el.textContent = t;
 };
 if (document.body) {
   document.body.setAttribute("data-ran", "1");
@@ -115,7 +115,7 @@ let currentUserId = "";
 let currentModelId = "";
 let isAdmin = false;
 let needsKey = true;
-const savedKeys: Record<string, boolean> = {};
+const savedKeys = {};
 let pendingImage = null;
 let lastUserMessage = "";
 
@@ -815,7 +815,8 @@ function renderMath(src) {
       ? src.slice(1, -1)
       : src;
   const html = renderMathInner(body.trim());
-  return `<span class="math">${html}</span>`;
+  const escaped = html.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  return `<span class="math">${escaped}</span>`;
 }
 function renderMarkdown(src) {
   try {
@@ -969,7 +970,7 @@ document.getElementById("ct_save").addEventListener("click", () => {
     );
   } catch {}
   saveThemeToBackend("custom");
-  toast("Тема сохранена <i data-lucide='check' class='lucide'></i>", "ok");
+  toast("Тема сохранена", "ok");
 });
 
 function loadCustomThemeEditor() {
@@ -1624,7 +1625,7 @@ ctxMenu.addEventListener("click", (e) => {
     const text = ctxMsgEl.innerText || ctxMsgEl.textContent;
     navigator.clipboard
       .writeText(text.trim())
-      .then(() => toast("Скопировано <i data-lucide='check' class='lucide'></i>", "ok"))
+      .then(() => toast("Скопировано", "ok"))
       .catch(() => {});
   } else if (act === "reply") {
     const text = (
@@ -2378,7 +2379,7 @@ async function mbSelect(id) {
     const detailEl = document.querySelector('.mb-item-detail[data-detail-id="' + esc(id) + '"]');
     if (detailEl) detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) {
-    toast("<i data-lucide='alert-triangle' class='lucide'></i> " + e, "err");
+    toast(String(e), "err");
   }
   if (window.lucide) lucide.createIcons();
 }
@@ -2443,7 +2444,7 @@ async function mbToggleFav(id) {
     const detailEl = document.querySelector('.mb-item-detail[data-detail-id="' + esc(id) + '"]');
     if (detailEl) detailEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (e) {
-    toast("<i data-lucide='alert-triangle' class='lucide'></i> " + e, "err");
+    toast(String(e), "err");
   }
 }
 async function mbPingGroup(groupKey) {
@@ -3134,7 +3135,7 @@ function exportChat(format) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  toast("Экспортировано <i data-lucide='check' class='lucide'></i>", "ok");
+  toast("Экспортировано", "ok");
 }
 function exportDialog(dialog, format) {
   const msgs = dialog.messages || [];
@@ -3160,7 +3161,7 @@ function exportDialog(dialog, format) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  toast("Экспортировано <i data-lucide='check' class='lucide'></i>", "ok");
+  toast("Экспортировано", "ok");
 }
 $("#s_replay_tour").addEventListener("click", () => {
   localStorage.removeItem(TOUR_KEY);
@@ -3338,8 +3339,11 @@ function showConfirm(title, message) {
 function showAlert(title, message) {
   return new Promise((resolve) => {
     const modal = $("#alertModal");
-  $("#alertTitle").textContent = title || "Внимание";
-  $("#alertBody").innerHTML = message || "";
+    $("#alertTitle").textContent = title || "Внимание";
+    const bodyEl = $("#alertBody");
+    if (bodyEl) {
+      bodyEl.textContent = message || "";
+    }
     modal.classList.add("open");
     const cleanup = () => {
       modal.classList.remove("open");
@@ -3377,7 +3381,7 @@ function toast(msg, type) {
     }
     const el = document.createElement("div");
     el.className = "toast" + (type ? " " + type : "");
-    el.innerHTML = msg;
+    el.textContent = msg;
     wrap.appendChild(el);
     requestAnimationFrame(() => {
       el.style.opacity = "1";
@@ -3390,8 +3394,8 @@ function toast(msg, type) {
     }, 2600);
   } catch (e) {
     try {
-      $("#alertModal");
-      $("#alertBody").innerHTML = msg;
+      const bodyEl = $("#alertBody");
+      if (bodyEl) bodyEl.textContent = msg;
       $("#alertModal").classList.add("open");
     } catch {}
   }
