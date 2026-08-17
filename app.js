@@ -207,9 +207,13 @@ async function ensureCurrentDialog() {
   }
   activeDialogId = activeDialogId || (dialogs[0] && dialogs[0].id) || null;
   if (!activeDialogId && dialogs.length === 0) {
-    const created = await createDialogDb();
-    activeDialogId = created.id;
-    dialogs = [created];
+    try {
+      const created = await createDialogDb();
+      activeDialogId = created.id;
+      dialogs = [created];
+    } catch (e) {
+      log("не удалось создать диалог: " + e.message);
+    }
   }
   if (dialogs.length === 0) {
     activeDialogId = null;
@@ -1694,6 +1698,9 @@ $("#bar").addEventListener("submit", async (e) => { vibClick();
   if (needsKey) {
     openSettings("keys");
     return;
+  }
+  if (!activeDialogId) {
+    await ensureCurrentDialog();
   }
   const input = $("#input");
   const text = input.value.trim();
