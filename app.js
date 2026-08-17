@@ -2371,6 +2371,7 @@ async function mbOpen() {
   }
 }
 function mbClose() {
+  if (tourActive) return;
   mbState.selectedId = null;
   $("#modelBrowser").classList.remove("open");
   $("#messages").style.display = "";
@@ -3679,6 +3680,10 @@ async function runTour(startStep = 0) {
       skipBtn.style.display = "";
     }
 
+    if (step.target && step.target.startsWith("#mb_")) {
+      mbOpen();
+    }
+
     titleEl.textContent = step.title;
     bodyEl.textContent = step.body;
     nextBtn.textContent = index === steps.length - 1 ? "Завершить" : "Далее";
@@ -3730,6 +3735,7 @@ async function runTour(startStep = 0) {
     showQueuedAuthErrorIfAny();
     openDeferredSettingsIfAny();
     nextBtn.style.display = "";
+    if (!activeDialogId) ensureCurrentDialog();
   }
 
   const onNext = () => {
