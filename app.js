@@ -115,6 +115,7 @@ let currentUserId = "";
 let currentModelId = "";
 let isAdmin = false;
 let needsKey = true;
+const savedKeys: Record<string, boolean> = {};
 let pendingImage = null;
 let lastUserMessage = "";
 
@@ -1388,13 +1389,13 @@ function collectProviderKeys() {
     const inp = $("#s_key_" + p);
     if (!inp || inp.disabled) return;
     const v = (inp.value || "").trim();
-    if (v) keys[p] = v;
+    if (!v || v === "••••••••••••••••") return;
+    keys[p] = v;
   });
   return keys;
 }
 function hasProviderKey(provider) {
-  const k = ($("#s_key_" + provider) || {}).value || "";
-  return !!k.trim();
+  return !!savedKeys[provider];
 }
 async function loadKeyInfo() {
   try {
@@ -1411,11 +1412,10 @@ async function loadKeyInfo() {
       const st = $("#key_status_" + p);
       const inp = $("#s_key_" + p);
       if (!st) return;
+      savedKeys[p] = !!k.has;
       if (k.has) {
         st.innerHTML = "<i data-lucide='check' class='lucide'></i> сохранён";
-        if (inp && !inp.disabled && !inp.value) {
-          inp.value = "••••••••••••••••";
-        }
+        if (inp && !inp.disabled) inp.value = "";
       } else {
         st.innerHTML = "— нет";
         if (inp && !inp.disabled) inp.value = "";
