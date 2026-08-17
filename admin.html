@@ -186,7 +186,10 @@
       </div>
 
       <div class="section">
-        <div class="section-head"><div class="section-title">Черный список</div></div>
+        <div class="section-head">
+          <div class="section-title">Черный список</div>
+          <button class="btn danger sm" id="blToggle" onclick="blToggle()">Выключить</button>
+        </div>
         <div class="row">
           <input id="bl_id" type="text" placeholder="Telegram ID" />
           <select id="bl_type">
@@ -297,6 +300,18 @@
       if (s.ok) renderSummary(s);
       if (u.ok) renderUsers(u.users);
       if (w.ok) renderBlacklist(w.blacklist);
+      const toggleBtn = $("#blToggle");
+      if (toggleBtn) {
+        const enabled = s.blacklist_enabled !== false;
+        toggleBtn.textContent = enabled ? "Выключить" : "Включить";
+        toggleBtn.className = enabled ? "btn danger sm" : "btn primary sm";
+      }
+    }
+
+    async function blToggle() {
+      const d = await pjson("blacklist", { sub_action: "toggle", enabled: !($("#blToggle")?.textContent?.trim() === "Включить") });
+      flash(d.ok ? (d.blacklist_enabled ? "включено" : "выключено") : (d.error || "ошибка"));
+      if (d.ok) loadAll();
     }
 
     function renderSummary(s) {
