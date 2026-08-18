@@ -403,7 +403,12 @@ async function autoSaveCurrentDialog() {
       msgs.push(msgObj);
     });
     const currentDialog = currentDialogData || (window.__dialogsCache || []).find((d) => d.id === activeDialogId) || {};
-    const dialog = { id: activeDialogId, messages: msgs, model: currentModelId || "", name: currentDialog.name || "", updated_at: Date.now() };
+    let dialogName = currentDialog.name || "";
+    if (!dialogName) {
+      const activeItem = document.querySelector(`.dialog-item-main[data-id="${activeDialogId}"] .dialog-name-text`);
+      if (activeItem) dialogName = activeItem.textContent || "";
+    }
+    const dialog = { id: activeDialogId, messages: msgs, model: currentModelId || "", name: dialogName, updated_at: Date.now() };
     try {
       const saved = await saveDialogToDb(dialog);
       if (saved && saved.name) {
@@ -2836,7 +2841,7 @@ if (limitSlider) {
     const modePicker = document.querySelector('.seg-picker[data-name="context_limit_mode"]');
     const mode = modePicker ? modePicker.dataset.value : "messages";
     if (mode === "tokens") {
-      $("#limitVal").textContent = limitSlider.value + " токенов";
+      $("#limitVal").textContent = parseInt(limitSlider.value).toLocaleString("ru-RU") + " токенов";
     } else {
       $("#limitVal").textContent = limitSlider.value;
     }
@@ -2858,6 +2863,7 @@ function updateLimitModeVisibility() {
   const rc = document.querySelector(".range-container");
   const lv = $("#limitVal");
   const fullLabel = document.querySelector(".full-context-label");
+  const slider = $("#s_limit_slider");
   if (mode === "full") {
     if (rc) rc.style.display = "none";
     if (lv) lv.style.display = "none";
@@ -2866,11 +2872,23 @@ function updateLimitModeVisibility() {
     if (rc) rc.style.display = "flex";
     if (lv) lv.style.display = "inline-block";
     if (fullLabel) fullLabel.style.display = "none";
-    if (lv) lv.textContent = (parseInt(($("#s_limit")?.value || "4000"), 10)) + " токенов";
+    if (slider) {
+      slider.min = "500";
+      slider.max = "32000";
+      slider.step = "500";
+      if (parseInt(slider.value) < 500) slider.value = "4000";
+      $("#s_limit").value = slider.value;
+    }
+    if (lv) lv.textContent = (parseInt(($("#s_limit")?.value || "4000"), 10)).toLocaleString("ru-RU") + " токенов";
   } else {
     if (rc) rc.style.display = "flex";
     if (lv) lv.style.display = "inline-block";
     if (fullLabel) fullLabel.style.display = "none";
+    if (slider) {
+      slider.min = "1";
+      slider.max = "100";
+      slider.step = "1";
+    }
     if (lv) lv.textContent = $("#s_limit")?.value || "10";
   }
 }
