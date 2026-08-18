@@ -254,6 +254,7 @@ function renderDialog(dialog) {
     updateEmptyState();
     currentModelId = dialog.model || currentModelId;
     if (window.lucide) lucide.createIcons();
+    updateContextStats();
   }, 180);
 }
 
@@ -1196,6 +1197,57 @@ function rerenderAllStats() {
   });
 }
 
+function getUsedTokens() {
+  let used = 0;
+  const msgs = currentDialogData?.messages || [];
+  for (const m of msgs) {
+    if (m.stats && typeof m.stats === "object" && m.stats.total_tokens) {
+      used += m.stats.total_tokens || 0;
+    } else if (m.content) {
+      used += estimateTokens(m.content);
+    }
+  }
+  return used;
+}
+
+function getMaxContext() {
+  const id = currentModelId;
+  if (!id) return null;
+  const raw = mbFind(id) || mbFindCacheOnly(id);
+  if (!raw) return null;
+  return raw.context != null ? raw.context : null;
+}
+
+function formatNum(n) {
+  if (n == null) return "—";
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  return String(n);
+}
+
+function updateContextStats() {
+  const el = $("#ctxStats");
+  const tokensEl = $("#ctxTokens");
+  const percentEl = $("#ctxPercent");
+  if (!el || !tokensEl || !percentEl) return;
+
+  const used = getUsedTokens();
+  const maxCtx = getMaxContext();
+  const textEl = tokensEl.querySelector(".ctx-text");
+  if (textEl) textEl.textContent = formatNum(used) + " " + formatNum(maxCtx);
+
+  let pct = 0;
+  if (maxCtx && maxCtx > 0) pct = Math.min(100, Math.round((used / maxCtx) * 100));
+  percentEl.textContent = pct + "%";
+
+  el.classList.remove("warn", "danger");
+  if (pct >= 90) el.classList.add("danger");
+  else if (pct >= 70) el.classList.add("warn");
+
+  if (used > 0 || maxCtx) el.style.display = "";
+  else el.style.display = "none";
+}
+
 const inTelegram = !!(
   window.Telegram &&
   window.Telegram.WebApp &&
@@ -1400,6 +1452,7 @@ async function auth(devId) {
     } else {
       await ensureCurrentDialog();
     }
+    updateContextStats();
 
     log("модель: " + (data.settings.selected_model || "—"));
     // Показываем чат
@@ -1910,6 +1963,7 @@ $("#bar").addEventListener("submit", async (e) => { vibClick();
   } finally {
     if (sendBtn) sendBtn.classList.remove("typing");
     await saveLocalHistory();
+    updateContextStats();
   }
 });
 
@@ -2512,6 +2566,7 @@ async function mbPick(id) {
     const raw = mbFind(id);
     log("модель: " + id);
     mbClose();
+    updateContextStats();
   } catch (e) {
     await showAlert("Ошибка", "<i data-lucide='alert-triangle' class='lucide'></i> " + String(e));
   }
@@ -3262,6 +3317,7 @@ $("#newChatBtn").addEventListener("click", async () => { vibClick();
     currentDialogData = created;
     renderDialog(created);
     renderDialogsPanel();
+    updateContextStats();
     toast("Новый диалог начат", "ok");
   } catch (e) {
     const errText = e && e.message ? e.message : String(e);

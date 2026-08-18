@@ -31,6 +31,13 @@
     <div id="status" style="display:none"></div>
     <div id="tgDebug" style="display:none; position:fixed; top:0; left:0; right:0; background:#000; color:#0f0; font-family:monospace; font-size:11px; padding:8px; z-index:99999; max-height:30vh; overflow:auto; white-space:pre-wrap;"></div>
     <header>
+      <div id="ctxStats" class="ctx-stats" style="display: none;">
+        <span id="ctxTokens" class="ctx-tokens" title="Использовано / Максимум токенов">
+          <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span class="ctx-text">0 / 0</span>
+        </span>
+        <span id="ctxPercent" class="ctx-percent" title="Процент заполнения контекста">0%</span>
+      </div>
       <div style="flex: 1"></div>
       <button
         id="models"
@@ -772,7 +779,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app.js?v=20260818_1748"></script>
+    <script src="./app.js?v=20260818_1804"></script>
     <!-- DEV ONLY: мобильная консоль отладки (eruda). Не удалять временно. -->
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>
@@ -781,6 +788,7 @@
     </script>
   </body>
 </html>
+
 
 
 

@@ -430,6 +430,59 @@ header {
   position: relative;
   z-index: 5;
 }
+
+.ctx-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(8px);
+  transition: opacity 0.2s;
+}
+.ctx-stats:hover {
+  border-color: var(--stroke-strong);
+}
+.ctx-tokens {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 1;
+}
+.ctx-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+.ctx-text {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
+.ctx-percent {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  opacity: 0.8;
+  white-space: nowrap;
+  line-height: 1;
+  padding-left: 4px;
+  border-left: 1px solid var(--stroke);
+}
+.ctx-stats.warn .ctx-percent {
+  color: var(--amber);
+  opacity: 1;
+}
+.ctx-stats.danger .ctx-percent {
+  color: var(--red);
+  opacity: 1;
+}
 .brand {
   display: flex;
   align-items: center;
