@@ -2888,6 +2888,11 @@ function updateLimitModeVisibility() {
       slider.min = "1";
       slider.max = "100";
       slider.step = "1";
+      let v = parseInt(slider.value, 10);
+      if (isNaN(v) || v < 1) v = 10;
+      if (v > 100) v = 100;
+      slider.value = String(v);
+      $("#s_limit").value = slider.value;
     }
     if (lv) lv.textContent = $("#s_limit")?.value || "10";
   }
