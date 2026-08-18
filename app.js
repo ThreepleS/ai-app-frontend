@@ -1227,14 +1227,32 @@ function formatNum(n) {
 
 function updateContextStats() {
   const el = $("#ctxStats");
-  const tokensEl = $("#ctxTokens");
+  const textEl = $("#ctxText");
+  const sentEl = $("#ctxSent .ctx-val");
+  const recvEl = $("#ctxRecv .ctx-val");
   const percentEl = $("#ctxPercent");
-  if (!el || !tokensEl || !percentEl) return;
+  if (!el || !textEl || !sentEl || !recvEl || !percentEl) return;
 
-  const used = getUsedTokens();
+  const msgs = currentDialogData?.messages || [];
+  let used = 0;
+  let sent = 0;
+  let recv = 0;
+  for (const m of msgs) {
+    const t = estimateTokens(m.content || "");
+    used += t;
+    if (m.role === "user") sent += t;
+    else if (m.role === "bot") recv += t;
+    if (m.stats && typeof m.stats === "object") {
+      if (m.stats.prompt_tokens) sent += m.stats.prompt_tokens;
+      if (m.stats.completion_tokens) recv += m.stats.completion_tokens;
+      if (m.stats.total_tokens) used += m.stats.total_tokens;
+    }
+  }
+
   const maxCtx = getMaxContext();
-  const textEl = tokensEl.querySelector(".ctx-text");
-  if (textEl) textEl.textContent = formatNum(used) + " " + formatNum(maxCtx);
+  textEl.textContent = formatNum(used) + " " + formatNum(maxCtx);
+  sentEl.textContent = formatNum(sent);
+  recvEl.textContent = formatNum(recv);
 
   let pct = 0;
   if (maxCtx && maxCtx > 0) pct = Math.min(100, Math.round((used / maxCtx) * 100));

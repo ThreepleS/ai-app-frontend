@@ -465,6 +465,38 @@ header {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.2px;
 }
+.ctx-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--stroke);
+  flex: 0 0 auto;
+}
+.ctx-sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 1;
+  opacity: 0.85;
+}
+.ctx-recv {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 1;
+  opacity: 0.85;
+}
+.ctx-val {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
 .ctx-percent {
   font-size: 10px;
   font-weight: 600;
@@ -473,7 +505,6 @@ header {
   white-space: nowrap;
   line-height: 1;
   padding-left: 4px;
-  border-left: 1px solid var(--stroke);
 }
 .ctx-stats.warn .ctx-percent {
   color: var(--amber);
