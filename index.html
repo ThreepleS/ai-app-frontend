@@ -31,25 +31,27 @@
     <div id="status" style="display:none"></div>
     <div id="tgDebug" style="display:none; position:fixed; top:0; left:0; right:0; background:#000; color:#0f0; font-family:monospace; font-size:11px; padding:8px; z-index:99999; max-height:30vh; overflow:auto; white-space:pre-wrap;"></div>
     <header>
-      <div style="flex: 1"></div>
       <div id="ctxStats" class="ctx-stats" style="display: none;">
-        <span class="ctx-tokens" title="Использовано / Максимум токенов">
-          <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-          <span id="ctxText" class="ctx-text">0 / 0</span>
-        </span>
-        <span class="ctx-sep"></span>
-        <span class="ctx-row">
-          <span id="ctxSent" class="ctx-sent" title="Отправлено токенов">
+        <div class="ctx-row">
+          <span class="ctx-tokens" title="Использовано / Максимум токенов">
+            <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span id="ctxText" class="ctx-text">0 / 0</span>
+          </span>
+          <span class="ctx-sep"></span>
+          <span id="ctxPercent" class="ctx-percent" title="Процент заполнения контекста">0%</span>
+        </div>
+        <div class="ctx-row ctx-row-io">
+          <span id="ctxSent" class="ctx-io" title="Отправлено токенов">
             <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
             <span class="ctx-val">0</span>
           </span>
-          <span id="ctxRecv" class="ctx-recv" title="Получено токенов">
+          <span id="ctxRecv" class="ctx-io" title="Получено токенов">
             <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             <span class="ctx-val">0</span>
           </span>
-        </span>
-        <span class="ctx-percent" id="ctxPercent" title="Процент заполнения контекста">0%</span>
+        </div>
       </div>
+      <div style="flex: 1"></div>
       <button
         id="models"
         class="hbtn"
@@ -790,7 +792,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app.js?v=20260818_1836"></script>
+    <script src="./app.js?v=20260818_1841"></script>
     <!-- DEV ONLY: мобильная консоль отладки (eruda). Не удалять временно. -->
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>
@@ -799,6 +801,7 @@
     </script>
   </body>
 </html>
+
 
 
 

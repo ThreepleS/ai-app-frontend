@@ -417,10 +417,9 @@ body {
 header {
   flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px 6px;
+  padding: 10px 12px 8px;
   backdrop-filter: blur(18px) saturate(140%);
   background: linear-gradient(
     180deg,
@@ -434,21 +433,30 @@ header {
 
 .ctx-stats {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 3px;
   flex: 0 0 auto;
-  padding: 3px 7px;
-  border-radius: 6px;
+  padding: 5px 8px;
+  border-radius: 8px;
   background: var(--glass);
   border: 1px solid var(--stroke);
   backdrop-filter: blur(8px);
   transition: opacity 0.2s;
-  order: 10;
-  margin-left: auto;
-  margin-right: auto;
+  min-width: 140px;
 }
 .ctx-stats:hover {
   border-color: var(--stroke-strong);
+}
+.ctx-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  line-height: 1;
+}
+.ctx-row-io {
+  gap: 8px;
+  padding-left: 18px;
 }
 .ctx-tokens {
   display: inline-flex;
@@ -464,6 +472,7 @@ header {
   width: 12px;
   height: 12px;
   opacity: 0.7;
+  flex-shrink: 0;
 }
 .ctx-text {
   font-variant-numeric: tabular-nums;
@@ -475,23 +484,7 @@ header {
   background: var(--stroke);
   flex: 0 0 auto;
 }
-.ctx-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.ctx-sent {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 9px;
-  font-weight: 500;
-  color: var(--muted);
-  white-space: nowrap;
-  line-height: 1;
-  opacity: 0.85;
-}
-.ctx-recv {
+.ctx-io {
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -513,7 +506,6 @@ header {
   opacity: 0.8;
   white-space: nowrap;
   line-height: 1;
-  padding-left: 3px;
 }
 .ctx-stats.warn .ctx-percent {
   color: var(--amber);
