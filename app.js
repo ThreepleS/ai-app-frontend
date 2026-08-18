@@ -393,7 +393,7 @@ async function autoSaveCurrentDialog() {
       else text = el.innerText || el.textContent;
       if (role === "bot" && el.dataset.raw) text = el.dataset.raw;
       const imgEl = el.querySelector("img");
-      const msgObj: any = {
+      const msgObj = {
         role,
         content: text.replace("&#x27F3; перегенерировать", "").trim(),
         image: imgEl ? imgEl.src : null,
