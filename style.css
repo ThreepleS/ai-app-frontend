@@ -760,6 +760,23 @@ header {
   white-space: pre-wrap;
   opacity: 0.85;
 }
+.stats-compact {
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.7;
+  font-style: italic;
+}
+.stats-full {
+  font-size: 11px;
+  color: var(--text-secondary);
+  opacity: 0.9;
+  background: var(--glass);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--stroke);
+  display: inline-block;
+  margin-top: 6px;
+}
 
 /* Context menu */
 #ctxMenu {

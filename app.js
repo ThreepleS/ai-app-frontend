@@ -279,16 +279,28 @@ function renderDialogsPanel() {
           hour: "2-digit",
           minute: "2-digit",
         });
+        const messages = d.messages || [];
+        const msgCount = messages.length;
+        let totalTokens = 0;
+        messages.forEach((m) => {
+          if (m.stats && typeof m.stats === "object") {
+            const t = m.stats.total_tokens ?? ((m.stats.prompt_tokens || 0) + (m.stats.completion_tokens || 0));
+            totalTokens += t || 0;
+          }
+        });
+        const tokensStr = totalTokens ? `${totalTokens} токенов` : "";
+        const metaParts = [date, `${msgCount} сообщ.`];
+        if (tokensStr) metaParts.push(tokensStr);
         item.innerHTML = `
           <div class="dialog-item-main" data-id="${d.id}">
             <div class="dialog-item-name" title="Нажми, чтобы переименовать">
               <span class="dialog-name-text">${esc(d.name || "")}</span>
-              <button class="dialog-item-edit" data-edit="${d.id}" title="Переименовать"><i data-lucide='pencil' class="icon"></i></button>
-              <button class="dialog-item-export" data-export="${d.id}" title="Экспорт"><i data-lucide='download' class="icon"></i></button>
+              <button class="dialog-item-edit" data-edit="${d.id}" title="Переименовать"><i data-lucide='pencil' class="icon'></i></button>
+              <button class="dialog-item-export" data-export="${d.id}" title="Экспорт"><i data-lucide='download' class='icon'></i></button>
             </div>
-            <div class="dialog-item-meta">${date} · ${(d.messages || []).length} сообщ.</div>
+            <div class="dialog-item-meta">${metaParts.join(" · ")}</div>
           </div>
-          <button class="dialog-item-del" data-del="${d.id}" title="Удалить"><i data-lucide='trash-2' class="icon"></i></button>
+          <button class="dialog-item-del" data-del="${d.id}" title="Удалить"><i data-lucide='trash-2' class='icon'></i></button>
         `;
         panel.appendChild(item);
         const startRename = () => {
@@ -375,18 +387,23 @@ async function autoSaveCurrentDialog() {
     box.querySelectorAll(".msg").forEach((el) => {
       const role = el.classList.contains("user") ? "user" : "bot";
       let text = "";
-    const md = el.querySelector(".md");
-    if (md) text = md.innerText || md.textContent;
-    else text = el.innerText || el.textContent;
-    if (role === "bot" && el.dataset.raw) text = el.dataset.raw;
+      const md = el.querySelector(".md");
+      if (md) text = md.innerText || md.textContent;
+      else text = el.innerText || el.textContent;
+      if (role === "bot" && el.dataset.raw) text = el.dataset.raw;
       const imgEl = el.querySelector("img");
-      msgs.push({
+      const msgObj: any = {
         role,
         content: text.replace("&#x27F3; перегенерировать", "").trim(),
         image: imgEl ? imgEl.src : null,
-      });
+      };
+      if (role === "bot" && el.dataset.stats) {
+        try { msgObj.stats = JSON.parse(el.dataset.stats); } catch {}
+      }
+      msgs.push(msgObj);
     });
-    const dialog = { id: activeDialogId, messages: msgs, model: currentModelId || "", name: "", updated_at: Date.now() };
+    const currentDialog = currentDialogData || (window.__dialogsCache || []).find((d) => d.id === activeDialogId) || {};
+    const dialog = { id: activeDialogId, messages: msgs, model: currentModelId || "", name: currentDialog.name || "", updated_at: Date.now() };
     try {
       const saved = await saveDialogToDb(dialog);
       if (saved && saved.name) {
@@ -1124,6 +1141,56 @@ function addHistoryMessage(role, content, image) {
   if (window.lucide) lucide.createIcons();
 }
 
+function estimateTokens(text) {
+  if (!text) return 0;
+  const s = String(text);
+  let tokens = 0;
+  let i = 0;
+  while (i < s.length) {
+    const c = s.charCodeAt(i);
+    if (c < 0x800) tokens += 0.5;
+    else if (c < 0x10000) tokens += 1;
+    else tokens += 1.5;
+    i++;
+  }
+  return Math.max(1, Math.ceil(tokens / 3.5));
+}
+
+function formatStatsRaw(stats, mode) {
+  if (!stats) return "";
+  const m = mode || ($("#s_stats")?.value || "full");
+  if (m === "disabled") return "";
+  if (m === "compact") {
+    const tt = stats.total_tokens ?? ((stats.prompt_tokens || 0) + (stats.completion_tokens || 0));
+    return tt ? `токенов: ${tt}` : "";
+  }
+  const parts = [];
+  if (stats.model) parts.push(`модель: ${stats.model}`);
+  if (stats.prompt_tokens != null) parts.push(`prompt: ${stats.prompt_tokens}`);
+  if (stats.completion_tokens != null) parts.push(`completion: ${stats.completion_tokens}`);
+  if (stats.total_tokens != null) parts.push(`total: ${stats.total_tokens}`);
+  return parts.join(" | ");
+}
+
+function rerenderAllStats() {
+  const mode = $("#s_stats")?.value || "full";
+  box.querySelectorAll(".stats").forEach((el) => {
+    const botMsg = el.closest(".msg.bot");
+    if (!botMsg) return;
+    let statsObj = null;
+    if (botMsg.dataset.stats) {
+      try { statsObj = JSON.parse(botMsg.dataset.stats); } catch {}
+    }
+    const text = formatStatsRaw(statsObj, mode);
+    if (text) {
+      el.textContent = text;
+      el.style.display = "";
+    } else {
+      el.style.display = "none";
+    }
+  });
+}
+
 const inTelegram = !!(
   window.Telegram &&
   window.Telegram.WebApp &&
@@ -1217,6 +1284,13 @@ function fillSettings(s) {
     statsPicker.dataset.value = statsVal;
     syncSegPickers();
   }
+  const limitMode = localStorage.getItem("context_limit_mode") || "messages";
+  const limitModePicker = document.querySelector('.seg-picker[data-name="context_limit_mode"]');
+  if (limitModePicker) {
+    limitModePicker.dataset.value = limitMode;
+    syncSegPickers();
+  }
+  updateLimitModeVisibility();
   if (s.theme) {
     theme = s.theme;
     try {
@@ -1724,15 +1798,30 @@ $("#bar").addEventListener("submit", async (e) => { vibClick();
   try {
     const systemPromptToSend = ($("#s_prompt")?.value || "").trim();
     const contextLimitFull = $("#s_limit_full")?.checked || false;
-    const contextLimit = contextLimitFull ? 9999 : parseInt(($("#s_limit")?.value || "10"), 10);
     let currentHist = currentDialogData?.messages || [];
-    if (!contextLimitFull && currentHist.length > contextLimit) {
-      currentHist = currentHist.slice(-contextLimit);
+    if (!contextLimitFull) {
+      const limitMode = localStorage.getItem("context_limit_mode") || "messages";
+      if (limitMode === "messages") {
+        const contextLimit = parseInt(($("#s_limit")?.value || "10"), 10);
+        if (currentHist.length > contextLimit) currentHist = currentHist.slice(-contextLimit);
+      } else if (limitMode === "tokens") {
+        const maxTokens = parseInt(($("#s_limit")?.value || "4000"), 10);
+        let used = 0;
+        const sliced = [];
+        for (let i = currentHist.length - 1; i >= 0; i--) {
+          const t = estimateTokens(currentHist[i].content || "") + 4;
+          if (used + t > maxTokens && sliced.length > 0) break;
+          sliced.unshift(currentHist[i]);
+          used += t;
+        }
+        currentHist = sliced;
+      }
     }
     const chatPayload = {
       message: text,
       image: imageToSend,
       context_limit_full: contextLimitFull || undefined,
+      context_limit_mode: contextLimitFull ? undefined : (localStorage.getItem("context_limit_mode") || "messages"),
     };
     if (systemPromptToSend) chatPayload.system_prompt = systemPromptToSend;
     if (currentHist.length > 0) chatPayload.history = currentHist;
@@ -1780,10 +1869,18 @@ $("#bar").addEventListener("submit", async (e) => { vibClick();
           }
         }
         if (botEl) botEl.dataset.raw = ev.markdown || full;
-        if (ev.stats) {
+        if (ev.stats && botEl) {
+          const statsObj = {
+            model: ev.model || model,
+            prompt_tokens: ev.usage?.prompt_tokens ?? ev.usage?.promptTokenCount,
+            completion_tokens: ev.usage?.completion_tokens ?? ev.usage?.candidatesTokenCount,
+            total_tokens: ev.usage?.total_tokens ?? ev.usage?.totalTokenCount,
+          };
+          botEl.dataset.stats = JSON.stringify(statsObj);
           const s = document.createElement("div");
-          s.className = "stats";
-          s.textContent = ev.stats;
+          const mode = ($("#s_stats")?.value || "full");
+          s.className = "stats stats-" + mode;
+          s.textContent = formatStatsRaw(statsObj, mode);
           botEl.appendChild(s);
         }
         if (botEl) addCodeCopy(botEl);
@@ -2634,6 +2731,7 @@ $("#s_save").addEventListener("click", async () => { vibClick();
   status.textContent = "";
   const contextLimit = $("#s_limit").value;
   const statsDisplay = $("#s_stats").value;
+  const limitMode = localStorage.getItem("context_limit_mode") || "messages";
   try {
     localStorage.setItem("local_settings", JSON.stringify({
       notify_vibrate: $("#s_vibrate") ? $("#s_vibrate").checked : false,
@@ -2650,6 +2748,7 @@ $("#s_save").addEventListener("click", async () => { vibClick();
     selected_model: currentModelId,
     system_prompt: $("#s_prompt").value,
     context_limit: contextLimit,
+    context_limit_mode: limitMode,
     stats_display: statsDisplay,
     theme: ["monochrome", "hacker", "candy"].includes(theme) || ["nord", "synthwave"].includes(theme) ? "dark" : theme,
     notify_vibrate: $("#s_vibrate") ? $("#s_vibrate").checked : false,
@@ -2674,6 +2773,7 @@ $("#s_save").addEventListener("click", async () => { vibClick();
     needsKey = false;
     updateEmptyState();
     updateInputState();
+    rerenderAllStats();
     log("модель: " + data.settings.selected_model);
     if (tourActive && localStorage.getItem(TOUR_KEY) === "true") {
       const congrats = $("#tourCongrats");
@@ -2733,7 +2833,13 @@ if (vibSlider) {
 const limitSlider = $("#s_limit_slider");
 if (limitSlider) {
   limitSlider.addEventListener("input", () => {
-    $("#limitVal").textContent = limitSlider.value;
+    const modePicker = document.querySelector('.seg-picker[data-name="context_limit_mode"]');
+    const mode = modePicker ? modePicker.dataset.value : "messages";
+    if (mode === "tokens") {
+      $("#limitVal").textContent = limitSlider.value + " токенов";
+    } else {
+      $("#limitVal").textContent = limitSlider.value;
+    }
     $("#s_limit").value = limitSlider.value;
   });
 }
@@ -2746,10 +2852,56 @@ function updateLimitVisibility() {
   if (lv) lv.style.display = full ? "none" : "inline-block";
 }
 
+function updateLimitModeVisibility() {
+  const modePicker = document.querySelector('.seg-picker[data-name="context_limit_mode"]');
+  const mode = modePicker ? modePicker.dataset.value : "messages";
+  const rc = document.querySelector(".range-container");
+  const lv = $("#limitVal");
+  const fullLabel = document.querySelector(".full-context-label");
+  if (mode === "full") {
+    if (rc) rc.style.display = "none";
+    if (lv) lv.style.display = "none";
+    if (fullLabel) fullLabel.style.display = "none";
+  } else if (mode === "tokens") {
+    if (rc) rc.style.display = "flex";
+    if (lv) lv.style.display = "inline-block";
+    if (fullLabel) fullLabel.style.display = "none";
+    if (lv) lv.textContent = (parseInt(($("#s_limit")?.value || "4000"), 10)) + " токенов";
+  } else {
+    if (rc) rc.style.display = "flex";
+    if (lv) lv.style.display = "inline-block";
+    if (fullLabel) fullLabel.style.display = "none";
+    if (lv) lv.textContent = $("#s_limit")?.value || "10";
+  }
+}
+
 const limitFullToggle = $("#s_limit_full");
 if (limitFullToggle) {
   limitFullToggle.addEventListener("change", updateLimitVisibility);
   updateLimitVisibility();
+}
+
+const limitModePicker = document.querySelector('.seg-picker[data-name="context_limit_mode"]');
+if (limitModePicker) {
+  limitModePicker.addEventListener("click", (e) => { vibClick();
+    const btn = e.target.closest(".seg-btn");
+    if (!btn) return;
+    limitModePicker.dataset.value = btn.dataset.val;
+    localStorage.setItem("context_limit_mode", btn.dataset.val);
+    syncSegPickers();
+    updateLimitModeVisibility();
+  });
+}
+
+const statsPicker = document.querySelector('.seg-picker[data-name="stats_display"]');
+if (statsPicker) {
+  statsPicker.addEventListener("click", (e) => { vibClick();
+    const btn = e.target.closest(".seg-btn");
+    if (!btn) return;
+    statsPicker.dataset.value = btn.dataset.val;
+    syncSegPickers();
+    rerenderAllStats();
+  });
 }
 
 let systemPromptSaveTimer;
@@ -3111,15 +3263,14 @@ function vibClick() {
   if (vib && vib.checked && navigator.vibrate) navigator.vibrate(10);
 }
 function syncSegPickers() {
-
-document.querySelectorAll(".seg-picker").forEach((picker) => {
+  document.querySelectorAll(".seg-picker").forEach((picker) => {
     const name = picker.dataset.name;
     const val = picker.dataset.value;
     picker.querySelectorAll(".seg-btn").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.val === val);
     });
     const hidden = picker.parentElement.querySelector(
-      `input[type="hidden"][id="${name === "context_limit" ? "s_limit" : "s_stats"}"]`,
+      `input[type="hidden"][id="${name === "context_limit" || name === "context_limit_mode" ? "s_limit" : "s_stats"}"]`,
     );
     if (hidden) hidden.value = val;
   });

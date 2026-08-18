@@ -353,20 +353,30 @@
                 <div>
                   <div class="section-title">Лимит контекста</div>
                   <div class="settings-card-desc">
-                    Сколько последних сообщений помнить.
+                    Сколько контекста отправлять модели.
                   </div>
                 </div>
                 <div class="range-val" id="limitVal" style="background: var(--glass); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--stroke); font-weight: bold;">10</div>
+              </div>
+              <div
+                class="seg-picker"
+                data-name="context_limit_mode"
+                data-value="messages"
+                style="margin-bottom: 10px;"
+              >
+                <button data-val="full" class="seg-btn">Весь диалог</button>
+                <button data-val="messages" class="seg-btn active">Сообщения</button>
+                <button data-val="tokens" class="seg-btn">Токены</button>
               </div>
               <div class="range-container">
                 <input type="range" id="s_limit_slider" min="1" max="100" value="10" />
               </div>
               <input type="hidden" id="s_limit" value="10" />
-              <div class="range-row" style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+              <div class="range-row full-context-label" style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
                 <label class="custom-toggle" style="font-size: 13px; color: var(--muted); cursor: pointer;">
                   <input type="checkbox" id="s_limit_full" />
                   <span class="toggle-slider"></span>
-                  <span>Весь диалог</span>
+                  <span>Весь диалог (fallback)</span>
                 </label>
               </div>
             </div>
@@ -762,7 +772,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app.js?v=20260817_2325"></script>
+    <script src="./app.js?v=20260818_1723"></script>
     <!-- DEV ONLY: мобильная консоль отладки (eruda). Не удалять временно. -->
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>
@@ -771,6 +781,7 @@
     </script>
   </body>
 </html>
+
 
 
 
