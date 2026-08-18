@@ -417,9 +417,10 @@ body {
 header {
   flex: 0 0 auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px 8px;
+  padding: 8px 12px 6px;
   backdrop-filter: blur(18px) saturate(140%);
   background: linear-gradient(
     180deg,
@@ -436,12 +437,15 @@ header {
   align-items: center;
   gap: 6px;
   flex: 0 0 auto;
-  padding: 4px 8px;
-  border-radius: 8px;
+  padding: 3px 7px;
+  border-radius: 6px;
   background: var(--glass);
   border: 1px solid var(--stroke);
   backdrop-filter: blur(8px);
   transition: opacity 0.2s;
+  order: 10;
+  margin-left: auto;
+  margin-right: auto;
 }
 .ctx-stats:hover {
   border-color: var(--stroke-strong);
@@ -449,16 +453,16 @@ header {
 .ctx-tokens {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--muted);
   white-space: nowrap;
   line-height: 1;
 }
 .ctx-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   opacity: 0.7;
 }
 .ctx-text {
@@ -467,15 +471,20 @@ header {
 }
 .ctx-sep {
   width: 1px;
-  height: 12px;
+  height: 10px;
   background: var(--stroke);
   flex: 0 0 auto;
+}
+.ctx-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .ctx-sent {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10px;
+  gap: 2px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--muted);
   white-space: nowrap;
@@ -485,8 +494,8 @@ header {
 .ctx-recv {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10px;
+  gap: 2px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--muted);
   white-space: nowrap;
@@ -498,13 +507,13 @@ header {
   letter-spacing: 0.2px;
 }
 .ctx-percent {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--muted);
   opacity: 0.8;
   white-space: nowrap;
   line-height: 1;
-  padding-left: 4px;
+  padding-left: 3px;
 }
 .ctx-stats.warn .ctx-percent {
   color: var(--amber);
@@ -2637,8 +2646,8 @@ textarea {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
   background: var(--glass);
   border: 1px solid var(--stroke);
   cursor: pointer;
@@ -2659,12 +2668,13 @@ textarea {
 .dialog-item-name {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: 4px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 .dialog-name-text {
   min-width: 0;
@@ -2678,9 +2688,14 @@ textarea {
   color: var(--muted);
   font-size: 14px;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 10px;
+  padding: 2px 4px;
+  border-radius: 6px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   transition: background 0.2s, color 0.2s;
 }
 .dialog-item-edit:hover {
@@ -2693,9 +2708,14 @@ textarea {
   color: var(--muted);
   font-size: 14px;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 10px;
+  padding: 2px 4px;
+  border-radius: 6px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   transition: background 0.2s, color 0.2s;
 }
 .dialog-item-export:hover {

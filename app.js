@@ -1197,19 +1197,6 @@ function rerenderAllStats() {
   });
 }
 
-function getUsedTokens() {
-  let used = 0;
-  const msgs = currentDialogData?.messages || [];
-  for (const m of msgs) {
-    if (m.stats && typeof m.stats === "object" && m.stats.total_tokens) {
-      used += m.stats.total_tokens || 0;
-    } else if (m.content) {
-      used += estimateTokens(m.content);
-    }
-  }
-  return used;
-}
-
 function getMaxContext() {
   const id = currentModelId;
   if (!id) return null;
@@ -1233,21 +1220,35 @@ function updateContextStats() {
   const percentEl = $("#ctxPercent");
   if (!el || !textEl || !sentEl || !recvEl || !percentEl) return;
 
-  const msgs = currentDialogData?.messages || [];
   let used = 0;
   let sent = 0;
   let recv = 0;
-  for (const m of msgs) {
-    const t = estimateTokens(m.content || "");
-    used += t;
-    if (m.role === "user") sent += t;
-    else if (m.role === "bot") recv += t;
-    if (m.stats && typeof m.stats === "object") {
-      if (m.stats.prompt_tokens) sent += m.stats.prompt_tokens;
-      if (m.stats.completion_tokens) recv += m.stats.completion_tokens;
-      if (m.stats.total_tokens) used += m.stats.total_tokens;
+
+  box.querySelectorAll(".msg").forEach((msgEl) => {
+    const isUser = msgEl.classList.contains("user");
+    const isBot = msgEl.classList.contains("bot");
+    if (!isUser && !isBot) return;
+
+    const md = msgEl.querySelector(".md");
+    const text = (md ? (md.innerText || md.textContent || "") : (msgEl.innerText || msgEl.textContent || "")).trim();
+    const t = estimateTokens(text);
+
+    if (isUser) {
+      sent += t;
+      used += t;
+    } else if (isBot) {
+      recv += t;
+      used += t;
+      if (msgEl.dataset.stats) {
+        try {
+          const stats = JSON.parse(msgEl.dataset.stats);
+          if (stats.prompt_tokens) sent += stats.prompt_tokens;
+          if (stats.completion_tokens) recv += stats.completion_tokens;
+          if (stats.total_tokens) used += stats.total_tokens;
+        } catch {}
+      }
     }
-  }
+  });
 
   const maxCtx = getMaxContext();
   textEl.textContent = formatNum(used) + " " + formatNum(maxCtx);
