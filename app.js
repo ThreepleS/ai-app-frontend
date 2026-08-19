@@ -2501,6 +2501,30 @@ function mbDetectProvider(id) {
 
 function mbView(m) {
     const id = m.model_id || m.id;
+    // Special handling for autofree (not in any provider cache)
+    if (id === "autofree") {
+        return {
+            id: "autofree",
+            name: "AutoFree",
+            provider: "multiprovider",
+            is_free: true,
+            context: null,
+            mod_in: "text,image",
+            mod_out: "text",
+            price_prompt: null,
+            price_completion: null,
+            price_cache: null,
+            price_unit: "per_token",
+            description: "Универсальная система, которая автоматически подбирает и подключает самую мощную из доступных бесплатных нейросетей под ваш запрос.",
+            vision: true,
+            reasoning: false,
+            function_calling: false,
+            max_output: null,
+            quantization: null,
+            type: "router",
+            meta: "",
+        };
+    }
     const name = m.display_name || m.name || id;
     const provider = m.provider || mbDetectProvider(id);
     const detailMissing =
