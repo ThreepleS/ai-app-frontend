@@ -2082,6 +2082,7 @@ $("#bar").addEventListener("submit", async (e) => {
 
     const imageToSend = pendingImage ? pendingImage.dataUrl : null;
     input.value = "";
+    autoResizeTextarea(input);
     pendingImage = null;
     showAttach();
 
