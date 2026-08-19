@@ -706,7 +706,12 @@
         </svg>
       </button>
       <div class="composer">
-        <input id="input" placeholder="Сообщение или фото…" />
+        <div class="composer-wrap">
+          <textarea id="input" placeholder="Сообщение или фото…" rows="1"></textarea>
+          <button type="button" id="expandInput" class="cbtn" title="Развернуть на весь экран" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+          </button>
+        </div>
         <button type="submit" class="send-btn" title="Отправить">
           <svg
             viewBox="0 0 24 24"
@@ -732,6 +737,23 @@
         <div id="tourTooltipBody" class="tour-tooltip-body"></div>
         <div class="tour-tooltip-foot">
           <button id="tourNext" class="btn primary sm">Далее</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="fullscreenEditor" class="modal">
+      <div class="modal-backdrop" data-close="fullscreenEditor"></div>
+      <div class="modal-dialog" style="flex:1;display:flex;flex-direction:column;height:100%;max-height:none;margin:0;border-radius:0;">
+        <div class="fs-head">
+          <h3>Редактор сообщения</h3>
+          <button class="fs-close" data-close="fullscreenEditor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+        </div>
+        <div class="fs-body">
+          <textarea id="fsTextarea" placeholder="Сообщение или фото…"></textarea>
+        </div>
+        <div class="fs-foot">
+          <button class="btn ghost" id="fsCancel">Отмена</button>
+          <button class="btn primary" id="fsApply">Применить</button>
         </div>
       </div>
     </div>
@@ -785,7 +807,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app.js?v=20260819_2117"></script>
+    <script src="./app.js?v=20260819_2137"></script>
     <!-- DEV ONLY: мобильная консоль отладки (eruda). Не удалять временно. -->
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>
@@ -794,6 +816,7 @@
     </script>
   </body>
 </html>
+
 
 
 

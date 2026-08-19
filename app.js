@@ -1806,6 +1806,74 @@ document.addEventListener("paste", async (e) => {
     }
 });
 
+// --- Textarea: auto-resize, Enter/Shift+Enter, expand button ----------
+const inputEl = $("#input");
+const expandBtn = $("#expandInput");
+const fsEditor = $("#fullscreenEditor");
+const fsTextarea = $("#fsTextarea");
+const fsCancel = $("#fsCancel");
+const fsApply = $("#fsApply");
+
+function autoResizeTextarea(el) {
+    el.style.height = "auto";
+    const maxH = Math.min(el.scrollHeight, 150);
+    el.style.height = maxH + "px";
+    if (expandBtn) {
+        const lines = (el.value.match(/\n/g) || []).length + 1;
+        const charLen = el.value.length;
+        expandBtn.style.display = (lines >= 4 || charLen > 120) ? "inline-flex" : "none";
+    }
+}
+
+if (inputEl) {
+    inputEl.addEventListener("input", () => autoResizeTextarea(inputEl));
+    inputEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            $("#bar").dispatchEvent(new Event("submit"));
+        }
+    });
+    autoResizeTextarea(inputEl);
+}
+
+// Fullscreen editor
+function openFullscreenEditor() {
+    if (!fsEditor || !fsTextarea || !inputEl) return;
+    fsTextarea.value = inputEl.value;
+    autoResizeTextarea(fsTextarea);
+    fsEditor.classList.add("open");
+    fsTextarea.focus();
+    if (window.lucide) lucide.createIcons();
+}
+
+function closeFullscreenEditor() {
+    if (!fsEditor) return;
+    fsEditor.classList.remove("open");
+}
+
+if (expandBtn) expandBtn.addEventListener("click", openFullscreenEditor);
+if (fsCancel) fsCancel.addEventListener("click", closeFullscreenEditor);
+if (fsApply) {
+    fsApply.addEventListener("click", () => {
+        if (inputEl && fsTextarea) {
+            inputEl.value = fsTextarea.value;
+            autoResizeTextarea(inputEl);
+            inputEl.focus();
+        }
+        closeFullscreenEditor();
+    });
+}
+if (fsEditor) {
+    fsEditor.querySelectorAll("[data-close]").forEach((el) => {
+        el.addEventListener("click", closeFullscreenEditor);
+    });
+}
+
+// Sync fullscreen textarea height
+if (fsTextarea) {
+    fsTextarea.addEventListener("input", () => autoResizeTextarea(fsTextarea));
+}
+
 // --- Lightbox: открыть / увеличить / сохранить / ответить ----------
 const lb = $("#lightbox");
 const lbImg = $("#lb_img");
