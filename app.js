@@ -1776,6 +1776,35 @@ $("#imgfile").addEventListener("change", (e) => {
     e.target.value = "";
 });
 
+// --- Clipboard paste image (Ctrl+V) -----------------------------------
+document.addEventListener("paste", async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items || items.length === 0) return;
+    for (const item of items) {
+        if (item.type.startsWith("image/")) {
+            e.preventDefault();
+            const blob = item.getAsFile();
+            if (!blob) return;
+            if (blob.size > 8 * 1024 * 1024) {
+                showAlert("Файл слишком большой", "Максимальный размер фото — 8 МБ.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const jpeg = await imageToJpegBase64(reader.result);
+                    pendingImage = { dataUrl: jpeg };
+                } catch {
+                    pendingImage = { dataUrl: reader.result };
+                }
+                showAttach();
+            };
+            reader.readAsDataURL(blob);
+            break;
+        }
+    }
+});
+
 // --- Lightbox: открыть / увеличить / сохранить / ответить ----------
 const lb = $("#lightbox");
 const lbImg = $("#lb_img");
@@ -3606,6 +3635,12 @@ function syncSegPickers() {
             `input[type="hidden"][id="${name === "context_limit" ? "s_limit" : "s_stats"}"]`,
         );
         if (hidden) hidden.value = val;
+        if (name === "context_limit_mode") {
+            const sliderWrap = picker.parentElement.querySelector(".range-container");
+            const limitVal = picker.parentElement.querySelector("#limitVal");
+            if (sliderWrap) sliderWrap.style.display = val === "full" ? "none" : "";
+            if (limitVal) limitVal.style.display = val === "full" ? "none" : "";
+        }
     });
 }
 
