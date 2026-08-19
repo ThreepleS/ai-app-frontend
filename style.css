@@ -434,15 +434,16 @@ header {
 .ctx-stats {
   display: inline-flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   flex: 0 0 auto;
-  padding: 5px 8px;
+  padding: 4px 8px;
   border-radius: 8px;
   background: var(--glass);
   border: 1px solid var(--stroke);
   backdrop-filter: blur(8px);
   transition: opacity 0.2s;
-  min-width: 140px;
+  width: fit-content;
+  min-width: 0;
 }
 .ctx-stats:hover {
   border-color: var(--stroke-strong);
@@ -450,18 +451,18 @@ header {
 .ctx-row {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   white-space: nowrap;
   line-height: 1;
 }
 .ctx-row-io {
-  gap: 8px;
-  padding-left: 18px;
+  gap: 6px;
+  padding-left: 14px;
 }
 .ctx-tokens {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   font-size: 10px;
   font-weight: 500;
   color: var(--muted);
@@ -469,14 +470,14 @@ header {
   line-height: 1;
 }
 .ctx-icon {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   opacity: 0.7;
   flex-shrink: 0;
 }
 .ctx-text {
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.1px;
 }
 .ctx-sep {
   width: 1px;
@@ -487,7 +488,7 @@ header {
 .ctx-io {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   font-size: 9px;
   font-weight: 500;
   color: var(--muted);
@@ -497,7 +498,7 @@ header {
 }
 .ctx-val {
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.1px;
 }
 .ctx-percent {
   font-size: 9px;
