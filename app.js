@@ -2315,7 +2315,7 @@ const TOUR_FAKE_CACHE = {
         mod_out: "text",
         price_prompt: null,
         price_completion: null,
-        description: "Автоматически выбирает лучшую модель под задачу: для текста — самые умные, для фото — с Vision, при лимитах — бесплатные аналоги. Всё бесплатно, ключи не нужны.",
+        description: "Универсальная система, которая автоматически подбирает и подключает самую мощную из доступных бесплатных нейросетей под ваш запрос.",
         _placeholder: true
     }, ],
     openrouter: [{
@@ -2761,7 +2761,7 @@ function mbModelsForGroup(gkey) {
             mod_out: "text",
             price_prompt: null,
             price_completion: null,
-            description: "Автоматически выбирает лучшую модель под задачу: для текста — самые умные, для фото — с Vision, при лимитах — бесплатные аналоги. Всё бесплатно, ключи не нужны.",
+            description: "Универсальная система, которая автоматически подбирает и подключает самую мощную из доступных бесплатных нейросетей под ваш запрос.",
             _placeholder: true,
         };
         if (cached.length > 0) return [autofreeItem, ...cached];
