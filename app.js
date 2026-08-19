@@ -121,6 +121,7 @@ const PROVIDER_LABELS = {
     groq: "Groq",
     venice: "Venice AI",
     alibaba: "Alibaba",
+    multiprovider: "МультиПровайдер",
 };
 
 let keyMode = "manual";
@@ -2228,7 +2229,8 @@ const TOUR_FAKE_FAVORITES = [{
     {
         model_id: "autofree",
         display_name: "AutoFree",
-        provider: "openrouter"
+        provider: "multiprovider",
+        is_free: true
     },
 ];
 
@@ -2238,14 +2240,14 @@ const TOUR_FAKE_CACHE = {
         model_id: "autofree",
         name: "AutoFree",
         display_name: "AutoFree",
-        provider: "openrouter",
+        provider: "multiprovider",
         is_free: true,
         context: null,
-        mod_in: null,
-        mod_out: null,
+        mod_in: "text,image",
+        mod_out: "text",
         price_prompt: null,
         price_completion: null,
-        description: "в разработке...",
+        description: "Автоматически выбирает лучшую модель под задачу: для текста — самые умные, для фото — с Vision, при лимитах — бесплатные аналоги. Всё бесплатно, ключи не нужны.",
         _placeholder: true
     }, ],
     openrouter: [{
@@ -2575,6 +2577,7 @@ function mbRenderDetail() {
     if (!id) {
         return '<div class="mb-empty">Выбери модель из списка, чтобы увидеть подробности.</div>';
     }
+    const isAutofree = id === "autofree";
     const raw = mbFind(id);
     const v = mbView(raw || {
         id,
@@ -2585,7 +2588,7 @@ function mbRenderDetail() {
     const needsKey = !hasProviderKey(provider);
     const providerLabel = PROVIDER_LABELS[provider] || provider;
     const badges = [
-        `<span class="badge prov">${esc(PROVIDER_LABELS[v.provider] || v.provider)}</span>`,
+        `<span class="badge prov">${esc(isAutofree ? "МультиПровайдер" : (PROVIDER_LABELS[v.provider] || v.provider))}</span>`,
     ];
     badges.push(
         v.is_free ?
@@ -2644,19 +2647,23 @@ function mbRenderDetail() {
     ].join("") + (v.is_free ? "" : priceRows);
     const active = id === currentModelId;
     const isText = !v.type || v.type === "text";
-    const pickDisabled = active || !isText;
-    const pickLabel = active ?
+    let pickDisabled = active || !isText;
+    let pickLabel = active ?
         "<i data-lucide='check' class='lucide'></i> Активна" :
         !isText ?
         "Генерация (скоро)" :
         needsKey ?
         "Добавьте ключ " + esc(providerLabel) :
         "Выбрать";
+    if (isAutofree) {
+        pickDisabled = true;
+        pickLabel = '<i data-lucide="clock" class="lucide"></i> Скоро...';
+    }
     const isRecommended = RECOMMENDED_MODELS.includes(id);
     return `
     <div class="mb-detail-inner">
       <div class="dhead">
-        <div class="dname">${esc(v.name)}${needsKey ? '<span class="ikey-lock" style="margin-left:8px"><i data-lucide="lock" class="lucide"></i> ' + esc(providerLabel) + '</span>' : ''}</div>
+        <div class="dname">${esc(v.name)}${needsKey && !isAutofree ? '<span class="ikey-lock" style="margin-left:8px"><i data-lucide="lock" class="lucide"></i> ' + esc(providerLabel) + '</span>' : ''}</div>
         ${isAdmin ? '<button class="mb-recommend ' + (isRecommended ? 'on' : '') + '" data-recommend="' + esc(id) + '" title="' + (isRecommended ? 'Убрать из рекомендуемых' : 'Добавить в рекомендуемые') + '"><i data-lucide="' + (isRecommended ? 'star' : 'star-off') + '" class="icon"></i></button>' : ''}
         <button class="mb-star ${fav ? "on" : ""}" data-star="${esc(id)}" title="В избранное"><i data-lucide='${fav ? 'star' : 'star-off'}' class="icon"></i></button>
       </div>
@@ -2674,8 +2681,23 @@ function mbModelsForGroup(gkey) {
         const recSet = new Set(RECOMMENDED_MODELS.map((id) => id.toLowerCase()));
         const all = Object.values(mbState.cache).flat().filter(Boolean);
         const cached = all.filter((m) => recSet.has((m.model_id || m.id || "").toLowerCase()));
-        if (cached.length > 0) return cached;
-        if (tourActive) return [];
+        const autofreeItem = {
+            id: "autofree",
+            model_id: "autofree",
+            name: "AutoFree",
+            display_name: "AutoFree",
+            provider: "multiprovider",
+            is_free: true,
+            context: null,
+            mod_in: "text,image",
+            mod_out: "text",
+            price_prompt: null,
+            price_completion: null,
+            description: "Автоматически выбирает лучшую модель под задачу: для текста — самые умные, для фото — с Vision, при лимитах — бесплатные аналоги. Всё бесплатно, ключи не нужны.",
+            _placeholder: true,
+        };
+        if (cached.length > 0) return [autofreeItem, ...cached];
+        if (tourActive) return [autofreeItem];
         const items = RECOMMENDED_MODELS.map((id) => ({
             id,
             model_id: id,
@@ -2690,22 +2712,7 @@ function mbModelsForGroup(gkey) {
             price_completion: null,
             description: "",
         }));
-        items.push({
-            id: "autofree",
-            model_id: "autofree",
-            name: "AutoFree",
-            display_name: "AutoFree",
-            provider: "openrouter",
-            is_free: true,
-            context: null,
-            mod_in: null,
-            mod_out: null,
-            price_prompt: null,
-            price_completion: null,
-            description: "в разработке...",
-            _placeholder: true,
-        });
-        return items;
+        return [autofreeItem, ...items];
     }
     if (tourActive && TOUR_FAKE_CACHE[gkey]) return TOUR_FAKE_CACHE[gkey];
     const arr = gkey === "favorite" ? mbState.favorites : gkey === "paid" ? mbState.cache.openrouter : mbState.cache[gkey];
