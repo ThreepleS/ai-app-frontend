@@ -2637,7 +2637,7 @@ textarea {
 .dialog-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
   background: var(--glass);
@@ -2658,10 +2658,7 @@ textarea {
   min-width: 0;
 }
 .dialog-item-name {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -2669,65 +2666,48 @@ textarea {
   min-width: 0;
 }
 .dialog-name-text {
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.dialog-item-edit {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 6px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  transition: background 0.2s, color 0.2s;
-}
-.dialog-item-edit:hover {
-  background: rgba(255,255,255,0.08);
-  color: var(--text);
-}
-.dialog-item-export {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 6px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  transition: background 0.2s, color 0.2s;
-}
-.dialog-item-export:hover {
-  background: rgba(255,255,255,0.08);
-  color: var(--text);
-}
 .dialog-item-meta {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.dialog-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.dialog-item-edit,
+.dialog-item-export,
 .dialog-item-del {
   border: 0;
   background: transparent;
   color: var(--muted);
-  font-size: 18px;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 10px;
+  padding: 4px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   transition: background 0.2s, color 0.2s;
+}
+.dialog-item-edit:hover,
+.dialog-item-export:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+}
+.dialog-item-del {
+  color: var(--muted);
 }
 .dialog-item-del:hover {
   background: rgba(255, 107, 107, 0.15);
