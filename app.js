@@ -3522,6 +3522,7 @@ function tplOpenEdit(id) {
     $("#tplEditName").value = t.name;
     $("#tplEditText").value = t.text;
     edit.style.display = "flex";
+    edit.scrollIntoView({ behavior: "smooth", block: "end" });
 }
 
 function tplCloseEdit() {
@@ -3554,7 +3555,7 @@ async function tplSaveEdit() {
         toast("Не удалось сохранить шаблон: " + e.message, "err");
     }
     tplCloseEdit();
-    tplRender();
+    requestAnimationFrame(() => tplRender());
 }
 async function tplDelete(id) {
     tplList = tplList.filter((x) => x.id !== id);
@@ -3624,6 +3625,7 @@ $("#tpl_add").addEventListener("click", () => {
     $("#tplEditName").value = "";
     $("#tplEditText").value = "";
     $("#tplEdit").style.display = "flex";
+    $("#tplEdit").scrollIntoView({ behavior: "smooth", block: "end" });
 });
 $("#tpl_add_rec").addEventListener("click", async () => {
     await tplAddRecommended();
