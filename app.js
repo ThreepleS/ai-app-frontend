@@ -3246,17 +3246,17 @@ $("#mb_list").addEventListener("click", async (e) => {
         }
         return;
     }
+    const ping = e.target.closest("[data-ping]");
+    if (ping) {
+        e.stopPropagation();
+        await mbPingGroup(ping.dataset.ping);
+        return;
+    }
     const head = e.target.closest(".ghead");
     if (head) {
         const g = head.parentElement;
         mbState.collapsed[g.dataset.group] = !mbState.collapsed[g.dataset.group];
         await mbRenderList();
-        return;
-    }
-    const ping = e.target.closest("[data-ping]");
-    if (ping) {
-        e.stopPropagation();
-        await mbPingGroup(ping.dataset.ping);
         return;
     }
     const item = e.target.closest(".mb-item");
