@@ -253,6 +253,7 @@ async function ensureCurrentDialog() {
             const created = await createDialogDb();
             activeDialogId = created.id;
             dialogs = [created];
+            resetHeaderStats();
         } catch (e) {
             log("не удалось создать диалог: " + e.message);
         }
@@ -262,6 +263,7 @@ async function ensureCurrentDialog() {
         box.innerHTML = "";
         updateEmptyState();
         renderDialogsPanel();
+        resetHeaderStats();
         return;
     }
     if (!activeDialogId || !dialogs.some((d) => d.id === activeDialogId)) {
@@ -284,6 +286,7 @@ function renderDialog(dialog) {
         box.innerHTML = "";
         updateEmptyState();
         currentDialogData = null;
+        resetHeaderStats();
         return;
     }
     currentDialogData = dialog;
@@ -299,7 +302,27 @@ function renderDialog(dialog) {
         updateEmptyState();
         currentModelId = dialog.model || currentModelId;
         if (window.lucide) lucide.createIcons();
+        updateContextStats();
     }, 180);
+}
+
+function resetHeaderStats() {
+    const textEl = $("#ctxText");
+    const sentEl = $("#ctxSent .ctx-val");
+    const recvEl = $("#ctxRecv .ctx-val");
+    const cachedEl = $("#ctxCached .ctx-val");
+    const percentEl = $("#ctxPercent");
+    const maxCtx = getMaxContext();
+    if (textEl) textEl.textContent = "0 " + formatNum(maxCtx);
+    if (sentEl) sentEl.textContent = "0";
+    if (recvEl) recvEl.textContent = "0";
+    if (cachedEl) cachedEl.textContent = "0";
+    if (percentEl) percentEl.textContent = "0%";
+    const el = $("#ctxStats");
+    if (el) {
+        el.classList.remove("warn", "danger");
+        el.style.display = maxCtx ? "" : "none";
+    }
 }
 
 function renderDialogsPanel() {
@@ -333,8 +356,8 @@ dialogs.forEach((d) => {
                         totalTokens += t || 0;
                     }
                 });
-                const tokensStr = totalTokens ? `${totalTokens} т` : "";
-                const metaParts = [date, `${msgCount} с`];
+                const tokensStr = totalTokens ? `${formatNum(totalTokens)} токенов` : "";
+                const metaParts = [date, `${msgCount} сообщений`];
                 if (tokensStr) metaParts.push(tokensStr);
                 item.innerHTML = `
                   <div class="dialog-item-main" data-id="${d.id}">
@@ -3704,6 +3727,7 @@ $("#newChatBtn").addEventListener("click", async () => {
         activeDialogId = created.id;
         currentDialogData = created;
         renderDialog(created);
+        resetHeaderStats();
         renderDialogsPanel();
         toast("Новый диалог начат", "ok");
     } catch (e) {
