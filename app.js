@@ -175,6 +175,7 @@ const esc = escapeHtml;
 // --- Dialog management (DB-backed cross-device) -----------------------
 let activeDialogId = null;
 let currentDialogData = null;
+let userAtBottom = true;
 
 function generateDialogName() {
     const now = new Date();
@@ -2172,6 +2173,10 @@ $("#bar").addEventListener("submit", async (e) => {
             botEl = null,
             botText = null,
             full = "";
+        const checkAtBottom = () => box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
+        const scrollToBottom = () => { box.scrollTop = box.scrollHeight; };
+        // Initial check
+        userAtBottom = checkAtBottom();
         const flushLine = async (line) => {
             if (!line.trim()) return;
             let ev;
@@ -2187,9 +2192,12 @@ $("#bar").addEventListener("submit", async (e) => {
                 botText.className = "md";
                 botEl.appendChild(botText);
                 box.appendChild(botEl);
+                userAtBottom = checkAtBottom();
+                if (userAtBottom) scrollToBottom();
             } else if (ev.type === "delta") {
                 full += ev.text || "";
                 if (botText) botText.textContent = full;
+                if (userAtBottom) scrollToBottom();
             } else if (ev.type === "error") {
                 if (botEl) botEl.remove();
                 addMessage("bot", escapeHtml(ev.message || "ошибка"));
@@ -3652,10 +3660,11 @@ function escRegex(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 box.addEventListener("scroll", () => {
-    if (box.scrollTop < box.scrollHeight - box.clientHeight - 60) {
-        box.classList.add("search-faded");
-    } else {
+    userAtBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
+    if (userAtBottom) {
         box.classList.remove("search-faded");
+    } else {
+        box.classList.add("search-faded");
     }
 });
 
