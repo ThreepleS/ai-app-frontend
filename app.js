@@ -1908,6 +1908,52 @@ if (fsEditor) {
     });
 }
 
+// Compression settings button in header
+const ctxCompressBtn = $("#ctxCompressBtn");
+function openCompressModal() {
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.style.zIndex = "1000";
+    modal.innerHTML = `
+        <div class="modal-backdrop" data-close="compressModal"></div>
+        <div class="modal-dialog" style="max-width: 400px;">
+            <div class="modal-head">
+                <b>Настройки сжатия контекста</b>
+                <button class="modal-close" data-close="compressModal"><i data-lucide="x" class="icon"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 16px;">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="compressUseCheap" style="width: 20px; height: 20px;">
+                        <span>Использовать дешёвую модель (Gemini Flash) для сжатия вместо текущей</span>
+                    </label>
+                </div>
+                <div style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">
+                    Сжатие срабатывает автоматически при заполнении контекста >70%.
+                    При включении — сжатие выполняет Gemini Flash (быстрее, дешевле),
+                    но может упустить детали. По умолчанию — текущая активная модель.
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn primary" id="compressSave">Сохранить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    if (window.lucide) lucide.createIcons();
+    modal.querySelectorAll("[data-close]").forEach((el) => {
+        el.addEventListener("click", () => modal.remove());
+    });
+    $("#compressSave").addEventListener("click", () => {
+        const useCheap = $("#compressUseCheap").checked;
+        localStorage.setItem("compress_use_cheap", useCheap ? "1" : "0");
+        modal.remove();
+        toast(useCheap ? "Сжатие будет через Gemini Flash" : "Сжатие через активную модель", "ok");
+    });
+}
+
+if (ctxCompressBtn) ctxCompressBtn.addEventListener("click", openCompressModal);
+
 // Sync fullscreen textarea height
 if (fsTextarea) {
     fsTextarea.addEventListener("input", () => autoResizeTextarea(fsTextarea));
