@@ -295,7 +295,7 @@ function renderDialog(dialog) {
         box.innerHTML = "";
         const msgs = dialog.messages || [];
         msgs.forEach((m) => {
-            addHistoryMessage(m.role, m.content || "", m.image || null);
+            addHistoryMessage(m.role, m.content || "", m.image || null, m.stats || null);
         });
         box.scrollTop = box.scrollHeight;
         box.classList.remove("switching");
@@ -1361,7 +1361,7 @@ function addCodeCopy(root) {
 }
 
 // Рендер одного сообщения из истории (при загрузке).
-function addHistoryMessage(role, content, image) {
+function addHistoryMessage(role, content, image, stats) {
     const imgHtml = image ?
         `<img class="upimg" src="${esc(image)}" alt="" />` :
         "";
@@ -1375,7 +1375,15 @@ function addHistoryMessage(role, content, image) {
         const isHtml = typeof content === "string" && content.trim().startsWith("<");
         html = content ? (isHtml ? content : renderMarkdown(content)) : imgHtml;
     }
-    addMessage(role, html);
+    const msgEl = addMessage(role, html);
+    if (stats && role === "bot") {
+        msgEl.dataset.stats = JSON.stringify(stats);
+        const mode = ($("#s_stats")?.value || "full");
+        const s = document.createElement("div");
+        s.className = "stats stats-" + mode;
+        s.textContent = formatStatsRaw(stats, mode);
+        msgEl.appendChild(s);
+    }
     if (window.lucide) lucide.createIcons();
 }
 
