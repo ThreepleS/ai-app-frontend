@@ -1476,10 +1476,11 @@ function fillSettings(s) {
     if (!s) return;
     currentModelId = s.selected_model || "";
     $("#s_prompt").value = s.system_prompt || "";
-    $("#s_limit").value = String(s.context_limit || 10);
+    $("#s_limit").value = String(s.context_limit || 10000);
     if ($("#s_limit_slider")) {
-        $("#s_limit_slider").value = String(s.context_limit || 10);
-        if ($("#limitVal")) $("#limitVal").textContent = $("#s_limit_slider").value;
+        const val = Math.max(1000, Math.min(1000000, parseInt(s.context_limit, 10) || 10000));
+        $("#s_limit_slider").value = String(val);
+        if ($("#limitVal")) $("#limitVal").textContent = formatNum(val);
     }
     const statsVal = s.stats_display || "full";
     $("#s_stats").value = statsVal;
@@ -3272,8 +3273,14 @@ $("#s_save").addEventListener("click", async () => {
     status.textContent = "";
     const limitMode = localStorage.getItem("context_limit_mode") || "messages";
     let contextLimit = parseInt($("#s_limit").value, 10);
-    if (isNaN(contextLimit) || contextLimit < 1) contextLimit = 10;
-    contextLimit = Math.min(100, Math.max(1, contextLimit));
+    if (isNaN(contextLimit) || contextLimit < 1) {
+        contextLimit = limitMode === "tokens" ? 10000 : 10;
+    }
+    if (limitMode === "tokens") {
+        contextLimit = Math.max(1000, Math.min(1000000, contextLimit));
+    } else {
+        contextLimit = Math.max(1, Math.min(100, contextLimit));
+    }
     const statsDisplay = $("#s_stats").value;
     try {
         localStorage.setItem("local_settings", JSON.stringify({
@@ -3377,8 +3384,9 @@ if (vibSlider) {
 const limitSlider = $("#s_limit_slider");
 if (limitSlider) {
     limitSlider.addEventListener("input", () => {
-        $("#limitVal").textContent = limitSlider.value;
-        $("#s_limit").value = limitSlider.value;
+        const val = parseInt(limitSlider.value, 10);
+        $("#limitVal").textContent = formatNum(val);
+        $("#s_limit").value = String(val);
     });
 }
 
