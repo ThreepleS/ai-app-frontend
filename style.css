@@ -2137,6 +2137,50 @@ textarea {
 .toggle-label {
   font-weight: 600;
 }
+.toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+.toggle-wrap input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-wrap .toggle-slider {
+  width: 44px;
+  height: 24px;
+  flex: 0 0 auto;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  border-radius: 99px;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+}
+.toggle-wrap .toggle-slider::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle-wrap input:checked + .toggle-slider {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: var(--accent);
+}
+.toggle-wrap input:checked + .toggle-slider::after {
+  transform: translateX(20px);
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
 .seg-picker {
   display: flex;
   gap: 4px;

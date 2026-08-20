@@ -1578,7 +1578,13 @@ async function auth(devId) {
         currentUserId = data.user_id;
         isAdmin = !!data.is_admin;
         needsKey = !!data.needs_key;
-        if (isAdmin) $("#s_admin").style.display = "inline-block";
+        if (isAdmin) {
+            $("#s_admin").style.display = "inline-block";
+            $("#s_erudite_wrap").style.display = "inline-flex";
+        }
+        const eruditeEnabled = localStorage.getItem("erudite_enabled") === "1";
+        const eruditeEl = $("#s_erudite");
+        if (eruditeEl) eruditeEl.checked = eruditeEnabled;
         fillSettings(data.settings);
         if (data.settings && Array.isArray(data.settings.recommended_models)) {
             RECOMMENDED_MODELS = data.settings.recommended_models;
@@ -3927,6 +3933,11 @@ $("#s_replay_tour").addEventListener("click", () => {
 });
 $("#s_bug_report").addEventListener("click", () => {
     window.open("https://t.me/mqzxcsss", "_blank");
+});
+$("#s_erudite").addEventListener("change", () => {
+    const enabled = $("#s_erudite").checked;
+    localStorage.setItem("erudite_enabled", enabled ? "1" : "0");
+    toast(enabled ? "Режим Эрудит включен" : "Режим Эрудит выключен", "ok");
 });
 $("#s_keys_help").addEventListener("click", (e) => {
     e.preventDefault();
