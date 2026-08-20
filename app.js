@@ -3372,7 +3372,13 @@ document.querySelectorAll(".seg-picker").forEach((picker) => {
         vibClick();
         const btn = e.target.closest(".seg-btn");
         if (!btn) return;
-        picker.dataset.value = btn.dataset.val;
+        const newVal = btn.dataset.val;
+        const name = picker.dataset.name;
+        if (name === "ui_version" && newVal === "v2") {
+            toast("UI v2 — в разработке. Скоро...", "info");
+            return;
+        }
+        picker.dataset.value = newVal;
         syncSegPickers();
     });
 });
@@ -3791,7 +3797,7 @@ function syncSegPickers() {
             btn.classList.toggle("active", btn.dataset.val === val);
         });
         const hidden = picker.parentElement.querySelector(
-            `input[type="hidden"][id="${name === "context_limit" ? "s_limit" : "s_stats"}"]`,
+            `input[type="hidden"][id="${name === "context_limit" ? "s_limit" : name === "stats_display" ? "s_stats" : "s_ui_version"}"]`,
         );
         if (hidden) hidden.value = val;
         if (name === "context_limit_mode") {

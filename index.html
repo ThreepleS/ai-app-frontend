@@ -161,6 +161,21 @@
         </div>
         <div class="panel-body">
           <div class="tab-content active" data-content="theme">
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Версия интерфейса</div>
+                  <div class="settings-card-desc">
+                    Выберите версию UI. v2 — в разработке.
+                  </div>
+                </div>
+              </div>
+              <div class="seg-picker" data-name="ui_version" data-value="v1" style="margin-bottom: 16px;">
+                <button data-val="v1" class="seg-btn active">UI v1 (текущая)</button>
+                <button data-val="v2" class="seg-btn">UI v2 — Скоро...</button>
+              </div>
+              <input type="hidden" id="s_ui_version" value="v1" />
+            </div>
             <div class="theme-grid" id="themeGrid">
               <div class="theme-card active" data-theme-val="dark">
                 <div
@@ -811,7 +826,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app.js?v=20260820_1808"></script>
+    <script src="./app.js?v=20260820_1818"></script>
     <!-- DEV ONLY: мобильная консоль отладки (eruda). Не удалять временно. -->
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>
@@ -820,6 +835,7 @@
     </script>
   </body>
 </html>
+
 
 
 
