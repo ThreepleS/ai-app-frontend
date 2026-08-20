@@ -461,12 +461,14 @@ function updateContextStats() {
     const textEl = $("#ctxText");
     const sentEl = $("#ctxSent .ctx-val");
     const recvEl = $("#ctxRecv .ctx-val");
+    const cachedEl = $("#ctxCached .ctx-val");
     const percentEl = $("#ctxPercent");
     if (!el || !textEl || !sentEl || !recvEl || !percentEl) return;
 
     let used = 0;
     let sent = 0;
     let recv = 0;
+    let cached = 0;
 
     box.querySelectorAll(".msg").forEach((msgEl) => {
         const isUser = msgEl.classList.contains("user");
@@ -490,6 +492,7 @@ function updateContextStats() {
             if (stats) {
                 if (stats.prompt_tokens) sent += stats.prompt_tokens;
                 if (stats.completion_tokens) recv += stats.completion_tokens;
+                if (stats.cached_tokens) cached += stats.cached_tokens;
                 if (stats.total_tokens) used = used - t + stats.total_tokens;
             }
         }
@@ -500,6 +503,7 @@ function updateContextStats() {
     if (textElSelector) textElSelector.textContent = formatNum(used) + " " + formatNum(maxCtx);
     if (sentEl) sentEl.textContent = formatNum(sent);
     if (recvEl) recvEl.textContent = formatNum(recv);
+    if (cachedEl) cachedEl.textContent = formatNum(cached);
 
     let pct = 0;
     if (maxCtx && maxCtx > 0) pct = Math.min(100, Math.round((used / maxCtx) * 100));
@@ -584,7 +588,9 @@ function formatStatsRaw(stats, mode) {
     const parts = [];
     if (stats.model) parts.push(`модель: ${stats.model}`);
     if (stats.prompt_tokens != null) parts.push(`prompt: ${stats.prompt_tokens}`);
+    if (stats.thinking_tokens != null && stats.thinking_tokens > 0) parts.push(`thinking: ${stats.thinking_tokens}`);
     if (stats.completion_tokens != null) parts.push(`completion: ${stats.completion_tokens}`);
+    if (stats.cached_tokens != null && stats.cached_tokens > 0) parts.push(`cached: ${stats.cached_tokens}`);
     if (stats.total_tokens != null) parts.push(`total: ${stats.total_tokens}`);
     return parts.join(" | ");
 }
@@ -2172,6 +2178,8 @@ $("#bar").addEventListener("submit", async (e) => {
                         prompt_tokens: ev.usage?.prompt_tokens ?? ev.usage?.promptTokenCount,
                         completion_tokens: ev.usage?.completion_tokens ?? ev.usage?.candidatesTokenCount,
                         total_tokens: ev.usage?.total_tokens ?? ev.usage?.totalTokenCount,
+                        thinking_tokens: ev.usage?.thinking_tokens ?? ev.usage?.thoughtsTokenCount,
+                        cached_tokens: ev.usage?.cached_tokens ?? ev.usage?.cachedContentTokenCount,
                     };
                     botEl.dataset.stats = JSON.stringify(statsObj);
                     const s = document.createElement("div");
