@@ -1,18 +1,9 @@
 const $ = (s) => document.querySelector(s);
 const DEFAULT_FN_BASE = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1";
-function resolveApiBase() {
-  try {
-    const fromUrl = new URLSearchParams(location.search).get("api");
-    if (fromUrl) {
-      localStorage.setItem("api_base", fromUrl);
-      return fromUrl.replace(/\/+$/, "");
-    }
-    const stored = localStorage.getItem("api_base");
-    if (stored) return stored.replace(/\/+$/, "");
-  } catch {}
-  return DEFAULT_FN_BASE;
-}
-const API_BASE = resolveApiBase();
+// Базовый URL жёстко зафиксирован. Переопределение через ?api= или
+// localStorage запрещено: иначе внешняя ссылка может увести init_data на
+// произвольный сервер.
+const API_BASE = DEFAULT_FN_BASE;
 window.addEventListener("error", (e) => {
   try {
     alert("JS ошибка: " + (e.message || e.error || e));
@@ -117,35 +108,11 @@ async function doLogin() {
 }
 async function boot() {
   if (!inTelegram && !initData) {
-    const devId = localStorage.getItem("dev_user");
-    if (devId && getEnv("WEB_APP_DEV")) {
-      try {
-        const data = await pjson("summary");
-        if (data.ok) {
-          currentAdminId = String(data.admin_id || devId);
-          $("#login").style.display = "none";
-          $("#app").style.display = "block";
-          loadAll();
-          return;
-        }
-      } catch (e) {
-        $("#login_err").innerHTML = "<i data-lucide='alert-triangle' class='lucide'></i> " + String(e);
-        return;
-      }
-    }
     $("#login_err").innerHTML =
       "<i data-lucide='ban' class='lucide'></i> Откройте админ-панель внутри Telegram (через бота).";
     return;
   }
   await doLogin();
-}
-function getEnv(key) {
-  try {
-    const url = new URL(location.href);
-    const fromUrl = url.searchParams.get(key);
-    if (fromUrl) return fromUrl;
-  } catch {}
-  return "";
 }
 boot();
 

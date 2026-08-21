@@ -64,8 +64,9 @@ checkAppVersion();
 
 // Базовый URL Edge Functions Supabase. Формат:
 //   https://<PROJECT_REF>.supabase.co/functions/v1
-// Можно переопределить через ?api= или localStorage("api_base").
-// По умолчанию — вшитый адрес (меняется при деплое).
+// Базовый URL жёстко зафиксирован. Переопределение через ?api= или
+// localStorage запрещено: иначе внешняя ссылка может увести init_data на
+// произвольный сервер.
 const DEFAULT_FN_BASE = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1";
 
 function resolveFnBase() {
