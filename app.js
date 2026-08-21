@@ -681,57 +681,46 @@ const MD_ALLOWED_TAGS = new Set([
     "TD",
     "SPAN",
 ]);
-// Regex-сантитайзер без DOMParser (работает в любом WebView, не падает).
-function sanitizeMdHtml(htmlStr) {
-    // 1) удаляем теги вне allowlist
-    htmlStr = htmlStr.replace(/<\/?([A-Z][A-Z0-9]*)\b[^>]*>/gi, (m, tag) => {
-        if (MD_ALLOWED_TAGS.has(tag.toUpperCase())) return m;
-        return ""; // тег не в allowlist -> вырезаем целиком
+// HTML-санитайзер на базе DOMPurify (реальный DOM; надёжнее regex).
+// safeUrl / imgProxyUrl переиспользуются через хук ниже.
+(function registerMdSanitizeHooks() {
+    if (!window.DOMPurify) return;
+    DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+        if (node.tagName === "A") {
+            const href = node.getAttribute("href");
+            if (href != null) {
+                const v = safeUrl(href);
+                if (v === "#") {
+                    node.removeAttribute("href");
+                } else {
+                    node.setAttribute("href", v);
+                    node.setAttribute("target", "_blank");
+                    node.setAttribute("rel", "noopener noreferrer");
+                }
+            }
+        } else if (node.tagName === "IMG") {
+            const src = node.getAttribute("src");
+            if (src != null) {
+                const v = imgProxyUrl(src);
+                if (v === "#") {
+                    node.removeAttribute("src");
+                } else {
+                    node.setAttribute("src", v);
+                }
+            }
+        }
     });
-    // 2) чистим атрибуты внутри разрешённых тегов
-    htmlStr = htmlStr.replace(
-        /<([A-Z][A-Z0-9]*)\b([^>]*)>/gi,
-        (m, tag, attrs) => {
-            const uTag = tag.toUpperCase();
-            if (!MD_ALLOWED_TAGS.has(uTag)) return m; // не должно случиться, но на всякий
-            // парсим атрибуты regex'ом
-            let outAttrs = "";
-            attrs.replace(
-                /(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+))/g,
-                (_, name, v1, v2, v3) => {
-                    const val = (
-                        v1 !== undefined ? v1 : v2 !== undefined ? v2 : v3 || ""
-                    ).trim();
-                    const ln = name.toLowerCase();
-                    // опасные атрибуты: on*, javascript: в href/src
-                    if (/^on/i.test(ln)) return;
-                    if ((ln === "href" || ln === "src") && /^javascript:/i.test(val))
-                        return;
-                    if (uTag === "A") {
-                        if (ln === "href") {
-                            const v = safeUrl(val);
-                            if (v === "#") return;
-                            outAttrs += ` href="${v}" target="_blank" rel="noopener noreferrer"`;
-                        }
-                    } else if (uTag === "IMG") {
-                        if (ln === "src") {
-                            const v = imgProxyUrl(val);
-                            if (v === "#") return;
-                            outAttrs += ` src="${v}"`;
-                        } else if (ln === "alt") {
-                            outAttrs += ` alt="${val.replace(/"/g, '"')}"`;
-                        }
-                    } else if (ln === "class") {
-                        outAttrs += ` class="${val.replace(/"/g, '"')}"`;
-                    }
-                },
-            );
-            return `<${tag}${outAttrs}>`;
-        },
-    );
-    // 3) комментарии
-    htmlStr = htmlStr.replace(/<!--[\s\S]*?-->/g, "");
-    return htmlStr;
+})();
+
+function sanitizeMdHtml(htmlStr) {
+    if (!window.DOMPurify) return htmlStr; // fallback, если библиотека не загрузилась
+    return DOMPurify.sanitize(htmlStr, {
+        ALLOWED_TAGS: Array.from(MD_ALLOWED_TAGS).map((t) => t.toLowerCase()),
+        ALLOWED_ATTR: ["href", "src", "alt", "class"],
+        ALLOW_DATA_ATTR: false,
+        ALLOWED_URI_REGEXP:
+            /^(?:(?:https?:|mailto:|tel:|data:image\/)|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
 }
 // --- Лёгкий рендер математики (без внешних библиотек, offline).
 // Поддерживает: ^верхний, _нижний, \frac{a}{b}, \sqrt{x}, \cdot \times
