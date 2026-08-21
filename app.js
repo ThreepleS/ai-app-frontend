@@ -13,8 +13,38 @@ window.addEventListener("error", (e) => {
     console.error("[global]", e.message || e.error || e);
 });
 console.log("[app] script start");
-// Полифилл forEach для NodeList/HTMLCollection/DOMTokenList (старые WebView
-// Telegram не имеют его на списках узлов -> "querySelectorAll().forEach is not a function").
+// Старые WebView (некоторые Telegram) возвращают из querySelectorAll объект без
+// forEach (StaticNodeList / нестандартный прототип), поэтому патч
+// NodeList.prototype не срабатывает. Делаем querySelectorAll всегда
+// возвращающим настоящий Array — у Array.prototype.forEach есть везде.
+(function polyfillQSA() {
+    try {
+        const d = (typeof Document !== "undefined" && Document.prototype) || (document && document.constructor && document.constructor.prototype);
+        if (d && d.querySelectorAll) {
+            const orig = d.querySelectorAll;
+            d.querySelectorAll = function (sel) {
+                return Array.from(orig.call(this, sel));
+            };
+        }
+    } catch (_) {}
+    try {
+        if (Element.prototype.querySelectorAll) {
+            const orig = Element.prototype.querySelectorAll;
+            Element.prototype.querySelectorAll = function (sel) {
+                return Array.from(orig.call(this, sel));
+            };
+        }
+    } catch (_) {}
+    try {
+        if (typeof DocumentFragment !== "undefined" && DocumentFragment.prototype.querySelectorAll) {
+            const orig = DocumentFragment.prototype.querySelectorAll;
+            DocumentFragment.prototype.querySelectorAll = function (sel) {
+                return Array.from(orig.call(this, sel));
+            };
+        }
+    } catch (_) {}
+})();
+// Дополнительно: forEach на самих списках узлов (children, getElementsBy* и т.п.).
 if (window.NodeList && !NodeList.prototype.forEach) {
     NodeList.prototype.forEach = Array.prototype.forEach;
 }
