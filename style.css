@@ -867,12 +867,14 @@ header {
   margin-top: 7px;
   white-space: pre-wrap;
   opacity: 0.85;
+  min-height: 14px;
 }
 .stats-compact {
   font-size: 10px;
   color: var(--muted);
   opacity: 0.7;
   font-style: italic;
+  min-height: 14px;
 }
 .stats-full {
   font-size: 11px;
@@ -884,6 +886,7 @@ header {
   border: 1px solid var(--stroke);
   display: inline-block;
   margin-top: 6px;
+  min-height: 18px;
 }
 
 /* Context menu */
