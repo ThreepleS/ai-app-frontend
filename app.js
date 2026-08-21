@@ -13,6 +13,17 @@ window.addEventListener("error", (e) => {
     console.error("[global]", e.message || e.error || e);
 });
 console.log("[app] script start");
+// Полифилл forEach для NodeList/HTMLCollection/DOMTokenList (старые WebView
+// Telegram не имеют его на списках узлов -> "querySelectorAll().forEach is not a function").
+if (window.NodeList && !NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = Array.prototype.forEach;
+}
+if (window.HTMLCollection && !HTMLCollection.prototype.forEach) {
+    HTMLCollection.prototype.forEach = Array.prototype.forEach;
+}
+if (window.DOMTokenList && !DOMTokenList.prototype.forEach) {
+    DOMTokenList.prototype.forEach = Array.prototype.forEach;
+}
 const $ = (s) => document.querySelector(s);
 const log = (t) => {
     const el = $("#log");
