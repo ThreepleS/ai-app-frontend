@@ -1914,23 +1914,54 @@ if (fsEditor) {
     });
 }
 
-// Compression settings button in header
+// Compression buttons in header
 const ctxCompressBtn = $("#ctxCompressBtn");
-function openCompressModal() {
+const ctxCompressSettingsBtn = $("#ctxCompressSettingsBtn");
+
+// Immediate compression with confirmation
+async function compressContextNow() {
+    const confirmed = await showConfirm(
+        "Сжать контекст?",
+        "Это заменит старую историю кратким резюме. Действие необратимо. Продолжить?"
+    );
+    if (!confirmed) return;
+
+    // Show loading
+    const overlay = mbShowLoading("Сжатие контекста…");
+    try {
+        const res = await ef("chat", { compress: true }, 60000);
+        const data = await res.json();
+        if (data.ok) {
+            toast("Контекст сжат: " + data.summary, "ok");
+            // Reload current dialog to show new history
+            await ensureCurrentDialog();
+        } else {
+            toast("Ошибка: " + (data.error || "неизвестно"), "err");
+        }
+    } catch (e) {
+        toast("Ошибка сжатия: " + e.message, "err");
+    } finally {
+        if (overlay) overlay.remove();
+    }
+}
+
+// Compression settings modal
+function openCompressSettingsModal() {
     const modal = document.createElement("div");
     modal.className = "modal";
     modal.style.zIndex = "1000";
+    const useCheap = localStorage.getItem("compress_use_cheap") === "1";
     modal.innerHTML = `
-        <div class="modal-backdrop" data-close="compressModal"></div>
+        <div class="modal-backdrop" data-close="compressSettingsModal"></div>
         <div class="modal-dialog" style="max-width: 400px;">
             <div class="modal-head">
                 <b>Настройки сжатия контекста</b>
-                <button class="modal-close" data-close="compressModal"><i data-lucide="x" class="icon"></i></button>
+                <button class="modal-close" data-close="compressSettingsModal"><i data-lucide="x" class="icon"></i></button>
             </div>
             <div class="modal-body" style="padding: 16px;">
                 <div style="margin-bottom: 16px;">
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="compressUseCheap" style="width: 20px; height: 20px;">
+                        <input type="checkbox" id="compressUseCheap" style="width: 20px; height: 20px;" ${useCheap ? "checked" : ""}>
                         <span>Использовать дешёвую модель (Gemini Flash) для сжатия вместо текущей</span>
                     </label>
                 </div>
@@ -1941,7 +1972,7 @@ function openCompressModal() {
                 </div>
             </div>
             <div class="modal-foot">
-                <button class="btn primary" id="compressSave">Сохранить</button>
+                <button class="btn primary" id="compressSettingsSave">Сохранить</button>
             </div>
         </div>
     `;
@@ -1950,7 +1981,7 @@ function openCompressModal() {
     modal.querySelectorAll("[data-close]").forEach((el) => {
         el.addEventListener("click", () => modal.remove());
     });
-    $("#compressSave").addEventListener("click", () => {
+    $("#compressSettingsSave").addEventListener("click", () => {
         const useCheap = $("#compressUseCheap").checked;
         localStorage.setItem("compress_use_cheap", useCheap ? "1" : "0");
         modal.remove();
@@ -1958,7 +1989,8 @@ function openCompressModal() {
     });
 }
 
-if (ctxCompressBtn) ctxCompressBtn.addEventListener("click", openCompressModal);
+if (ctxCompressBtn) ctxCompressBtn.addEventListener("click", compressContextNow);
+if (ctxCompressSettingsBtn) ctxCompressSettingsBtn.addEventListener("click", openCompressSettingsModal);
 
 // Sync fullscreen textarea height
 if (fsTextarea) {
@@ -2505,9 +2537,9 @@ const mbState = {
     collapsed: {
         recommended: false,
         favorite: false,
-        openrouter: false,
+        openrouter: true,
         paid: true,
-        gemini: false,
+        gemini: true,
         venice: true,
         alibaba: true,
     },
@@ -2926,6 +2958,17 @@ function mbModelsForGroup(gkey) {
 }
 async function mbRenderList() {
     const list = $("#mb_list");
+    
+    // Auto-expand provider of currently selected model
+    if (currentModelId && !mbState.collapsedProviderSet) {
+        const provider = mbDetectProvider(currentModelId);
+        const groupKey = MB_GROUPS.find(g => g.key === provider)?.key;
+        if (groupKey && mbState.collapsed[groupKey]) {
+            mbState.collapsed[groupKey] = false;
+        }
+        mbState.collapsedProviderSet = true;
+    }
+    
     let html = "";
     for (const g of MB_GROUPS) {
         const collapsed = mbState.collapsed[g.key];
@@ -3016,7 +3059,6 @@ async function mbOpen() {
         mbState.cache.venice = TOUR_FAKE_CACHE.venice;
     } else {
         try {
-            localStorage.removeItem(mbPingStoreKey());
             mbState.working = {};
             mbState.lastPing = {};
             mbState.cache = {
@@ -3027,6 +3069,14 @@ async function mbOpen() {
                 venice: null,
                 favorite: null
             };
+            mbLoadPingStore();
+            // Load cached model lists
+            for (const g of MB_GROUPS) {
+                if (g.key !== "recommended" && g.key !== "favorite" && g.key !== "paid") {
+                    const cached = mbLoadListCache(g.key);
+                    if (cached) mbState.cache[g.key] = cached.models;
+                }
+            }
         } catch {}
     }
     $("#settings").classList.remove("open");

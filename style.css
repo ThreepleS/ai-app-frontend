@@ -448,6 +448,28 @@ header {
 .ctx-stats:hover {
   border-color: var(--stroke-strong);
 }
+.ctx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+  margin-left: 4px;
+}
+.ctx-btn:hover {
+  background: var(--glass);
+  color: var(--text);
+}
+.ctx-btn svg {
+  width: 16px;
+  height: 16px;
+}
 .ctx-row {
   display: inline-flex;
   align-items: center;
