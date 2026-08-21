@@ -58,10 +58,6 @@ checkAppVersion();
 const DEFAULT_FN_BASE = "https://amhszfvqruzpydqyjlya.supabase.co/functions/v1";
 
 function resolveFnBase() {
-    try {
-        const fromUrl = new URLSearchParams(location.search).get("api");
-        if (fromUrl) return fromUrl.replace(/\/+$/, "");
-    } catch {}
     return DEFAULT_FN_BASE;
 }
 const FN_BASE = resolveFnBase();
@@ -1373,8 +1369,8 @@ function addHistoryMessage(role, content, image, stats) {
             "";
         html = textHtml + imgHtml;
     } else {
-        const isHtml = typeof content === "string" && content.trim().startsWith("<");
-        html = content ? (isHtml ? content : renderMarkdown(content)) : imgHtml;
+        // Always use renderMarkdown for bot messages - no raw HTML bypass
+        html = content ? `<div class="md">${renderMarkdown(content)}</div>` : imgHtml;
     }
     const msgEl = addMessage(role, html);
     if (stats && role === "bot") {
@@ -1448,28 +1444,14 @@ function currentInitData() {
 
 function authBody() {
     const initData = currentInitData();
-    const devId = getDevId();
     if (initData) {
         log("authBody: using init_data len=" + initData.length);
         return {
             init_data: initData
         };
     }
-    log("authBody: using dev_user=" + String(devId));
-    return {
-        user_id: devId
-    };
-}
-
-function getDevId() {
-    if (currentUserId) return currentUserId;
-    const fromUrl = new URLSearchParams(location.search).get("dev_user");
-    if (fromUrl) return fromUrl;
-    try {
-        return localStorage.getItem("dev_user") || "";
-    } catch (e) {
-        return "";
-    }
+    log("authBody: no init_data");
+    return {};
 }
 
 function fillSettings(s) {
@@ -3717,15 +3699,41 @@ function highlightTermsInMsg(msgEl, term) {
     if (!term || !msgEl) return;
     const md = msgEl.querySelector(".md");
     if (!md) return;
-    const text = md.innerText || md.textContent || "";
     const terms = term.split(/\s+/).filter(Boolean);
     if (!terms.length) return;
     const regex = new RegExp(`(${terms.map(escRegex).join("|")})`, "gi");
-    const html = text.replace(
-        regex,
-        '<span class="search-highlight-term">$1</span>',
-    );
-    md.innerHTML = html;
+
+    // Safe highlighting using TreeWalker - never converts text to HTML
+    const walker = document.createTreeWalker(md, NodeFilter.SHOW_TEXT, null, false);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+        if (node.textContent.match(regex)) {
+            textNodes.push(node);
+        }
+    }
+    textNodes.forEach((textNode) => {
+        const text = textNode.textContent;
+        const parent = textNode.parentNode;
+        let lastIndex = 0;
+        const fragment = document.createDocumentFragment();
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            const matchIndex = match.index;
+            if (matchIndex > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchIndex)));
+            }
+            const span = document.createElement("span");
+            span.className = "search-highlight-term";
+            span.textContent = match[1];
+            fragment.appendChild(span);
+            lastIndex = matchIndex + match[0].length;
+        }
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+        parent.replaceChild(fragment, textNode);
+    });
 }
 
 function escRegex(s) {
@@ -4021,20 +4029,7 @@ document.querySelectorAll(".settings-tabs .stab").forEach((tab) => {
             `.tab-content[data-content="${target}"]`,
         );
         if (content) content.classList.add("active");
-    });
 });
-async function tryAutoAdmin() {
-    // Dev-режим на локальной машине: пробуем зайти под dev_user.
-    const devId = getDevId();
-    if (devId) {
-        if (await auth(devId)) {
-            $("#devbar").style.display = "none";
-            return;
-        }
-    }
-    $("#devbar").style.display = "flex";
-}
-
 (async () => {
     console.log("[app] init start");
     try {
@@ -4051,9 +4046,6 @@ async function tryAutoAdmin() {
             console.log("[app] auth done ok=" + ok);
             if (!ok) updateEmptyState();
         } else {
-            console.log("[app] calling tryAutoAdmin");
-            await tryAutoAdmin();
-            console.log("[app] tryAutoAdmin done");
             updateEmptyState();
         }
     } catch (e) {
@@ -4574,3 +4566,4 @@ async function runTour(startStep = 0) {
 
     showStep(0);
 }
+})();
