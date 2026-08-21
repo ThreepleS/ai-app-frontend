@@ -7,7 +7,7 @@ const API_BASE = DEFAULT_FN_BASE;
 window.addEventListener("error", (e) => {
   try {
     alert("JS ошибка: " + (e.message || e.error || e));
-  } catch {}
+  } catch (_) {}
 });
 let initData = "";
 const inTelegram = !!(window.Telegram && window.Telegram.WebApp);
@@ -89,16 +89,16 @@ document.getElementById("adminThemeToggle").addEventListener("click", (e) => {
 });
 
 async function doLogin() {
-  $("#login_err").innerHTML = "запрос к серверу…";
+  $("#login_err").textContent = "запрос к серверу…";
   let data;
   try {
     data = await pjson("summary");
   } catch (e) {
-    $("#login_err").innerHTML = "<i data-lucide='alert-triangle' class='lucide'></i> сетевая ошибка: " + String(e);
+    $("#login_err").textContent = "⚠️ сетевая ошибка: " + String(e);
     return;
   }
   if (!data.ok) {
-    $("#login_err").innerHTML = "<i data-lucide='ban' class='lucide'></i> " + (data.error || JSON.stringify(data));
+    $("#login_err").textContent = "⛔ " + (data.error || JSON.stringify(data));
     return;
   }
   if (data.admin_id) currentAdminId = String(data.admin_id);
@@ -108,8 +108,8 @@ async function doLogin() {
 }
 async function boot() {
   if (!inTelegram && !initData) {
-    $("#login_err").innerHTML =
-      "<i data-lucide='ban' class='lucide'></i> Откройте админ-панель внутри Telegram (через бота).";
+    $("#login_err").textContent =
+      "⛔ Откройте админ-панель внутри Telegram (через бота).";
     return;
   }
   await doLogin();
@@ -117,25 +117,35 @@ async function boot() {
 boot();
 
 async function loadAll() {
-  const [s, u, w, ws] = await Promise.all([
+  const [s, u, w] = await Promise.all([
     pjson("summary"),
     pjson("users"),
-    pjson("whitelist", { sub_action: "list" }).catch(() => ({ ok: false })),
-    pjson("whitelist", { sub_action: "setting" }).catch(() => ({ ok: false })),
+    pjson("blacklist", { sub_action: "list" }).catch(() => ({ ok: false })),
   ]);
   if (s.ok) renderSummary(s);
   if (u.ok) renderUsers(u.users);
-  if (w.ok) renderWhitelist(w.whitelist);
-  if (ws.ok) {
-    const toggle = $("#wl_toggle");
-    if (toggle) toggle.checked = ws.whitelist_enabled !== false;
+  if (w.ok) renderBlacklist(w.blacklist);
+  const toggleBtn = $("#blToggle");
+  if (toggleBtn) {
+    const enabled = s.blacklist_enabled !== false;
+    toggleBtn.textContent = enabled ? "Выключить" : "Включить";
+    toggleBtn.className = enabled ? "btn danger sm" : "btn primary sm";
   }
+}
+
+async function blToggle() {
+  const d = await pjson("blacklist", {
+    sub_action: "toggle",
+    enabled: !($("#blToggle")?.textContent?.trim() === "Включить"),
+  });
+  flash(d.ok ? (d.blacklist_enabled ? "включено" : "выключено") : (d.error || "ошибка"));
+  if (d.ok) loadAll();
 }
 
 function renderSummary(s) {
   const cards = [
     ["Пользователей", s.users_total],
-    ["В белом списке", s.whitelisted],
+    ["В черном списке", s.blacklisted],
     ["Всего сообщений", s.messages_total],
     ["Всего токенов", s.tokens_total],
   ];
@@ -146,7 +156,9 @@ function renderSummary(s) {
     )
     .join("");
   const line = (title, arr) =>
-    `<span class="muted">${title}: ${arr && arr.length ? arr.length + " актив." : "нет"}</span>`;
+    `<span class="muted">${title}: ${
+      arr && arr.length ? arr.length + " актив." : "нет"
+    }</span>`;
   $("#statsExtra").innerHTML =
     line("24ч", s.stats_24h) + " &nbsp; " + line("7д", s.stats_7d);
 }
@@ -162,7 +174,9 @@ function keysHtml(keys) {
   return entries
     .map(
       ([prov, v]) =>
-        `<span class="pill prov">${esc(prov)} ${v && v.has ? "<i data-lucide='check' class='lucide'></i>" : "—"}</span>`,
+        `<span class="pill prov">${esc(prov)} ${
+          v && v.has ? "✅" : "—"
+        }</span>`,
     )
     .join(" ");
 }
@@ -173,7 +187,9 @@ function renderUsers(users) {
     .map(
       (u) => `
         <tr>
-          <td>${u.is_admin ? '<span class="pill adm">админ</span>' : ""}<span class="mono">${esc(u.user_id)}</span></td>
+          <td>${
+            u.is_admin ? '<span class="pill adm">админ</span>' : ""
+          }<span class="mono">${esc(u.user_id)}</span></td>
           <td>${esc(u.provider)}</td>
           <td>${esc(u.model) || "—"}</td>
           <td>${esc(u.context_limit) || "—"}</td>
@@ -181,8 +197,8 @@ function renderUsers(users) {
           <td>${esc(u.tokens_total) || "0"}</td>
           <td>${keysHtml(u.keys)}</td>
           <td><div class="btns">
-            <button class="btn ghost sm" onclick="usrAction('clear',${u.user_id})"><i data-lucide='trash-2' class='lucide'></i> история</button>
-            <button class="btn danger sm" onclick="usrAction('reset',${u.user_id})"><i data-lucide='refresh-cw' class='lucide'></i> сброс</button>
+            <button class="btn ghost sm" data-act="usr" data-sub="clear" data-uid="${esc(u.user_id)}">🗑 история</button>
+            <button class="btn danger sm" data-act="usr" data-sub="reset" data-uid="${esc(u.user_id)}">♻ сброс</button>
           </div></td>
         </tr>`,
     )
@@ -190,22 +206,14 @@ function renderUsers(users) {
 }
 
 async function usrAction(action, uid) {
-  if (action === "reset") {
-    const ok = await showDangerModal(`Сбросить пользователя ${uid}?`, "Это действие нельзя отменить.");
-    if (!ok) return;
-    const confirmed = await with2FA("user", { sub_action: "reset", user_id: uid });
-    if (!confirmed) return;
-    flash(confirmed.message || confirmed.error || "ошибка");
-    if (confirmed.ok) loadAll();
-    return;
-  }
+  if (action === "reset" && !confirm(`Сбросить пользователя ${uid}?`)) return;
   const d = await pjson("user", { sub_action: action, user_id: uid });
-  flash(d.ok ? d.message : d.error || "ошибка");
+  flash(d.ok ? d.message : (d.error || "ошибка"));
   if (d.ok) loadAll();
 }
 
-function renderWhitelist(list) {
-  const tb = $("#whitelist tbody");
+function renderBlacklist(list) {
+  const tb = $("#blacklist tbody");
   if (!list || !list.length) {
     tb.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;padding:16px">список пуст</td></tr>`;
     return;
@@ -214,26 +222,39 @@ function renderWhitelist(list) {
     .map((e) => {
       const isAdmin = e.user_id == ADMIN();
       const type =
-        e.access_type === "temporary"
-          ? `<span class="pill temp"><i data-lucide='hourglass' class='lucide'></i> временный</span>`
-          : `<span class="pill perm"><i data-lucide='infinity' class='lucide'></i> вечный</span>`;
+        e.block_type === "temporary"
+          ? `<span class="pill temp">⏳ временный</span>`
+          : `<span class="pill perm">♾️ вечный</span>`;
       let expInfo = "";
-      if (e.access_type === "temporary") {
-        const ms = expToMs(e.access_expires_at);
+      if (e.block_type === "temporary") {
+        const ms = expToMs(e.block_expires_at);
         if (ms) {
           const daysLeft = Math.max(0, Math.ceil((ms - Date.now()) / 86400000));
           const d = new Date(ms);
-          expInfo = `<div class="muted" style="margin-top:3px">осталось ${daysLeft} дн. (до ${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()})</div>`;
-      }
+          expInfo = `<div class="muted" style="margin-top:3px">осталось ${daysLeft} дн. (до ${String(
+            d.getDate(),
+          ).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${
+            d.getFullYear()
+          })</div>`;
+        }
       }
       return `<tr>
-          <td>${isAdmin ? '<span class="pill adm">админ</span>' : ""}<span class="mono">${esc(e.user_id)}</span></td>
+          <td>${
+            isAdmin ? '<span class="pill adm">админ</span>' : ""
+          }<span class="mono">${esc(e.user_id)}</span></td>
           <td>${type}${expInfo}</td>
-          <td>${esc(e.note) || "—"}</td>
+          <td>${esc(e.block_reason) || "—"}</td>
           <td><div class="btns">
-            <button class="btn ghost sm" onclick="wlNote(${e.user_id})"><i data-lucide='pencil' class='lucide'></i> пометка</button>
-            ${e.access_type === "temporary" && !isAdmin ? `<button class="btn ghost sm" onclick="wlAddDays(${e.user_id})"><i data-lucide='plus' class='lucide'></i> дни</button>` : ""}
-            ${isAdmin ? "" : `<button class="btn danger sm" onclick="wlRemove(${e.user_id})"><i data-lucide='x' class='lucide'></i> удалить</button>`}
+            ${
+              e.block_type === "temporary" && !isAdmin
+                ? `<button class="btn ghost sm" data-act="bldays" data-uid="${esc(e.user_id)}">➕ дни</button>`
+                : ""
+            }
+            ${
+              isAdmin
+                ? ""
+                : `<button class="btn danger sm" data-act="blrem" data-uid="${esc(e.user_id)}">✕ удалить</button>`
+            }
           </div></td>
         </tr>`;
     })
@@ -249,30 +270,30 @@ function expToMs(v) {
   return isNaN(t) ? null : t;
 }
 
-async function wlAdd() {
-  const user_id = $("#wl_id").value.trim();
-  const access_type = $("#wl_type").value;
-  const days = access_type === "temporary" ? $("#wl_days").value : null;
-  const note = $("#wl_note").value.trim();
+async function blAdd() {
+  const user_id = $("#bl_id").value.trim();
+  const block_type = $("#bl_type").value;
+  const days = block_type === "temporary" ? $("#bl_days").value : null;
+  const block_reason = $("#bl_reason").value.trim();
   if (!user_id) {
     flash("введи ID", true);
     return;
   }
-  const d = await pjson("whitelist", {
+  const d = await pjson("blacklist", {
     sub_action: "add",
     user_id,
-    access_type,
+    block_type,
     days,
-    note,
+    block_reason,
   });
-  flash(d.ok ? "добавлено" : d.error || "ошибка");
+  flash(d.ok ? "добавлено" : (d.error || "ошибка"));
   if (d.ok) {
-    $("#wl_id").value = "";
-    $("#wl_note").value = "";
+    $("#bl_id").value = "";
+    $("#bl_reason").value = "";
     loadAll();
   }
 }
-async function wlAddDays(uid) {
+async function blAddDays(uid) {
   const days = prompt("Сколько дней добавить?");
   if (days === null) return;
   const d = Number(days);
@@ -280,76 +301,65 @@ async function wlAddDays(uid) {
     flash("введи положительное число дней", true);
     return;
   }
-  const r = await pjson("whitelist", {
+  const r = await pjson("blacklist", {
     sub_action: "add_days",
     user_id: uid,
     days: d,
   });
-  flash(r.ok ? `добавлено ${d} дн.` : r.error || "ошибка");
+  flash(r.ok ? `добавлено ${d} дн.` : (r.error || "ошибка"));
   if (r.ok) loadAll();
 }
-async function wlRemove(uid) {
-  const ok = await showDangerModal(`Удалить ${uid} из белого списка?`, "Пользователь потеряет доступ.");
-  if (!ok) return;
-  const confirmed = await with2FA("whitelist", { sub_action: "remove", user_id: uid });
-  flash(confirmed.ok ? confirmed.message : confirmed.error || "ошибка");
-  if (confirmed.ok) loadAll();
-}
-async function wlToggle(checked) {
-  const d = await pjson("whitelist", { sub_action: "toggle", enabled: checked });
-  flash(d.ok ? (checked ? "Белый список включён" : "Белый список выключен") : d.error || "ошибка");
+async function blRemove(uid) {
+  if (!confirm(`Удалить ${uid} из черного списка?`)) return;
+  const d = await pjson("blacklist", {
+    sub_action: "remove",
+    user_id: uid,
+  });
+  flash(d.ok ? d.message : (d.error || "ошибка"));
   if (d.ok) loadAll();
 }
-async function wlNote(uid) {
-  const note = prompt("Новая пометка:");
-  if (note === null) return;
-  const d = await pjson("whitelist", {
+async function blNote(uid) {
+  const block_reason = prompt("Новая причина:");
+  if (block_reason === null) return;
+  const d = await pjson("blacklist", {
     sub_action: "note",
     user_id: uid,
-    note,
+    block_reason,
   });
-  flash(d.ok ? "сохранено" : d.error || "ошибка");
+  flash(d.ok ? "сохранено" : (d.error || "ошибка"));
   if (d.ok) loadAll();
 }
 async function resetAll() {
-  const ok = await showDangerModal("Сбросить ВСЕХ пользователей?", "Белый список сохранится. Это действие нельзя отменить.");
-  if (!ok) return;
-  const confirmed = await with2FA("reset_all", {});
-  flash(confirmed.ok ? confirmed.message : confirmed.error || "ошибка");
-  if (confirmed.ok) loadAll();
+  if (!confirm("Сбросить ВСЕХ пользователей? Черный список сохранится.")) return;
+  const d = await pjson("reset_all", {});
+  flash(d.ok ? d.message : (d.error || "ошибка"));
+  if (d.ok) loadAll();
 }
 
-async function with2FA(action, params = {}) {
-  const req = await pjson("request_2fa", { for_action: action });
-  if (!req.ok) return req;
-  const code = String(req.code || "");
-  const input = await show2FAModal(code);
-  if (!input) return { ok: false, error: "Отменено" };
-  return pjson(action, Object.assign({}, params, { confirm: input }));
-}
-
-async function show2FAModal(expectedCode) {
-  return new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999";
-    const box = document.createElement("div");
-    box.style.cssText = "background:#1a1a1a;color:#fff;padding:24px;border-radius:12px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5)";
-    box.innerHTML = `<h3 style="margin:0 0 8px;font-size:18px">Двухфакторная проверка</h3><p style="margin:0 0 16px;color:#aaa;font-size:14px;line-height:1.5">Введите код подтверждения:<br><strong style="color:#fff;font-size:20px;letter-spacing:4px">${esc(expectedCode)}</strong></p><input id="faInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#0a0a0a;color:#fff;font-size:18px;letter-spacing:4px;text-align:center;margin-bottom:12px;box-sizing:border-box"><div style="text-align:right"><button id="faCancel" style="background:#333;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-right:8px">Отмена</button><button id="faConfirm" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer">Подтвердить</button></div>`;
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    const inputEl = box.querySelector("#faInput");
-    inputEl.focus();
-    const close = (val) => { document.body.removeChild(overlay); resolve(val); };
-    box.querySelector("#faCancel").onclick = () => close(null);
-    box.querySelector("#faConfirm").onclick = () => close(inputEl.value.trim());
-    inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") close(inputEl.value.trim()); });
-  });
-}
-
-$("#wl_type").addEventListener("change", (e) => {
-  $("#wl_days").style.display =
-    e.target.value === "temporary" ? "inline" : "none";
+$("#bl_type").addEventListener("change", (e) => {
+  $("#bl_days").style.display = e.target.value === "temporary" ? "inline" : "none";
 });
+
+// Делегирование кликов по кнопкам действий в таблицах.
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-act]");
+  if (!t) return;
+  const act = t.dataset.act;
+  const uid = Number(t.dataset.uid);
+  if (act === "usr") return usrAction(t.dataset.sub, uid);
+  if (act === "bldays") return blAddDays(uid);
+  if (act === "blrem") return blRemove(uid);
+});
+
+// Статичные кнопки панели (без inline-обработчиков — для строгого CSP).
+const usrRefresh = $("#usrRefresh");
+if (usrRefresh) usrRefresh.addEventListener("click", loadAll);
+const blToggleBtn = $("#blToggle");
+if (blToggleBtn) blToggleBtn.addEventListener("click", blToggle);
+const blAddBtn = $("#blAddBtn");
+if (blAddBtn) blAddBtn.addEventListener("click", blAdd);
+const resetAllBtn = $("#resetAllBtn");
+if (resetAllBtn) resetAllBtn.addEventListener("click", resetAll);
 
 function flash(t, isErr) {
   const m = $("#msg");
@@ -359,8 +369,4 @@ function flash(t, isErr) {
     m.textContent = "";
     m.className = "muted";
   }, 2500);
-}
-
-if (window.lucide) {
-  lucide.createIcons();
 }

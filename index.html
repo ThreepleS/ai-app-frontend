@@ -7,6 +7,10 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://unpkg.com https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';"
+    />
     <script src="https://unpkg.com/lucide@0.468.0"></script>
     <meta
       http-equiv="Cache-Control"
@@ -836,12 +840,10 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app.js?v=20260821_1752"></script>
-    <script>
-      if (window.lucide) lucide.createIcons();
-    </script>
+    <script src="./app.js?v=20260821_1802"></script>
   </body>
 </html>
+
 
 
 

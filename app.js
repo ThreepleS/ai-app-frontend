@@ -1414,31 +1414,9 @@ function currentInitData() {
             log("initData WebApp error: " + (e && e.message ? e.message : String(e)));
         }
     }
-    try {
-        const fromUrl = new URLSearchParams(location.search).get("init_data");
-        if (fromUrl) {
-            log("initData from URL len=" + fromUrl.length);
-            return fromUrl;
-        }
-    } catch (e) {
-        log("initData URL error: " + (e && e.message ? e.message : String(e)));
-    }
-    try {
-        const hash = location.hash || "";
-        const marker = "tgWebAppData=";
-        const idx = hash.indexOf(marker);
-        if (idx >= 0) {
-            const afterMarker = hash.slice(idx + marker.length);
-            const ampIdx = afterMarker.indexOf("&");
-            const raw = ampIdx >= 0 ?
-                decodeURIComponent(afterMarker.slice(0, ampIdx)) :
-                decodeURIComponent(afterMarker);
-            log("initData from hash len=" + raw.length);
-            return raw;
-        }
-    } catch (e) {
-        log("initData hash error: " + (e && e.message ? e.message : String(e)));
-    }
+    // init_data берётся ТОЛЬКО из Telegram WebApp (подписано бот-токеном).
+    // Любая инъекция через ?init_data= или location.hash запрещена: иначе
+    // внешняя ссылка может подсунуть произвольные данные авторизации.
     log("initData empty");
     return "";
 }
@@ -3945,7 +3923,7 @@ $("#s_replay_tour").addEventListener("click", () => {
     setTimeout(() => showBetaWelcome().then(() => initTour(true)), 120);
 });
 $("#s_bug_report").addEventListener("click", () => {
-    window.open("https://t.me/mqzxcsss", "_blank");
+    window.open("https://t.me/mqzxcsss", "_blank", "noopener,noreferrer");
 });
 $("#s_erudite").addEventListener("change", () => {
     const enabled = $("#s_erudite").checked;
