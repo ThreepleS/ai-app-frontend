@@ -14,46 +14,53 @@ window.addEventListener("error", (e) => {
 });
 console.log("[app] script start");
 // Старые WebView (некоторые Telegram) возвращают из querySelectorAll объект без
-// forEach (StaticNodeList / нестандартный прототип), поэтому патч
-// NodeList.prototype не срабатывает. Делаем querySelectorAll всегда
-// возвращающим настоящий Array — у Array.prototype.forEach есть везде.
-(function polyfillQSA() {
-    try {
-        const d = (typeof Document !== "undefined" && Document.prototype) || (document && document.constructor && document.constructor.prototype);
-        if (d && d.querySelectorAll) {
-            const orig = d.querySelectorAll;
-            d.querySelectorAll = function (sel) {
-                return Array.from(orig.call(this, sel));
+// forEach (StaticNodeList / нестандартный прототип), поэтому патч NodeList.prototype
+// не срабатывает. Делаем querySelectorAll всегда возвращающим настоящий Array.
+// Используем ES3-совместимый toArray (без Array.from / стрелочных функций), чтобы
+// сработать в самых старых движках, включая те, где Array.from отсутствует.
+(function () {
+    function toArray(list) {
+        var out = [];
+        if (!list) return out;
+        for (var i = 0; i < list.length; i++) out.push(list[i]);
+        return out;
+    }
+    function patch(proto) {
+        if (!proto || !proto.querySelectorAll) return;
+        try {
+            var orig = proto.querySelectorAll;
+            proto.querySelectorAll = function (sel) {
+                return toArray(orig.call(this, sel));
             };
-        }
-    } catch (_) {}
+        } catch (_) {}
+    }
+    patch(typeof Document !== "undefined" ? Document.prototype : null);
+    patch(typeof Element !== "undefined" ? Element.prototype : null);
+    patch(typeof DocumentFragment !== "undefined" ? DocumentFragment.prototype : null);
+    // На всякий случай: если querySelectorAll задан как собственное свойство
+    // экземпляра document (экзотика старых WebView) — перекрываем и его.
     try {
-        if (Element.prototype.querySelectorAll) {
-            const orig = Element.prototype.querySelectorAll;
-            Element.prototype.querySelectorAll = function (sel) {
-                return Array.from(orig.call(this, sel));
-            };
-        }
-    } catch (_) {}
-    try {
-        if (typeof DocumentFragment !== "undefined" && DocumentFragment.prototype.querySelectorAll) {
-            const orig = DocumentFragment.prototype.querySelectorAll;
-            DocumentFragment.prototype.querySelectorAll = function (sel) {
-                return Array.from(orig.call(this, sel));
+        if (document.querySelectorAll) {
+            var od = document.querySelectorAll.bind(document);
+            document.querySelectorAll = function (sel) {
+                return toArray(od(sel));
             };
         }
     } catch (_) {}
 })();
-// Дополнительно: forEach на самих списках узлов (children, getElementsBy* и т.п.).
-if (window.NodeList && !NodeList.prototype.forEach) {
-    NodeList.prototype.forEach = Array.prototype.forEach;
-}
-if (window.HTMLCollection && !HTMLCollection.prototype.forEach) {
-    HTMLCollection.prototype.forEach = Array.prototype.forEach;
-}
-if (window.DOMTokenList && !DOMTokenList.prototype.forEach) {
-    DOMTokenList.prototype.forEach = Array.prototype.forEach;
-}
+// forEach на самих списках узлов (children, getElementsBy* и т.п.).
+(function () {
+    function forEachPoly(C) {
+        if (C && C.prototype && !C.prototype.forEach) {
+            C.prototype.forEach = function (cb, thisArg) {
+                for (var i = 0; i < this.length; i++) cb.call(thisArg, this[i], i, this);
+            };
+        }
+    }
+    forEachPoly(typeof NodeList !== "undefined" ? NodeList : null);
+    forEachPoly(typeof HTMLCollection !== "undefined" ? HTMLCollection : null);
+    forEachPoly(typeof DOMTokenList !== "undefined" ? DOMTokenList : null);
+})();
 const $ = (s) => document.querySelector(s);
 const log = (t) => {
     const el = $("#log");
