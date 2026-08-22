@@ -1,6 +1,12 @@
-// === GLOBAL POLYFILL (must be first) ===
-// Force querySelectorAll to always return Arrays (have .forEach everywhere).
-// Patch all prototypes + document/element instances.
+// === Глобальные переменные тура (должны быть до mbClose и остального кода) ===
+const TOUR_KEY = "has_seen_tutorial";
+let tourActive = false;
+let queuedAuthError = null;
+let deferredOpenSettings = false;
+
+// === Глобальный полифилл querySelectorAll / forEach (ДОЛЖЕН БЫТЬ ПЕРВЫМ) ===
+// Принудительно заставляем querySelectorAll возвращать настоящие Array (у них есть .forEach везде).
+// Патчим все прототипы + инстансы document/element.
 (function () {
     function toArray(list) {
         var out = [];
@@ -17,13 +23,13 @@
             };
         } catch (_) {}
     }
-    // Patch all known prototypes
+    // Патчим все известные прототипы
     patch(typeof Document !== "undefined" ? Document.prototype : null);
     patch(typeof Element !== "undefined" ? Element.prototype : null);
     patch(typeof DocumentFragment !== "undefined" ? DocumentFragment.prototype : null);
     patch(typeof HTMLDocument !== "undefined" ? HTMLDocument.prototype : null);
     patch(typeof HTMLElement !== "undefined" ? HTMLElement.prototype : null);
-    // Patch document/element instances directly
+    // Патчим инстансы document/element напрямую
     try {
         if (document && document.querySelectorAll) {
             var od = document.querySelectorAll.bind(document);
@@ -36,7 +42,7 @@
             document.documentElement.querySelectorAll = function (sel) { return toArray(oe(sel)); };
         }
     } catch (_) {}
-    // forEach polyfills for all list-like objects
+    // forEach полифиллы для всех списковых объектов
     function forEachPoly(C) {
         if (C && C.prototype && !C.prototype.forEach) {
             C.prototype.forEach = function (cb, thisArg) {
@@ -64,54 +70,6 @@ window.addEventListener("error", (e) => {
     console.error("[global]", e.message || e.error || e);
 });
 console.log("[app] script start");
-// Старые WebView (некоторые Telegram) возвращают из querySelectorAll объект без
-// forEach (StaticNodeList / нестандартный прототип), поэтому патч NodeList.prototype
-// не срабатывает. Делаем querySelectorAll всегда возвращающим настоящий Array.
-// Используем ES3-совместимый toArray (без Array.from / стрелочных функций), чтобы
-// сработать в самых старых движках, включая те, где Array.from отсутствует.
-(function () {
-    function toArray(list) {
-        var out = [];
-        if (!list) return out;
-        for (var i = 0; i < list.length; i++) out.push(list[i]);
-        return out;
-    }
-    function patch(proto) {
-        if (!proto || !proto.querySelectorAll) return;
-        try {
-            var orig = proto.querySelectorAll;
-            proto.querySelectorAll = function (sel) {
-                return toArray(orig.call(this, sel));
-            };
-        } catch (_) {}
-    }
-    patch(typeof Document !== "undefined" ? Document.prototype : null);
-    patch(typeof Element !== "undefined" ? Element.prototype : null);
-    patch(typeof DocumentFragment !== "undefined" ? DocumentFragment.prototype : null);
-    // На всякий случай: если querySelectorAll задан как собственное свойство
-    // экземпляра document (экзотика старых WebView) — перекрываем и его.
-    try {
-        if (document.querySelectorAll) {
-            var od = document.querySelectorAll.bind(document);
-            document.querySelectorAll = function (sel) {
-                return toArray(od(sel));
-            };
-        }
-    } catch (_) {}
-})();
-// forEach на самих списках узлов (children, getElementsBy* и т.п.).
-(function () {
-    function forEachPoly(C) {
-        if (C && C.prototype && !C.prototype.forEach) {
-            C.prototype.forEach = function (cb, thisArg) {
-                for (var i = 0; i < this.length; i++) cb.call(thisArg, this[i], i, this);
-            };
-        }
-    }
-    forEachPoly(typeof NodeList !== "undefined" ? NodeList : null);
-    forEachPoly(typeof HTMLCollection !== "undefined" ? HTMLCollection : null);
-    forEachPoly(typeof DOMTokenList !== "undefined" ? DOMTokenList : null);
-})();
 const $ = (s) => document.querySelector(s);
 const log = (t) => {
     const el = $("#log");
@@ -4333,7 +4291,8 @@ async function initTour(force = false) {
         }
         const bd = welcome.querySelector(".modal-backdrop");
         if (bd) bd.removeEventListener("click", onNo);
-        welcome.querySelectorAll("[data-close]").forEach((b) => b.removeEventListener("click", onNo));
+        const wc = welcome.querySelectorAll("[data-close]");
+        if (wc && typeof wc.forEach === "function") wc.forEach((b) => b.removeEventListener("click", onNo));
         localStorage.setItem(TOUR_KEY, "true");
         if (!run) {
             tourActive = false;
@@ -4369,9 +4328,10 @@ async function initTour(force = false) {
             no.textContent = "Нет";
         }
     }, 1000);
-    const bd = welcome.querySelector(".modal-backdrop");
-    if (bd) bd.addEventListener("click", onNo);
-    welcome.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", onNo));
+const bd = welcome.querySelector(".modal-backdrop");
+        if (bd) bd.addEventListener("click", onNo);
+        const wc2 = welcome.querySelectorAll("[data-close]");
+        if (wc2 && typeof wc2.forEach === "function") wc2.forEach((b) => b.addEventListener("click", onNo));
 }
 
 async function runTour(startStep = 0) {
