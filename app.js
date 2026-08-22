@@ -1,3 +1,54 @@
+// === GLOBAL POLYFILL (must be first) ===
+// Force querySelectorAll to always return Arrays (have .forEach everywhere).
+// Patch all prototypes + document/element instances.
+(function () {
+    function toArray(list) {
+        var out = [];
+        if (!list) return out;
+        for (var i = 0; i < list.length; i++) out.push(list[i]);
+        return out;
+    }
+    function patch(proto) {
+        if (!proto || !proto.querySelectorAll) return;
+        try {
+            var orig = proto.querySelectorAll;
+            proto.querySelectorAll = function (sel) {
+                return toArray(orig.call(this, sel));
+            };
+        } catch (_) {}
+    }
+    // Patch all known prototypes
+    patch(typeof Document !== "undefined" ? Document.prototype : null);
+    patch(typeof Element !== "undefined" ? Element.prototype : null);
+    patch(typeof DocumentFragment !== "undefined" ? DocumentFragment.prototype : null);
+    patch(typeof HTMLDocument !== "undefined" ? HTMLDocument.prototype : null);
+    patch(typeof HTMLElement !== "undefined" ? HTMLElement.prototype : null);
+    // Patch document/element instances directly
+    try {
+        if (document && document.querySelectorAll) {
+            var od = document.querySelectorAll.bind(document);
+            document.querySelectorAll = function (sel) { return toArray(od(sel)); };
+        }
+    } catch (_) {}
+    try {
+        if (document && document.documentElement && document.documentElement.querySelectorAll) {
+            var oe = document.documentElement.querySelectorAll.bind(document.documentElement);
+            document.documentElement.querySelectorAll = function (sel) { return toArray(oe(sel)); };
+        }
+    } catch (_) {}
+    // forEach polyfills for all list-like objects
+    function forEachPoly(C) {
+        if (C && C.prototype && !C.prototype.forEach) {
+            C.prototype.forEach = function (cb, thisArg) {
+                for (var i = 0; i < this.length; i++) cb.call(thisArg, this[i], i, this);
+            };
+        }
+    }
+    forEachPoly(typeof NodeList !== "undefined" ? NodeList : null);
+    forEachPoly(typeof HTMLCollection !== "undefined" ? HTMLCollection : null);
+    forEachPoly(typeof DOMTokenList !== "undefined" ? DOMTokenList : null);
+})();
+
 window.addEventListener("error", (e) => {
     try {
         const el = document.querySelector("#log");
@@ -4438,7 +4489,10 @@ async function runTour(startStep = 0) {
     }
 
     function applySpotlight(rect, settingsMode = false) {
-        document.querySelectorAll(".tour-spotlight").forEach((el) => el.classList.remove("tour-spotlight"));
+        const spots = document.querySelectorAll(".tour-spotlight");
+        if (spots && typeof spots.forEach === "function") {
+            spots.forEach((el) => el.classList.remove("tour-spotlight"));
+        }
         const target = $(steps[currentStep].target);
         if (target) target.classList.add("tour-spotlight");
         updateOverlay(rect, settingsMode);
@@ -4524,7 +4578,10 @@ async function runTour(startStep = 0) {
         tooltip.style.display = "none";
         overlay.style.clipPath = "";
         overlay.style.background = "";
-        document.querySelectorAll(".tour-spotlight").forEach((el) => el.classList.remove("tour-spotlight"));
+        const spots = document.querySelectorAll(".tour-spotlight");
+        if (spots && typeof spots.forEach === "function") {
+            spots.forEach((el) => el.classList.remove("tour-spotlight"));
+        }
         nextBtn.removeEventListener("click", onNext);
         skipBtn.removeEventListener("click", onSkip);
         document.removeEventListener("click", tourClickHandler);
