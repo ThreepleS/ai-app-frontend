@@ -4,6 +4,33 @@ let tourActive = false;
 let queuedAuthError = null;
 let deferredOpenSettings = false;
 
+// === Toast-уведомления (определены рано, чтобы были доступны везде) ===
+function toast(msg, type) {
+    try {
+        const wrap = document.getElementById("toasts");
+        if (!wrap) return;
+        const el = document.createElement("div");
+        el.className = "toast" + (type ? " " + type : "");
+        el.textContent = msg;
+        wrap.appendChild(el);
+        requestAnimationFrame(() => {
+            el.style.opacity = "1";
+        });
+        setTimeout(() => {
+            el.style.transition = "opacity .3s, transform .3s";
+            el.style.opacity = "0";
+            el.style.transform = "translateY(8px)";
+            setTimeout(() => el.remove(), 320);
+        }, 2600);
+    } catch (e) {
+        try {
+            const bodyEl = $("#alertBody");
+            if (bodyEl) bodyEl.textContent = msg;
+            $("#alertModal").classList.add("open");
+        } catch {}
+    }
+}
+
 // === Глобальный полифилл querySelectorAll / forEach (ДОЛЖЕН БЫТЬ ПЕРВЫМ) ===
 // Принудительно заставляем querySelectorAll возвращать настоящие Array (у них есть .forEach везде).
 // Патчим все прототипы + инстансы document/element.
@@ -4164,35 +4191,6 @@ function exportDialogFromModal(format) {
 }
 $("#exportMdBtn").addEventListener("click", () => exportDialogFromModal("md"));
 $("#exportTxtBtn").addEventListener("click", () => exportDialogFromModal("txt"));
-
-// --- Toast-уведомления (вместо скучных alert там, где уместно) ---
-function toast(msg, type) {
-    try {
-        const wrap = document.getElementById("toasts");
-        if (!wrap) {
-            return;
-        }
-        const el = document.createElement("div");
-        el.className = "toast" + (type ? " " + type : "");
-        el.textContent = msg;
-        wrap.appendChild(el);
-        requestAnimationFrame(() => {
-            el.style.opacity = "1";
-        });
-        setTimeout(() => {
-            el.style.transition = "opacity .3s, transform .3s";
-            el.style.opacity = "0";
-            el.style.transform = "translateY(8px)";
-            setTimeout(() => el.remove(), 320);
-        }, 2600);
-    } catch (e) {
-        try {
-            const bodyEl = $("#alertBody");
-            if (bodyEl) bodyEl.textContent = msg;
-            $("#alertModal").classList.add("open");
-        } catch {}
-    }
-}
 
 // Закрытие оверлеев (настройки / браузер моделей) по крестику.
 document.querySelectorAll("[data-close]").forEach((btn) => {
