@@ -31,62 +31,38 @@ function toast(msg, type) {
     }
 }
 
-// === Глобальный полифилл querySelectorAll / forEach (ДОЛЖЕН БЫТЬ ПЕРВЫМ) ===
-// Принудительно заставляем querySelectorAll возвращать настоящие Array (у них есть .forEach везде).
-// Патчим через Object.defineProperty (простое присваивание не работает, если свойство read-only).
+// === Глобальный хелпер qsa (ДОЛЖЕН БЫТЬ ПЕРВЫМ) ===
+// НЕ пытаемся переопределить нативный querySelectorAll — в некоторых WebView (Telegram)
+// это свойство read-only и любая попытка переопределения молча проваливается.
+// Вместо этого добавляем НОВЫЙ метод qsa на прототипы (добавить новый метод всегда можно).
+// qsa вызывает ЗАХВАЧЕННУЮ нативную функцию и конвертирует результат через slice,
+// поэтому результат — всегда настоящий Array (с forEach / map / filter / length / [i]).
 (function () {
-    function toArray(list) {
-        if (!list) return [];
-        if (typeof Array.isArray === "function" && Array.isArray(list)) return list;
-        try { return Array.prototype.slice.call(list); }
-        catch (e) {
-            var out = [];
-            for (var i = 0; i < (list.length || 0); i++) out.push(list[i]);
-            return out;
-        }
-    }
-    function wrapOwner(owner, name) {
-        if (!owner || !owner[name]) return;
+    function installQsa(Proto) {
+        if (!Proto || !Proto.prototype) return;
+        var native = Proto.prototype.querySelectorAll;
+        if (typeof native !== "function") return;
         try {
-            var desc = Object.getOwnPropertyDescriptor(owner, name);
-            var orig;
-            if (desc && typeof desc.get === "function") {
-                orig = desc.get;
-                Object.defineProperty(owner, name, {
-                    configurable: true,
-                    get: function () {
-                        var fn = orig.call(this);
-                        var self = this;
-                        return function (sel) { return toArray(fn.call(self, sel)); };
-                    }
-                });
-            } else if (desc && typeof desc.value === "function") {
-                orig = desc.value;
-                Object.defineProperty(owner, name, {
-                    configurable: true,
-                    writable: true,
-                    value: function (sel) { return toArray(orig.call(this, sel)); }
-                });
-            } else {
-                orig = owner[name];
-                try { owner[name] = function (sel) { return toArray(orig.call(this, sel)); }; }
-                catch (e) {}
-            }
-        } catch (e) {}
+            Proto.prototype.qsa = function (sel) {
+                try { return Array.prototype.slice.call(native.call(this, sel)); }
+                catch (e) { return []; }
+            };
+        } catch (_) {}
     }
-    // Патчим все известные прототипы
-    ["Document", "Element", "DocumentFragment", "HTMLDocument", "HTMLElement", "SVGElement"].forEach(function (n) {
-        try { var C = window[n]; if (C && C.prototype) wrapOwner(C.prototype, "querySelectorAll"); } catch (e) {}
-    });
-    // Патчим инстансы document/element напрямую
-    try { wrapOwner(document, "querySelectorAll"); } catch (e) {}
-    try { if (document.documentElement) wrapOwner(document.documentElement, "querySelectorAll"); } catch (e) {}
-    // forEach на случай, если querySelectorAll вернул нативный список (последний рубеж)
-    [window.NodeList, window.HTMLCollection, window.DOMTokenList].forEach(function (C) {
+    installQsa(typeof Document !== "undefined" ? Document : null);
+    installQsa(typeof Element !== "undefined" ? Element : null);
+    installQsa(typeof DocumentFragment !== "undefined" ? DocumentFragment : null);
+    installQsa(typeof HTMLElement !== "undefined" ? HTMLElement : null);
+    installQsa(typeof SVGElement !== "undefined" ? SVGElement : null);
+    // Запасной forEach на списковых прототипах (на случай прямых вызовов нативного querySelectorAll)
+    function fp(C) {
         if (C && C.prototype && !C.prototype.forEach) {
-            try { C.prototype.forEach = Array.prototype.forEach; } catch (e) {}
+            try { C.prototype.forEach = Array.prototype.forEach; } catch (_) {}
         }
-    });
+    }
+    fp(typeof NodeList !== "undefined" ? NodeList : null);
+    fp(typeof HTMLCollection !== "undefined" ? HTMLCollection : null);
+    fp(typeof DOMTokenList !== "undefined" ? DOMTokenList : null);
 })();
 
 window.addEventListener("error", (e) => {
@@ -498,7 +474,7 @@ dialogs.forEach((d) => {
                 });
             });
             if (window.lucide) lucide.createIcons();
-            document.querySelectorAll(".dialog-item-del").forEach((btn) => {
+            document.qsa(".dialog-item-del").forEach((btn) => {
                 btn.addEventListener("click", async (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.del;
@@ -511,7 +487,7 @@ dialogs.forEach((d) => {
                     } else renderDialogsPanel();
                 });
             });
-            document.querySelectorAll(".dialog-item-export").forEach((btn) => {
+            document.qsa(".dialog-item-export").forEach((btn) => {
                 btn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.export;
@@ -540,7 +516,7 @@ function closeDialogs() {
 
 function collectMessagesFromDom() {
     const msgs = [];
-    box.querySelectorAll(".msg").forEach((el) => {
+    box.qsa(".msg").forEach((el) => {
         const role = el.classList.contains("user") ? "user" : "bot";
         let text = "";
         const md = el.querySelector(".md");
@@ -582,7 +558,7 @@ function updateContextStats() {
     let recv = 0;
     let cached = 0;
 
-    box.querySelectorAll(".msg").forEach((msgEl) => {
+    box.qsa(".msg").forEach((msgEl) => {
         const isUser = msgEl.classList.contains("user");
         const isBot = msgEl.classList.contains("bot");
         if (!isUser && !isBot) return;
@@ -653,7 +629,7 @@ async function autoSaveCurrentDialog() {
         try {
             const saved = await saveDialogToDb(dialog);
             if (saved && saved.name) {
-                const items = document.querySelectorAll(".dialog-item");
+                const items = document.qsa(".dialog-item");
                 items.forEach((item) => {
                     if (item.querySelector(`[data-id="${saved.id}"]`)) {
                         const nameEl = item.querySelector(".dialog-name-text");
@@ -709,7 +685,7 @@ function formatStatsRaw(stats, mode) {
 
 function rerenderAllStats() {
     const mode = $("#s_stats")?.value || "full";
-    box.querySelectorAll(".stats").forEach((el) => {
+    box.qsa(".stats").forEach((el) => {
         const botMsg = el.closest(".msg.bot");
         if (!botMsg) return;
         let statsObj = null;
@@ -1204,7 +1180,7 @@ function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t || "dark");
     const grid = document.getElementById("themeGrid");
     if (grid) {
-        grid.querySelectorAll(".theme-card").forEach((c) => {
+        grid.qsa(".theme-card").forEach((c) => {
             c.classList.toggle("active", c.dataset.themeVal === t);
         });
     }
@@ -1347,7 +1323,7 @@ function loadCustomThemeEditor() {
 
 // --- Status dot & empty state ---------------------------------------------------
 function updateEmptyState() {
-    const isEmpty = box.querySelectorAll(".msg").length === 0;
+    const isEmpty = box.qsa(".msg").length === 0;
     if (isEmpty) {
         if (!box.querySelector(".empty-state")) {
             if (needsKey) {
@@ -1411,7 +1387,7 @@ function addMessage(role, html, stats, scroll) {
 }
 
 function addCodeCopy(root) {
-    root.querySelectorAll("pre").forEach((pre) => {
+    root.qsa("pre").forEach((pre) => {
         if (pre.parentElement && pre.parentElement.classList.contains("code-wrap"))
             return;
         const wrap = document.createElement("div");
@@ -1956,7 +1932,7 @@ if (fsApply) {
     });
 }
 if (fsEditor) {
-    fsEditor.querySelectorAll("[data-close]").forEach((el) => {
+    fsEditor.qsa("[data-close]").forEach((el) => {
         el.addEventListener("click", closeFullscreenEditor);
     });
 }
@@ -3436,14 +3412,14 @@ $("#s_save").addEventListener("click", async () => {
                     if (ok) ok.removeEventListener("click", onOk);
                     const bd = congrats.querySelector(".modal-backdrop");
                     if (bd) bd.removeEventListener("click", onOk);
-                    congrats.querySelectorAll("[data-close]").forEach((b) => b.removeEventListener("click", onOk));
+                    congrats.qsa("[data-close]").forEach((b) => b.removeEventListener("click", onOk));
                     closeSettings();
                     runTour(8);
                 };
                 const onOk = () => close();
                 if (ok) ok.addEventListener("click", onOk);
                 if (bd) bd.addEventListener("click", onOk);
-                congrats.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", onOk));
+                congrats.qsa("[data-close]").forEach((b) => b.addEventListener("click", onOk));
             }
         }
     } catch (err) {
@@ -3470,7 +3446,7 @@ if (keyModeToggle) {
     });
 }
 
-document.querySelectorAll(".seg-picker").forEach((picker) => {
+document.qsa(".seg-picker").forEach((picker) => {
     picker.addEventListener("click", (e) => {
         vibClick();
         const btn = e.target.closest(".seg-btn");
@@ -3748,9 +3724,9 @@ tplRender();
 // --- Sound / Vibration -------------------------------------------------
 function clearSearchHighlight() {
     box
-        .querySelectorAll(".search-highlight-frame")
+        .qsa(".search-highlight-frame")
         .forEach((el) => el.classList.remove("search-highlight-frame"));
-    box.querySelectorAll(".search-highlight-term").forEach((el) => {
+    box.qsa(".search-highlight-term").forEach((el) => {
         const parent = el.parentNode;
         if (parent) {
             parent.replaceChild(document.createTextNode(el.textContent), el);
@@ -3831,7 +3807,7 @@ function renderSearchResults(q) {
     if (!q.trim()) return;
     const term = q.toLowerCase();
     const items = [];
-    box.querySelectorAll(".msg").forEach((el) => {
+    box.qsa(".msg").forEach((el) => {
         const role = el.classList.contains("user") ? "Вы" : "Бот";
         const md = el.querySelector(".md");
         const text = (md ? md.innerText : el.innerText || "").trim();
@@ -3922,10 +3898,10 @@ function vibClick() {
 
 function syncSegPickers() {
 
-    document.querySelectorAll(".seg-picker").forEach((picker) => {
+    document.qsa(".seg-picker").forEach((picker) => {
         const name = picker.dataset.name;
         const val = picker.dataset.value;
-        picker.querySelectorAll(".seg-btn").forEach((btn) => {
+        picker.qsa(".seg-btn").forEach((btn) => {
             btn.classList.toggle("active", btn.dataset.val === val);
         });
         const hidden = picker.parentElement.querySelector(
@@ -3950,7 +3926,7 @@ function updateVibVal() {
 // --- Chat export ------------------------------------------------------
 function exportChat(format) {
     const msgs = [];
-    box.querySelectorAll(".msg").forEach((el) => {
+    box.qsa(".msg").forEach((el) => {
         const role = el.classList.contains("user") ? "Вы" : "Бот";
         const md = el.querySelector(".md");
         const text = (md ? md.innerText : el.innerText || "").trim();
@@ -4054,8 +4030,8 @@ function openSettings(tab = null) {
     updateVibVal();
     loadKeyInfo();
     if (tab) {
-        document.querySelectorAll(".stab").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        document.qsa(".stab").forEach(t => t.classList.remove("active"));
+        document.qsa(".tab-content").forEach(c => c.classList.remove("active"));
         const stab = document.querySelector(`.stab[data-tab="${tab}"]`);
         if (stab) stab.classList.add("active");
         const content = document.querySelector(`.tab-content[data-content="${tab}"]`);
@@ -4086,14 +4062,14 @@ $("#dialogsBtn").addEventListener("click", () => {
 });
 
 // --- Settings tabs ----------------------------------------------------
-document.querySelectorAll(".settings-tabs .stab").forEach((tab) => {
+document.qsa(".settings-tabs .stab").forEach((tab) => {
     tab.addEventListener("click", () => {
         vibClick();
         document
-            .querySelectorAll(".settings-tabs .stab")
+            .qsa(".settings-tabs .stab")
             .forEach((t) => t.classList.remove("active"));
         document
-            .querySelectorAll(".tab-content")
+            .qsa(".tab-content")
             .forEach((c) => c.classList.remove("active"));
         tab.classList.add("active");
         const target = tab.dataset.tab;
@@ -4169,11 +4145,11 @@ function showConfirm(title, message) {
         };
         const cleanup = () => {
             $("#confirmOk").removeEventListener("click", onOk);
-            modal.querySelectorAll("[data-close]").forEach((btn) => btn.removeEventListener("click", onCancel));
+            modal.qsa("[data-close]").forEach((btn) => btn.removeEventListener("click", onCancel));
             modal.querySelector(".modal-backdrop").removeEventListener("click", onCancel);
         };
         $("#confirmOk").addEventListener("click", onOk);
-        modal.querySelectorAll("[data-close]").forEach((btn) => btn.addEventListener("click", onCancel));
+        modal.qsa("[data-close]").forEach((btn) => btn.addEventListener("click", onCancel));
         modal.querySelector(".modal-backdrop").addEventListener("click", onCancel);
     });
 }
@@ -4189,14 +4165,14 @@ function showAlert(title, message) {
         modal.classList.add("open");
         const cleanup = () => {
             modal.classList.remove("open");
-            modal.querySelectorAll("[data-close]").forEach((btn) => btn.removeEventListener("click", onClose));
+            modal.qsa("[data-close]").forEach((btn) => btn.removeEventListener("click", onClose));
             modal.querySelector(".modal-backdrop").removeEventListener("click", onClose);
         };
         const onClose = () => {
             cleanup();
             resolve(true);
         };
-        modal.querySelectorAll("[data-close]").forEach((btn) => btn.addEventListener("click", onClose));
+        modal.qsa("[data-close]").forEach((btn) => btn.addEventListener("click", onClose));
         modal.querySelector(".modal-backdrop").addEventListener("click", onClose);
     });
 }
@@ -4215,7 +4191,7 @@ $("#exportMdBtn").addEventListener("click", () => exportDialogFromModal("md"));
 $("#exportTxtBtn").addEventListener("click", () => exportDialogFromModal("txt"));
 
 // Закрытие оверлеев (настройки / браузер моделей) по крестику.
-document.querySelectorAll("[data-close]").forEach((btn) => {
+document.qsa("[data-close]").forEach((btn) => {
     btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-close");
         if (id === "modelBrowser") mbClose();
@@ -4280,14 +4256,14 @@ function showBetaWelcome() {
             if (btn) btn.removeEventListener("click", onClose);
             const bd = modal.querySelector(".modal-backdrop");
             if (bd) bd.removeEventListener("click", onClose);
-            modal.querySelectorAll("[data-close]").forEach((b) => b.removeEventListener("click", onClose));
+            modal.qsa("[data-close]").forEach((b) => b.removeEventListener("click", onClose));
             resolve();
         };
         const onClose = () => cleanup();
         if (btn) btn.addEventListener("click", onClose);
         const bd = modal.querySelector(".modal-backdrop");
         if (bd) bd.addEventListener("click", onClose);
-        modal.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", onClose));
+        modal.qsa("[data-close]").forEach((b) => b.addEventListener("click", onClose));
         modal.classList.add("open");
     });
 }
@@ -4311,7 +4287,7 @@ async function initTour(force = false) {
         }
         const bd = welcome.querySelector(".modal-backdrop");
         if (bd) bd.removeEventListener("click", onNo);
-        const wc = welcome.querySelectorAll("[data-close]");
+        const wc = welcome.qsa("[data-close]");
         if (wc && typeof wc.forEach === "function") wc.forEach((b) => b.removeEventListener("click", onNo));
         localStorage.setItem(TOUR_KEY, "true");
         if (!run) {
@@ -4350,7 +4326,7 @@ async function initTour(force = false) {
     }, 1000);
 const bd = welcome.querySelector(".modal-backdrop");
         if (bd) bd.addEventListener("click", onNo);
-        const wc2 = welcome.querySelectorAll("[data-close]");
+        const wc2 = welcome.qsa("[data-close]");
         if (wc2 && typeof wc2.forEach === "function") wc2.forEach((b) => b.addEventListener("click", onNo));
 }
 
@@ -4469,7 +4445,7 @@ async function runTour(startStep = 0) {
     }
 
     function applySpotlight(rect, settingsMode = false) {
-        const spots = document.querySelectorAll(".tour-spotlight");
+        const spots = document.qsa(".tour-spotlight");
         if (spots && typeof spots.forEach === "function") {
             spots.forEach((el) => el.classList.remove("tour-spotlight"));
         }
@@ -4558,7 +4534,7 @@ async function runTour(startStep = 0) {
         tooltip.style.display = "none";
         overlay.style.clipPath = "";
         overlay.style.background = "";
-        const spots = document.querySelectorAll(".tour-spotlight");
+        const spots = document.qsa(".tour-spotlight");
         if (spots && typeof spots.forEach === "function") {
             spots.forEach((el) => el.classList.remove("tour-spotlight"));
         }
