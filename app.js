@@ -3863,7 +3863,9 @@ $("#cs_input").addEventListener("input", (e) =>
 );
 $("#searchBtn").addEventListener("click", openChatSearch);
 
-$("#newChatBtn").addEventListener("click", async () => {
+const newChatBtn = $("#newChatBtn");
+if (newChatBtn) {
+    newChatBtn.addEventListener("click", async () => {
     vibClick();
     try {
         if (!(await showConfirm("Новый диалог", "Текущий диалог будет сохранён. Продолжить?"))) return;
@@ -3885,6 +3887,7 @@ $("#newChatBtn").addEventListener("click", async () => {
         log("new chat error: " + errText);
     }
 });
+}
 
 // --- Sound / Vibration -------------------------------------------------
 function getVibStrength() {
@@ -4105,6 +4108,8 @@ document.querySelectorAll(".settings-tabs .stab").forEach((tab) => {
         log("<i data-lucide='alert-triangle' class='lucide'></i> ошибка инициализации: " + (e && e.message ? e.message : String(e)));
     }
     console.log("[app] init complete");
+    // Автоматически открываем последний диалог или создаём новый
+    await ensureCurrentDialog();
 })();
 
 // Явно показываем чат после загрузки DOM (страховка от вечной заглушки).
