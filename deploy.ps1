@@ -27,10 +27,14 @@ if ($v.version -ne $dateStr) {
   $v | ConvertTo-Json | Set-Content $versionFile
 }
 
-# 2. Update script tag in index.html
+# 2. Copy app.js to a VERSIONED FILENAME. Changing the PATH (not just a ?v= query)
+#    busts EVERY cache layer at once: browser HTTP cache, service worker cache,
+#    and Telegram's WebView cache. A ?v= query alone was being ignored by all of them.
+$appVersioned = "app_$($v.version).js"
+Copy-Item -Path "app.js" -Destination $appVersioned -Force
 $html = Get-Content $indexFile -Raw -Encoding UTF8
-$newTag = "<script src=`"./app.js?v=$($v.version)`"></script>"
-$html = $html -replace '<script src="\./app\.js\?v=[^"]+"></script>', $newTag
+$newTag = "<script src=`"./$($appVersioned)`"></script>"
+$html = $html -replace '<script src="\./app\.js[^"]*"></script>', $newTag
 Set-Content $indexFile $html -Encoding UTF8
 
 Write-Host "Version bumped to $($v.version)"

@@ -19,8 +19,10 @@ if ($v.version -ne $dateStr) {
 }
 
 $html = Get-Content $indexFile -Raw -Encoding UTF8
-$newTag = "<script src=`"./app.js?v=$($v.version)`"></script>"
-$html = $html -replace '<script src="\./app\.js\?v=[^"]+"></script>', $newTag
+$appVersioned = "app_$($v.version).js"
+Copy-Item -Path "app.js" -Destination $appVersioned -Force
+$newTag = "<script src=`"./$($appVersioned)`"></script>"
+$html = $html -replace '<script src="\./app\.js[^"]*"></script>', $newTag
 Set-Content $indexFile $html -Encoding UTF8
 
 Write-Host "Bumped version to $($v.version)"
