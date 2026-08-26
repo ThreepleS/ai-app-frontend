@@ -33,53 +33,60 @@ function toast(msg, type) {
 
 // === Глобальный полифилл querySelectorAll / forEach (ДОЛЖЕН БЫТЬ ПЕРВЫМ) ===
 // Принудительно заставляем querySelectorAll возвращать настоящие Array (у них есть .forEach везде).
-// Патчим все прототипы + инстансы document/element.
+// Патчим через Object.defineProperty (простое присваивание не работает, если свойство read-only).
 (function () {
     function toArray(list) {
-        var out = [];
-        if (!list) return out;
-        for (var i = 0; i < list.length; i++) out.push(list[i]);
-        return out;
+        if (!list) return [];
+        if (typeof Array.isArray === "function" && Array.isArray(list)) return list;
+        try { return Array.prototype.slice.call(list); }
+        catch (e) {
+            var out = [];
+            for (var i = 0; i < (list.length || 0); i++) out.push(list[i]);
+            return out;
+        }
     }
-    function patch(proto) {
-        if (!proto || !proto.querySelectorAll) return;
+    function wrapOwner(owner, name) {
+        if (!owner || !owner[name]) return;
         try {
-            var orig = proto.querySelectorAll;
-            proto.querySelectorAll = function (sel) {
-                return toArray(orig.call(this, sel));
-            };
-        } catch (_) {}
+            var desc = Object.getOwnPropertyDescriptor(owner, name);
+            var orig;
+            if (desc && typeof desc.get === "function") {
+                orig = desc.get;
+                Object.defineProperty(owner, name, {
+                    configurable: true,
+                    get: function () {
+                        var fn = orig.call(this);
+                        var self = this;
+                        return function (sel) { return toArray(fn.call(self, sel)); };
+                    }
+                });
+            } else if (desc && typeof desc.value === "function") {
+                orig = desc.value;
+                Object.defineProperty(owner, name, {
+                    configurable: true,
+                    writable: true,
+                    value: function (sel) { return toArray(orig.call(this, sel)); }
+                });
+            } else {
+                orig = owner[name];
+                try { owner[name] = function (sel) { return toArray(orig.call(this, sel)); }; }
+                catch (e) {}
+            }
+        } catch (e) {}
     }
     // Патчим все известные прототипы
-    patch(typeof Document !== "undefined" ? Document.prototype : null);
-    patch(typeof Element !== "undefined" ? Element.prototype : null);
-    patch(typeof DocumentFragment !== "undefined" ? DocumentFragment.prototype : null);
-    patch(typeof HTMLDocument !== "undefined" ? HTMLDocument.prototype : null);
-    patch(typeof HTMLElement !== "undefined" ? HTMLElement.prototype : null);
+    ["Document", "Element", "DocumentFragment", "HTMLDocument", "HTMLElement", "SVGElement"].forEach(function (n) {
+        try { var C = window[n]; if (C && C.prototype) wrapOwner(C.prototype, "querySelectorAll"); } catch (e) {}
+    });
     // Патчим инстансы document/element напрямую
-    try {
-        if (document && document.querySelectorAll) {
-            var od = document.querySelectorAll.bind(document);
-            document.querySelectorAll = function (sel) { return toArray(od(sel)); };
-        }
-    } catch (_) {}
-    try {
-        if (document && document.documentElement && document.documentElement.querySelectorAll) {
-            var oe = document.documentElement.querySelectorAll.bind(document.documentElement);
-            document.documentElement.querySelectorAll = function (sel) { return toArray(oe(sel)); };
-        }
-    } catch (_) {}
-    // forEach полифиллы для всех списковых объектов
-    function forEachPoly(C) {
+    try { wrapOwner(document, "querySelectorAll"); } catch (e) {}
+    try { if (document.documentElement) wrapOwner(document.documentElement, "querySelectorAll"); } catch (e) {}
+    // forEach на случай, если querySelectorAll вернул нативный список (последний рубеж)
+    [window.NodeList, window.HTMLCollection, window.DOMTokenList].forEach(function (C) {
         if (C && C.prototype && !C.prototype.forEach) {
-            C.prototype.forEach = function (cb, thisArg) {
-                for (var i = 0; i < this.length; i++) cb.call(thisArg, this[i], i, this);
-            };
+            try { C.prototype.forEach = Array.prototype.forEach; } catch (e) {}
         }
-    }
-    forEachPoly(typeof NodeList !== "undefined" ? NodeList : null);
-    forEachPoly(typeof HTMLCollection !== "undefined" ? HTMLCollection : null);
-    forEachPoly(typeof DOMTokenList !== "undefined" ? DOMTokenList : null);
+    });
 })();
 
 window.addEventListener("error", (e) => {
@@ -1619,6 +1626,12 @@ async function auth(devId) {
         const eruditeEnabled = localStorage.getItem("erudite_enabled") === "1";
         const eruditeEl = $("#s_erudite");
         if (eruditeEl) eruditeEl.checked = eruditeEnabled;
+        try {
+            if (typeof eruda !== "undefined" && eruda) {
+                if (eruditeEnabled) eruda.show();
+                else eruda.hide();
+            }
+        } catch (_) {}
         fillSettings(data.settings);
         if (data.settings && Array.isArray(data.settings.recommended_models)) {
             RECOMMENDED_MODELS = data.settings.recommended_models;
@@ -4004,6 +4017,10 @@ $("#s_bug_report").addEventListener("click", () => {
 $("#s_erudite").addEventListener("change", () => {
     const enabled = $("#s_erudite").checked;
     localStorage.setItem("erudite_enabled", enabled ? "1" : "0");
+    try {
+        if (enabled) eruda.show();
+        else eruda.hide();
+    } catch (_) {}
     toast(enabled ? "Режим Эрудит включен" : "Режим Эрудит выключен", "ok");
 });
 $("#s_keys_help").addEventListener("click", (e) => {
