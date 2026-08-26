@@ -31,7 +31,10 @@ if ($v.version -ne $dateStr) {
 #    busts EVERY cache layer at once: browser HTTP cache, service worker cache,
 #    and Telegram's WebView cache. A ?v= query alone was being ignored by all of them.
 $appVersioned = "app_$($v.version).js"
-Copy-Item -Path "app.js" -Destination $appVersioned -Force
+# Inject the real build version into the copied file (source keeps the placeholder).
+$appContent = Get-Content "app.js" -Raw -Encoding UTF8
+$appContent = $appContent -replace 'const APP_VERSION = "[^"]*";', "const APP_VERSION = `"$($v.version)`";"
+Set-Content $appVersioned $appContent -Encoding UTF8
 $html = Get-Content $indexFile -Raw -Encoding UTF8
 $newTag = "<script src=`"./$($appVersioned)`"></script>"
 $html = $html -replace '<script src="\./app\.js[^"]*"></script>', $newTag
