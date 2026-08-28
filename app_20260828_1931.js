@@ -1,11 +1,11 @@
-// === Глобальные переменные тура (должны быть до mbClose и остального кода) ===
+﻿// === Глобальные переменные тура (должны быть до mbClose и остального кода) ===
 const TOUR_KEY = "has_seen_tutorial";
 let tourActive = false;
 let queuedAuthError = null;
 let deferredOpenSettings = false;
 
 // Версия билда (инжектится при деплое). Показывается в настройках -> Ещё.
-const APP_VERSION = "__APP_VERSION__";
+const APP_VERSION = "20260828_1931";
 
 // === Toast-уведомления (определены рано, чтобы были доступны везде) ===
 function toast(msg, type) {
