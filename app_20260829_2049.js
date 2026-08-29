@@ -46,7 +46,7 @@ function aiHubQueryAll(root, selector) {
     return result;
 }
 
-const APP_VERSION = "dev";
+const APP_VERSION = "20260829_2049";
 
 window.addEventListener("error", (e) => {
     console.error("[FATAL JS ERROR]", {
@@ -4592,3 +4592,4 @@ async function runTour(startStep = 0) {
     showStep(0);
 }
 })();
+
