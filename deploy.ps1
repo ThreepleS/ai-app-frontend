@@ -37,7 +37,8 @@ $appContent = $appContent -replace 'const APP_VERSION = "[^"]*";', "const APP_VE
 Set-Content $appVersioned $appContent -Encoding UTF8
 $html = Get-Content $indexFile -Raw -Encoding UTF8
 $newTag = "<script src=`"./$($appVersioned)`"></script>"
-$html = $html -replace '<script src="\./app\.js[^"]*"></script>', $newTag
+# Match both old app.js?v=... and new app_YYYYMMDD_HHMM.js patterns
+$html = $html -replace '<script src="\./app(_\d{8}_\d{4})?\.js[^"]*"></script>', $newTag
 Set-Content $indexFile $html -Encoding UTF8
 
 Write-Host "Version bumped to $($v.version)"
