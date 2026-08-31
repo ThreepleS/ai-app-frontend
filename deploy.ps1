@@ -34,14 +34,15 @@ $appVersioned = "app_$($v.version).js"
 # Inject the real build version into the copied file (source keeps the placeholder).
 $appContent = Get-Content "app.js" -Raw -Encoding UTF8
 $appContent = $appContent -replace 'const APP_VERSION = "[^"]*";', "const APP_VERSION = `"$($v.version)`";"
-Set-Content $appVersioned $appContent -Encoding UTF8
+# Write without BOM to avoid parser edge cases in strict WebViews
+[System.IO.File]::WriteAllText($appVersioned, $appContent, [System.Text.UTF8Encoding]::new($false))
 $html = Get-Content $indexFile -Raw -Encoding UTF8
 # Add ?v=<version> to the script URL so the app file is cache-busted on its own
 # URL too — even if index.html itself is served from a stale cache layer.
 $newTag = "<script src=`"./$($appVersioned)?v=$($v.version)`"></script>"
 # Match both old app.js?v=... and new app_YYYYMMDD_HHMM.js patterns
 $html = $html -replace '<script src="\./app(_\d{8}_\d{4})?\.js[^"]*"></script>', $newTag
-Set-Content $indexFile $html -Encoding UTF8
+[System.IO.File]::WriteAllText($indexFile, $html, [System.Text.UTF8Encoding]::new($false))
 
 Write-Host "Version bumped to $($v.version)"
 
