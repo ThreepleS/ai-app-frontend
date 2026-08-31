@@ -1,4 +1,4 @@
-﻿// === Глобальные переменные тура (должны быть до mbClose и остального кода) ===
+// === Глобальные переменные тура (должны быть до mbClose и остального кода) ===
 const TOUR_KEY = "has_seen_tutorial";
 let tourActive = false;
 let queuedAuthError = null;
@@ -97,7 +97,7 @@ try {
     });
 } catch (e) {}
 
-const APP_VERSION = "dev";
+const APP_VERSION = "20260831_2033";
 
 window.addEventListener("error", (e) => {
     console.error("[FATAL JS ERROR]", {
