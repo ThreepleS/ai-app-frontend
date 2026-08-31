@@ -85,7 +85,7 @@ try {
     });
 } catch (e) {}
 
-const APP_VERSION = "dev";
+const APP_VERSION = "20260831_1859";
 
 window.addEventListener("error", (e) => {
     console.error("[FATAL JS ERROR]", {
@@ -4641,3 +4641,4 @@ async function runTour(startStep = 0) {
     showStep(0);
 }
 })();
+
