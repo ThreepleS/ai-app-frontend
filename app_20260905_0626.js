@@ -97,7 +97,7 @@ try {
     });
 } catch (e) {}
 
-const APP_VERSION = "dev";
+const APP_VERSION = "20260905_0626";
 
 window.addEventListener("error", (e) => {
     console.error("[FATAL JS ERROR]", {
