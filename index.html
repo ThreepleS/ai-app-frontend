@@ -766,15 +766,32 @@
     </form>
 
     <div id="tourSkipWrap" class="tour-skip-wrap">
-      <button id="tourSkip" class="btn ghost sm">Пропустить</button>
+      <button id="tourSkip" class="btn ghost sm"><i data-lucide="x" class="icon"></i> Пропустить</button>
     </div>
     <div id="tourBackdrop" class="tour-backdrop">
-      <div id="tourOverlay" class="tour-overlay"></div>
+      <svg id="tourSvgOverlay" class="tour-svg-overlay">
+        <defs>
+          <mask id="tourMask">
+            <rect width="100%" height="100%" fill="white" />
+            <rect id="tourMaskCutout" x="0" y="0" width="0" height="0" rx="12" ry="12" fill="black" />
+          </mask>
+        </defs>
+        <rect width="100%" height="100%" fill="rgba(6, 9, 18, 0.78)" mask="url(#tourMask)" />
+      </svg>
+      <div id="tourSpotlightBorder" class="tour-spotlight-border"></div>
       <div id="tourTooltip" class="tour-tooltip">
+        <div class="tour-tooltip-header">
+          <div class="tour-tooltip-meta">
+            <span id="tourStepBadge" class="tour-step-badge">1 / 7</span>
+            <div id="tourStepDots" class="tour-step-dots"></div>
+          </div>
+          <button id="tourCloseBtn" class="tour-close-btn" title="Закрыть обучение"><i data-lucide="x" class="icon"></i></button>
+        </div>
         <div id="tourTooltipTitle" class="tour-tooltip-title"></div>
         <div id="tourTooltipBody" class="tour-tooltip-body"></div>
         <div class="tour-tooltip-foot">
-          <button id="tourNext" class="btn primary sm">Далее</button>
+          <button id="tourPrev" class="btn ghost sm"><i data-lucide="chevron-left" class="icon"></i> Назад</button>
+          <button id="tourNext" class="btn primary sm">Далее <i data-lucide="chevron-right" class="icon"></i></button>
         </div>
       </div>
     </div>
@@ -784,7 +801,7 @@
       <div class="modal-dialog" style="flex:1;display:flex;flex-direction:column;height:100%;max-height:none;margin:0;border-radius:0;">
         <div class="fs-head">
           <h3>Редактор сообщения</h3>
-          <button class="fs-close" data-close="fullscreenEditor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+          <button class="fs-close" data-close="fullscreenEditor"><i data-lucide="x" class="icon"></i></button>
         </div>
         <div class="fs-body">
           <textarea id="fsTextarea" placeholder="Сообщение или фото…"></textarea>
@@ -800,8 +817,8 @@
       <div class="modal-backdrop"></div>
       <div class="modal-dialog">
         <div class="modal-head">
-          <b>Добро пожаловать в AI Hub v0.9</b>
-          <button class="modal-close" data-close="betaWelcome">✕</button>
+          <b><i data-lucide="info" class="icon"></i> Добро пожаловать в AI Hub</b>
+          <button class="modal-close" data-close="betaWelcome"><i data-lucide="x" class="icon"></i></button>
         </div>
         <div class="modal-body">
           <p>Это <b>бета-тест</b>. Функционал может меняться, а перед релизом возможен полный сброс данных.</p>
@@ -817,15 +834,15 @@
       <div class="modal-backdrop"></div>
       <div class="modal-dialog">
         <div class="modal-head">
-          <b>Добро пожаловать!</b>
-          <button class="modal-close" data-close="tourWelcome">✕</button>
+          <b><i data-lucide="compass" class="icon"></i> Обучение по приложению</b>
+          <button class="modal-close" data-close="tourWelcome"><i data-lucide="x" class="icon"></i></button>
         </div>
         <div class="modal-body">
-          Хотите пройти обучение по использованию?
+          Пройти короткий интерактивный обзор ключевых функций AI Hub? Это займёт меньше минуты.
         </div>
         <div class="modal-foot">
-          <button class="btn ghost" id="tourNo">Нет</button>
-          <button class="btn primary" id="tourYes">Да</button>
+          <button class="btn ghost" id="tourNo">Позже</button>
+          <button class="btn primary" id="tourYes">Начать обзор</button>
         </div>
       </div>
     </div>
@@ -833,19 +850,19 @@
       <div class="modal-backdrop"></div>
       <div class="modal-dialog">
         <div class="modal-head">
-          <b>Молодец! 🎉</b>
-          <button class="modal-close" data-close="tourCongrats">✕</button>
+          <b><i data-lucide="check-circle" class="icon"></i> Ключ сохранён</b>
+          <button class="modal-close" data-close="tourCongrats"><i data-lucide="x" class="icon"></i></button>
         </div>
         <div class="modal-body">
-          Отлично, ключ сохранён. Теперь закрой настройки — я покажу тебе браузер моделей, где можно выбрать модель и добавить её в избранное.
+          Отлично! API-ключ зашифрован и сохранён в вашем аккаунте. Теперь вы можете отправлять запросы и выбирать модели провайдера.
         </div>
         <div class="modal-foot">
-          <button class="btn primary" id="tourCongratsOk">Понял, иду в модели</button>
+          <button class="btn primary" id="tourCongratsOk">Отлично</button>
         </div>
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app_20260907_1845.js?v=20260907_1845"></script>
+    <script src="./app_20260907_1855.js?v=20260907_1855"></script>
   </body>
 </html>
 
