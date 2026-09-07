@@ -378,26 +378,6 @@
                 </div>
             </div>
 
-          <div class="tab-content" data-content="notify">
-            <div class="settings-card">
-              <div class="settings-card-head">
-                <div>
-                  <div class="section-title">Оповещения</div>
-                  <div class="settings-card-desc">
-                    Звук и вибрация при получении ответа.
-                  </div>
-                </div>
-              </div>
-              <div class="custom-toggles">
-                <label class="custom-toggle">
-                  <input type="checkbox" id="s_vibrate" />
-                  <div class="toggle-slider"></div>
-                  <span class="toggle-label"><i data-lucide="vibrate" class="icon"></i> Вибрация</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
           <div class="tab-content" data-content="more">
             <div class="settings-card">
               <div class="settings-card-head" style="align-items: center; justify-content: space-between;">
@@ -420,7 +400,7 @@
                 <button data-val="tokens" class="seg-btn">Токены</button>
               </div>
               <div class="range-container">
-                <input type="range" id="s_limit_slider" min="1000" max="1000000" step="1000" value="10000" />
+                <input type="range" id="s_limit_slider" min="1" max="100" step="1" value="10" />
               </div>
               <input type="hidden" id="s_limit" value="10" />
             </div>
@@ -445,6 +425,23 @@
                 <button data-val="full" class="seg-btn">Полная</button>
               </div>
               <input type="hidden" id="s_stats" value="compact" />
+            </div>
+            <div class="settings-card">
+              <div class="settings-card-head">
+                <div>
+                  <div class="section-title">Вибрация</div>
+                  <div class="settings-card-desc">
+                    Тактильный отклик при нажатиях и получении ответа.
+                  </div>
+                </div>
+              </div>
+              <div class="custom-toggles">
+                <label class="custom-toggle">
+                  <input type="checkbox" id="s_vibrate" />
+                  <div class="toggle-slider"></div>
+                  <span class="toggle-label"><i data-lucide="vibrate" class="icon"></i> Вибрация</span>
+                </label>
+              </div>
             </div>
             <div class="settings-card">
               <div class="settings-card-head">
@@ -561,9 +558,6 @@
             </button>
             <button class="stab" data-tab="keys">
                <span class="stab-icon"><i data-lucide="key" class="icon"></i></span>Ключи
-            </button>
-            <button class="stab" data-tab="notify">
-               <span class="stab-icon"><i data-lucide="bell" class="icon"></i></span>Опов.
             </button>
             <button class="stab" data-tab="more">
                <span class="stab-icon"><i data-lucide="upload" class="icon"></i></span>Ещё
@@ -851,7 +845,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app_20260907_0624.js?v=20260907_0624"></script>
+    <script src="./app_20260907_0638.js?v=20260907_0638"></script>
   </body>
 </html>
 
