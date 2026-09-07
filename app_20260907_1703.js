@@ -5,7 +5,7 @@ let queuedAuthError = null;
 let deferredOpenSettings = false;
 
 // Версия билда (инжектится при деплое). Показывается в настройках -> Ещё.
-const APP_VERSION = "__APP_VERSION__";
+const APP_VERSION = "20260907_1703";
 
 // === Toast-уведомления (определены рано, чтобы были доступны везде) ===
 function toast(msg, type) {
