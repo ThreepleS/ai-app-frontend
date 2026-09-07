@@ -895,8 +895,9 @@ header {
   list-style: none;
   transition: color 0.15s ease, background 0.15s ease;
 }
-.thinking-summary::-webkit-details-marker {
-  display: none;
+.thinking-summary::-webkit-details-marker,
+.thinking-summary::marker {
+  display: none !important;
 }
 .thinking-summary:hover {
   color: var(--text, #f1f5f9);
@@ -911,12 +912,23 @@ header {
   gap: 6px;
 }
 .thinking-icon {
-  font-size: 0.95rem;
+  width: 15px;
+  height: 15px;
+  color: #818cf8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 .thinking-arrow {
-  font-size: 0.72rem;
+  width: 14px;
+  height: 14px;
   transition: transform 0.2s ease;
   opacity: 0.7;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .thinking-block[open] .thinking-arrow {
   transform: rotate(180deg);
@@ -993,10 +1005,14 @@ header {
   gap: 10px;
 }
 .chat-error-icon {
-  font-size: 1.25rem;
-  line-height: 1;
+  width: 18px;
+  height: 18px;
+  color: #f87171;
   flex-shrink: 0;
   margin-top: 1px;
+}
+[data-theme="light"] .chat-error-icon {
+  color: #dc2626;
 }
 .chat-error-body {
   flex: 1;
@@ -1019,47 +1035,10 @@ header {
 [data-theme="light"] .chat-error-msg {
   color: #334155;
 }
-.chat-error-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 1px;
-}
-.chat-error-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 13px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: 8px;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.16);
-  color: #fecaca;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-.chat-error-btn:hover {
-  background: rgba(239, 68, 68, 0.28);
-  border-color: rgba(239, 68, 68, 0.6);
-  transform: translateY(-1px);
-}
-.chat-error-btn:active {
-  transform: translateY(0);
-}
-[data-theme="light"] .chat-error-btn {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #991b1b;
-}
-[data-theme="light"] .chat-error-btn:hover {
-  background: #fecaca;
-}
+
 /* Collapsible technical details */
 .error-details {
-  margin-top: 3px;
+  margin-top: 2px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1079,12 +1058,14 @@ header {
   cursor: pointer;
   color: rgba(241, 245, 249, 0.68);
   user-select: none;
+  list-style: none;
 }
 [data-theme="light"] .error-summary {
   color: rgba(71, 85, 105, 0.85);
 }
-.error-summary::-webkit-details-marker {
-  display: none;
+.error-summary::-webkit-details-marker,
+.error-summary::marker {
+  display: none !important;
 }
 .error-summary:hover {
   color: rgba(241, 245, 249, 0.95);
@@ -1093,12 +1074,23 @@ header {
 .error-summary-title {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+}
+.error-summary-icon {
+  width: 13px;
+  height: 13px;
+  opacity: 0.75;
+  flex-shrink: 0;
 }
 .error-summary-arrow {
-  font-size: 0.68rem;
+  width: 13px;
+  height: 13px;
   transition: transform 0.2s ease;
   opacity: 0.7;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .error-details[open] .error-summary-arrow {
   transform: rotate(180deg);
