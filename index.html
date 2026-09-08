@@ -720,9 +720,51 @@
       <button data-act="delete" class="danger">🗑 Удалить</button>
     </div>
 
+    <!-- Attach Bottom Sheet (Telegram-style) -->
+    <div id="attachSheet" class="bottom-sheet">
+      <div class="bottom-sheet-backdrop" id="attachSheetBackdrop"></div>
+      <div class="bottom-sheet-dialog">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-head">
+          <span>Прикрепить фото</span>
+          <button type="button" class="modal-close" id="attachSheetClose"><i data-lucide="x" class="icon"></i></button>
+        </div>
+        <div class="bottom-sheet-body">
+          <div class="attach-options">
+            <button type="button" class="attach-opt-btn" id="attachOptGallery">
+              <div class="attach-opt-icon gallery-icon">
+                <i data-lucide="image" class="icon"></i>
+              </div>
+              <div class="attach-opt-content">
+                <span class="attach-opt-title">Выбрать из галереи</span>
+                <span class="attach-opt-desc">Альбомы, папки, медиафайлы</span>
+              </div>
+              <i data-lucide="chevron-right" class="icon attach-opt-arrow"></i>
+            </button>
+            <button type="button" class="attach-opt-btn" id="attachOptCamera">
+              <div class="attach-opt-icon camera-icon">
+                <i data-lucide="camera" class="icon"></i>
+              </div>
+              <div class="attach-opt-content">
+                <span class="attach-opt-title">Сделать снимок</span>
+                <span class="attach-opt-desc">Камера устройства</span>
+              </div>
+              <i data-lucide="chevron-right" class="icon attach-opt-arrow"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <form id="bar" autocomplete="off">
       <input
         id="imgfile"
+        type="file"
+        accept="image/*"
+        style="display: none"
+      />
+      <input
+        id="imgfile_camera"
         type="file"
         accept="image/*"
         capture="environment"
@@ -862,7 +904,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app_20260908_1931.js?v=20260908_1931"></script>
+    <script src="./app_20260908_1950.js?v=20260908_1950"></script>
   </body>
 </html>
 
