@@ -207,7 +207,24 @@ function renderUsers(users) {
 
 async function usrAction(action, uid) {
   if (action === "reset" && !confirm(`Сбросить пользователя ${uid}?`)) return;
-  const d = await pjson("user", { sub_action: action, user_id: uid });
+  let confirmCode = "";
+  if (action === "reset" || action === "clear") {
+    try {
+      const r2 = await pjson("request_2fa", { for_action: `${action}_user_${uid}` });
+      if (r2.ok) {
+        flash(r2.message || "Код отправлен в бота");
+        confirmCode = prompt("Введите 6-значный код подтверждения из Telegram-бота:") || "";
+        if (!confirmCode.trim()) {
+          flash("Действие отменено (не введен код 2FA)", true);
+          return;
+        }
+      }
+    } catch (e) {
+      flash("Ошибка запроса 2FA: " + String(e), true);
+      return;
+    }
+  }
+  const d = await pjson("user", { sub_action: action, user_id: uid, confirm: confirmCode.trim() });
   flash(d.ok ? d.message : (d.error || "ошибка"));
   if (d.ok) loadAll();
 }
@@ -331,7 +348,22 @@ async function blNote(uid) {
 }
 async function resetAll() {
   if (!confirm("Сбросить ВСЕХ пользователей? Черный список сохранится.")) return;
-  const d = await pjson("reset_all", {});
+  let confirmCode = "";
+  try {
+    const r2 = await pjson("request_2fa", { for_action: "reset_all" });
+    if (r2.ok) {
+      flash(r2.message || "Код отправлен в бота");
+      confirmCode = prompt("ВНИМАНИЕ! Для сброса ВСЕХ пользователей введите 6-значный код 2FA из Telegram-бота:") || "";
+      if (!confirmCode.trim()) {
+        flash("Сброс отменен (не введен код 2FA)", true);
+        return;
+      }
+    }
+  } catch (e) {
+    flash("Ошибка запроса 2FA: " + String(e), true);
+    return;
+  }
+  const d = await pjson("reset_all", { confirm: confirmCode.trim() });
   flash(d.ok ? d.message : (d.error || "ошибка"));
   if (d.ok) loadAll();
 }
