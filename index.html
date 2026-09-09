@@ -714,10 +714,11 @@
     <div id="toasts"></div>
 
     <div id="ctxMenu">
-      <button data-act="copy">📋 Копировать</button>
-      <button data-act="regen">🔄 Сгенерировать заново</button>
-      <button data-act="reply">↩️ Ответить</button>
-      <button data-act="delete" class="danger">🗑 Удалить</button>
+      <button data-act="copy"><i data-lucide="copy" class="icon"></i> Копировать</button>
+      <button data-act="reply"><i data-lucide="reply" class="icon"></i> Ответить</button>
+      <button data-act="regen"><i data-lucide="rotate-cw" class="icon"></i> Сгенерировать заново</button>
+      <div class="sep"></div>
+      <button data-act="delete" class="danger"><i data-lucide="trash-2" class="icon"></i> Удалить</button>
     </div>
 
     <!-- Attach Bottom Sheet (Telegram-style) -->
@@ -730,6 +731,12 @@
           <button type="button" class="modal-close" id="attachSheetClose"><i data-lucide="x" class="icon"></i></button>
         </div>
         <div class="bottom-sheet-body">
+          <div id="attachRecentWrap" class="attach-recent-wrap" style="display: none;">
+            <div class="attach-recent-head">
+              <span class="attach-recent-title"><i data-lucide="clock" class="icon"></i> Недавние в AI Hub</span>
+            </div>
+            <div id="attachRecentList" class="attach-recent-list"></div>
+          </div>
           <div class="attach-options">
             <button type="button" class="attach-opt-btn" id="attachOptGallery">
               <div class="attach-opt-icon gallery-icon">
@@ -760,13 +767,13 @@
       <input
         id="imgfile"
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/*"
         style="display: none"
       />
       <input
         id="imgfile_camera"
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/*"
         capture="environment"
         style="display: none"
       />
@@ -904,7 +911,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app_20260908_1950.js?v=20260908_1950"></script>
+    <script src="./app_20260909_0815.js?v=20260909_0815"></script>
   </body>
 </html>
 
