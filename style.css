@@ -726,6 +726,112 @@ header {
   transform: translateY(-1px);
   box-shadow: var(--ring);
 }
+/* --- AI Thinking Indicator --- */
+.msg.bot.thinking {
+  background: color-mix(in srgb, var(--glass) 88%, var(--accent) 12%);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--stroke));
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 10px 16px;
+  animation: aiThinkingFadeIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ai-thinking-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  user-select: none;
+}
+.ai-thinking-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  animation: aiPulseGlow 2s ease-in-out infinite alternate;
+}
+.ai-thinking-icon svg,
+.ai-thinking-icon i {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.2;
+}
+.ai-thinking-label {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  background: linear-gradient(
+    90deg,
+    var(--text) 0%,
+    color-mix(in srgb, var(--text) 40%, var(--accent)) 40%,
+    var(--accent) 60%,
+    var(--text) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: aiTextShimmer 2.4s linear infinite;
+}
+.ai-thinking-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+}
+.ai-thinking-dots .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.35;
+  animation: aiDotWave 1.4s ease-in-out infinite;
+}
+.ai-thinking-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.ai-thinking-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.ai-thinking-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes aiThinkingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes aiPulseGlow {
+  0% {
+    transform: scale(0.94);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  100% {
+    transform: scale(1.08);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}
+@keyframes aiTextShimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+@keyframes aiDotWave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+    filter: drop-shadow(0 0 3px var(--accent));
+  }
+}
 .msg pre {
   background: #0a0e16;
   padding: 11px;
