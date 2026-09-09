@@ -3385,7 +3385,9 @@ textarea {
   position: fixed;
   z-index: 12002;
   display: none;
-  width: min(340px, calc(100vw - 32px));
+  width: min(350px, calc(100vw - 28px));
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
   background: var(--panel-solid, #121826);
   border: 1px solid var(--stroke-strong);
   border-radius: 18px;
@@ -3473,6 +3475,7 @@ textarea {
   color: var(--muted);
   line-height: 1.48;
   margin-bottom: 14px;
+  white-space: pre-line;
 }
 .tour-tooltip-foot {
   display: flex;
