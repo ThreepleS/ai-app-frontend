@@ -95,8 +95,28 @@ window.addEventListener("error", (e) => {
         }
     } catch (e) {}
 });
-console.log("[app] script start v20260905_1906");
+console.log("[app] script start v" + APP_VERSION);
 const $ = (s) => document.querySelector(s);
+
+// Динамическая загрузка Eruda исключительно для администраторов
+let erudaLoadingPromise = null;
+function loadErudaScript() {
+    if (typeof eruda !== "undefined") return Promise.resolve(window.eruda);
+    if (erudaLoadingPromise) return erudaLoadingPromise;
+    erudaLoadingPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "eruda.min.js";
+        script.onload = () => resolve(window.eruda);
+        script.onerror = (e) => {
+            console.error("[eruda] failed to load script", e);
+            erudaLoadingPromise = null;
+            reject(e);
+        };
+        document.head.appendChild(script);
+    });
+    return erudaLoadingPromise;
+}
+
 const log = (t) => {
     const el = $("#log");
     if (el) el.textContent = t;
@@ -1923,6 +1943,8 @@ function fillSettings(s) {
     syncSegPickers();
     updateVibVal();
     checkVision();
+    const appVerEl = $("#appVersion");
+    if (appVerEl) appVerEl.textContent = "v" + APP_VERSION;
 }
 
 async function fetchWithTimeout(url, opts, ms = 12000) {
@@ -1990,17 +2012,19 @@ async function auth(devId) {
             const eruditeEnabled = localStorage.getItem("erudite_enabled") === "1";
             const eruditeEl = $("#s_erudite");
             if (eruditeEl) eruditeEl.checked = eruditeEnabled;
-            if (typeof eruda !== "undefined" && eruda) {
-                try {
-                    if (eruditeEnabled) {
-                        if (!eruda._isInit) eruda.init({ theme: "Dark" });
-                    } else {
-                        if (eruda._isInit) eruda.destroy();
+            loadErudaScript().then((erudaObj) => {
+                if (erudaObj) {
+                    try {
+                        if (eruditeEnabled) {
+                            if (!erudaObj._isInit) erudaObj.init({ theme: "Dark" });
+                        } else {
+                            if (erudaObj._isInit) erudaObj.destroy();
+                        }
+                    } catch (e) {
+                        console.error("[eruda] toggle error", e);
                     }
-                } catch (e) {
-                    console.error("[eruda] toggle error", e);
                 }
-            }
+            }).catch((err) => console.warn("[eruda] admin load skipped", err));
         } else {
             $("#s_admin").style.display = "none";
             $("#s_erudite_wrap").style.display = "none";
@@ -2019,7 +2043,11 @@ async function auth(devId) {
         updateInputState();
         await loadKeyInfo();
 
-        await showBetaWelcome();
+        const seenBeta = localStorage.getItem("has_seen_beta_welcome_v2");
+        if (!seenBeta) {
+            await showBetaWelcome();
+            localStorage.setItem("has_seen_beta_welcome_v2", "true");
+        }
 
         if (data.needs_key && !tourActive) {
             const historyEmpty = !Array.isArray(data.history) || data.history.length === 0;
@@ -5007,7 +5035,7 @@ $("#s_replay_tour").addEventListener("click", () => {
 $("#s_bug_report").addEventListener("click", () => {
     window.open("https://t.me/mqzxcsss", "_blank", "noopener,noreferrer");
 });
-$("#s_erudite").addEventListener("change", () => {
+$("#s_erudite").addEventListener("change", async () => {
     if (!isAdmin) {
         $("#s_erudite_wrap").style.display = "none";
         try {
@@ -5018,12 +5046,15 @@ $("#s_erudite").addEventListener("change", () => {
     const enabled = $("#s_erudite").checked;
     localStorage.setItem("erudite_enabled", enabled ? "1" : "0");
     try {
-        if (typeof eruda !== "undefined" && eruda) {
-            if (enabled) {
-                if (!eruda._isInit) eruda.init({ theme: "Dark" });
-                eruda.show();
-            } else {
-                if (eruda._isInit) eruda.destroy();
+        if (enabled) {
+            const erudaObj = await loadErudaScript();
+            if (erudaObj) {
+                if (!erudaObj._isInit) erudaObj.init({ theme: "Dark" });
+                erudaObj.show();
+            }
+        } else {
+            if (typeof eruda !== "undefined" && eruda && eruda._isInit) {
+                eruda.destroy();
             }
         }
     } catch (e) {
@@ -5156,7 +5187,7 @@ window.addEventListener("DOMContentLoaded", () => {
             (lg.textContent === "инициализация..." || lg.textContent === "загрузка…")
         ) {
             // auth ещё не отработал или упала — покажем подсказку
-            log("<i data-lucide='alert-triangle' class='lucide'></i> не удалось подключиться. Открой консоль (eruda) для деталей.");
+            log("<i data-lucide='alert-triangle' class='lucide'></i> Не удалось подключиться к серверу. Попробуйте обновить страницу.");
         }
     }, 12000);
 });
@@ -5288,6 +5319,7 @@ function showBetaWelcome() {
             resolve();
             return;
         }
+        if (window.lucide) lucide.createIcons();
         const btn = $("#betaWelcomeClose");
         const cleanup = () => {
             modal.classList.remove("open");

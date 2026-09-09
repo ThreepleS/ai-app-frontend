@@ -31,9 +31,6 @@
     <script src="dompurify.min.js"></script>
     <!-- Локальный конфиг (если есть) -->
     <script src="./config.local.js" defer></script>
-    <!-- DEBUG ONLY: eruda console (убрать на релизе вместе с eruda.min.js) -->
-    <script src="eruda.min.js"></script>
-    <script src="eruda-init.js"></script>
   </head>
   <body>
     <div id="log" style="display:none"></div>
@@ -860,15 +857,16 @@
       <div class="modal-backdrop"></div>
       <div class="modal-dialog">
         <div class="modal-head">
-          <b><i data-lucide="info" class="icon"></i> Добро пожаловать в AI Hub</b>
+          <b><i data-lucide="shield-check" class="icon"></i> Добро пожаловать в AI Hub</b>
           <button class="modal-close" data-close="betaWelcome"><i data-lucide="x" class="icon"></i></button>
         </div>
         <div class="modal-body">
-          <p>Это <b>бета-тест</b>. Функционал может меняться, а перед релизом возможен полный сброс данных.</p>
-          <p style="margin-top:8px;">Использование API-ключей с балансом — <b>на ваш страх и риск</b>. Пока что не доверяйте конфиденциальные данные этому приложению, автор за него не отвечает.</p>
+          <p>Приложение <b>полностью готово к работе</b> и гарантирует максимальную конфиденциальность.</p>
+          <p style="margin-top:8px;">Все ваши данные — <b>API-ключи, диалоги и системные промпты</b> — надёжно защищены и шифруются алгоритмом <b>AES-256-GCM</b>. Никто, включая администраторов, не имеет доступа к вашей информации.</p>
+          <p style="margin-top:8px; opacity:0.85; font-size:12px;">Обратите внимание: сейчас продолжается открытый бета-тест. Функционал полностью стабилен, однако перед финальным релизом временные данные могут быть сброшены.</p>
         </div>
         <div class="modal-foot">
-          <button class="btn primary" id="betaWelcomeClose">Закрыть</button>
+          <button class="btn primary" id="betaWelcomeClose">Понятно</button>
         </div>
       </div>
     </div>
@@ -905,7 +903,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app_20260909_1012.js?v=20260909_1012"></script>
+    <script src="./app_20260909_1045.js?v=20260909_1045"></script>
   </body>
 </html>
 

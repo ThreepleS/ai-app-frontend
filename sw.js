@@ -1,8 +1,18 @@
 // PWA service worker: network-first everywhere so updates are picked up
 // immediately; the cache is only used as an offline fallback.
 // Cache version bump invalidates previously cached shells.
-const CACHE = "ai-app-shell-v9";
-const SHELL = ["./", "./index.html", "./admin.html", "./style.css", "./admin.css", "./admin.js", "./marked.min.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+const CACHE = "ai-app-shell-v10";
+const SHELL = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./marked.min.js",
+  "./dompurify.min.js",
+  "./lucide.min.js",
+  "./manifest.webmanifest",
+  "./icon-192.png",
+  "./icon-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
