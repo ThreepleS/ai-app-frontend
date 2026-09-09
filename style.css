@@ -433,12 +433,11 @@ header {
 
 .ctx-stats {
   display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
   flex: 0 0 auto;
-  padding: 5px 8px;
-  border-radius: 9px;
+  padding: 3px 6px;
+  border-radius: 8px;
   background: var(--glass);
   border: 1px solid var(--stroke);
   backdrop-filter: blur(8px);
@@ -449,32 +448,25 @@ header {
 .ctx-stats:hover {
   border-color: var(--stroke-strong);
 }
-.ctx-stats-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  align-items: flex-start;
-  justify-content: center;
-  min-width: 0;
-}
 .ctx-row {
   display: flex;
   align-items: center;
-  gap: 6px;
   white-space: nowrap;
   line-height: 1;
 }
 .ctx-row-main {
-  gap: 5px;
+  gap: 4px;
+  justify-content: flex-start;
 }
 .ctx-row-io {
-  gap: 7px;
+  gap: 6px;
+  justify-content: flex-start;
 }
 .ctx-tokens {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 10.5px;
+  gap: 2px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--muted);
   white-space: nowrap;
@@ -492,12 +484,12 @@ header {
 }
 .ctx-sep {
   width: 1px;
-  height: 9px;
+  height: 8px;
   background: var(--stroke);
   flex: 0 0 auto;
 }
 .ctx-percent {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--muted);
   opacity: 0.85;
@@ -508,7 +500,7 @@ header {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 500;
   color: var(--muted);
   white-space: nowrap;
@@ -523,28 +515,29 @@ header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 18px;
+  height: 18px;
   border: none;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent);
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.2s, color 0.2s, transform 0.15s;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
   flex-shrink: 0;
+  margin-left: 2px;
+  padding: 0;
 }
 .ctx-btn:hover {
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
   color: var(--text);
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 .ctx-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 .ctx-btn svg {
-  width: 14px;
-  height: 14px;
-}
+  width: 11px;
+  height: 11px;
 .ctx-stats.warn .ctx-percent {
   color: var(--amber);
   opacity: 1;
