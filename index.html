@@ -41,31 +41,33 @@
     <div id="tgDebug" style="display:none; position:fixed; top:0; left:0; right:0; background:#000; color:#0f0; font-family:monospace; font-size:11px; padding:8px; z-index:99999; max-height:30vh; overflow:auto; white-space:pre-wrap;"></div>
     <header>
       <div id="ctxStats" class="ctx-stats" style="display: none;">
-        <div class="ctx-row">
-          <span class="ctx-tokens" title="Использовано / Максимум токенов">
-            <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            <span id="ctxText" class="ctx-text">0 / 0</span>
-          </span>
-          <span class="ctx-sep"></span>
-          <span id="ctxPercent" class="ctx-percent" title="Процент заполнения контекста">0%</span>
-          <button id="ctxCompressBtn" class="ctx-btn" title="Сжать контекст сейчас" style="margin-left: 8px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-          </button>
+        <div class="ctx-stats-info">
+          <div class="ctx-row ctx-row-main">
+            <span class="ctx-tokens" title="Активный контекст / Максимум токенов">
+              <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <span id="ctxText" class="ctx-text">0 / 0</span>
+            </span>
+            <span class="ctx-sep"></span>
+            <span id="ctxPercent" class="ctx-percent" title="Заполнение контекста">0%</span>
+          </div>
+          <div class="ctx-row ctx-row-io">
+            <span id="ctxSent" class="ctx-io" title="Отправлено токенов за диалог">
+              <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+              <span class="ctx-val">0</span>
+            </span>
+            <span id="ctxRecv" class="ctx-io" title="Получено токенов за диалог">
+              <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              <span class="ctx-val">0</span>
+            </span>
+            <span id="ctxCached" class="ctx-io" title="Токенов из кэша за диалог">
+              <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+              <span class="ctx-val">0</span>
+            </span>
+          </div>
         </div>
-        <div class="ctx-row ctx-row-io">
-          <span id="ctxSent" class="ctx-io" title="Отправлено токенов">
-            <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            <span class="ctx-val">0</span>
-          </span>
-          <span id="ctxRecv" class="ctx-io" title="Получено токенов">
-            <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            <span class="ctx-val">0</span>
-          </span>
-          <span id="ctxCached" class="ctx-io" title="Токенов из кэша">
-            <svg class="ctx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            <span class="ctx-val">0</span>
-          </span>
-        </div>
+        <button id="ctxCompressBtn" class="ctx-btn" title="Сжать контекст диалога">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        </button>
       </div>
       <div style="flex: 1"></div>
       <button
@@ -731,12 +733,6 @@
           <button type="button" class="modal-close" id="attachSheetClose"><i data-lucide="x" class="icon"></i></button>
         </div>
         <div class="bottom-sheet-body">
-          <div id="attachRecentWrap" class="attach-recent-wrap" style="display: none;">
-            <div class="attach-recent-head">
-              <span class="attach-recent-title"><i data-lucide="clock" class="icon"></i> Недавние в AI Hub</span>
-            </div>
-            <div id="attachRecentList" class="attach-recent-list"></div>
-          </div>
           <div class="attach-options">
             <button type="button" class="attach-opt-btn" id="attachOptGallery">
               <div class="attach-opt-icon gallery-icon">
@@ -911,7 +907,7 @@
       </div>
     </div>
     <script src="./sw-register.js"></script>
-    <script src="./app_20260909_0815.js?v=20260909_0815"></script>
+    <script src="./app_20260909_0854.js?v=20260909_0854"></script>
   </body>
 </html>
 
