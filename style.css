@@ -538,6 +538,7 @@ header {
 .ctx-btn svg {
   width: 11px;
   height: 11px;
+}
 .ctx-stats.warn .ctx-percent {
   color: var(--amber);
   opacity: 1;
