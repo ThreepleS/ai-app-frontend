@@ -1282,12 +1282,15 @@ header {
     color-mix(in srgb, var(--bg) 55%, transparent)
   );
   border-top: 1px solid var(--stroke);
-  align-items: center;
+  align-items: flex-end;
+}
+#bar #imgbtn {
+  margin-bottom: 2px;
 }
 #bar .composer {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 4px;
   background: var(--glass);
   border: 1px solid var(--stroke);
@@ -1324,7 +1327,7 @@ header {
 .composer-wrap {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 4px;
   position: relative;
 }
@@ -1338,6 +1341,10 @@ header {
   justify-content: center;
   opacity: 0.6;
   transition: opacity 0.2s;
+  margin-bottom: 3px;
+}
+#bar .send-btn {
+  margin-bottom: 2px;
 }
 #expandInput:hover {
   opacity: 1;
